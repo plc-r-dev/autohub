@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed:google": "pnpm dlx tsx prisma/seed-google.ts"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.6.23",
