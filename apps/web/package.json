@@ -10,7 +10,10 @@
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
-    "seed:google": "pnpm dlx tsx prisma/seed-google.ts"
+    "db:seed": "pnpm prisma db seed"
+  },
+  "prisma": {
+    "seed": "pnpm dlx tsx prisma/seed.ts"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.6.23",

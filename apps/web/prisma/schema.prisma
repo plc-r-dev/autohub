@@ -163,17 +163,12 @@ model Merchant {
   tenant   Tenant @relation(fields: [tenantId], references: [id])
 
   code        String
-  googlePlaceId String? @unique
   name        String
   description String?
 
   phone   String?
   email   String?
   website String?
-  googleRating      Decimal?
-  googleReviewCount Int?
-  googleMapsUrl     String?
-  photoReferences   Json?
 
   status MerchantStatus @default(DRAFT)
 
