@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum TenantStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Tenant {
+  id          String         @id @default(uuid())
+  code        String         @unique
+  name        String
+  status      TenantStatus   @default(ACTIVE)
+
+  users       User[]
+  roles       Role[]
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model User {
+  id          String         @id @default(uuid())
+  lineUserId  String?        @unique
+  email       String?        @unique
+  firstName   String
+  lastName    String
+  phone       String?
+  status      UserStatus     @default(ACTIVE)
+
+  tenantId    String
+  tenant      Tenant         @relation(fields: [tenantId], references: [id])
+
+  userRoles   UserRole[]
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([tenantId])
+}
+
+model Role {
+  id          String         @id @default(uuid())
+  code        String
+  name        String
+
+  tenantId    String
+  tenant      Tenant         @relation(fields: [tenantId], references: [id])
+
+  userRoles   UserRole[]
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([tenantId, code])
+}
+
+model UserRole {
+  userId      String
+  roleId      String
+
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        Role           @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  assignedAt  DateTime       @default(now())
+
+  @@id([userId, roleId])
+  @@index([roleId])
+}
