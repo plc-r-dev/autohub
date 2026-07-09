@@ -31,6 +31,11 @@ enum ClaimStatus {
   REJECTED
 }
 
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+}
+
 model Tenant {
   id          String         @id @default(uuid())
   code        String         @unique
@@ -40,6 +45,7 @@ model Tenant {
   users       User[]
   roles       Role[]
   merchants Merchant[]
+  customers Customer[]
 
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -181,4 +187,45 @@ model Service {
 
   @@unique([branchId, code])
   @@index([branchId])
+}
+
+model Customer {
+  id          String         @id @default(uuid())
+  tenantId    String
+  tenant      Tenant         @relation(fields: [tenantId], references: [id])
+
+  lineUserId  String?        @unique
+  firstName   String
+  lastName    String
+  phone       String?
+  email       String?
+
+  status      CustomerStatus @default(ACTIVE)
+
+  vehicles    Vehicle[]
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([tenantId])
+}
+
+model Vehicle {
+  id              String      @id @default(uuid())
+
+  customerId      String
+  customer        Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  brand           String
+  model           String
+  year            Int?
+
+  licensePlate    String
+  color           String?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([customerId])
+  @@unique([customerId, licensePlate])
 }
