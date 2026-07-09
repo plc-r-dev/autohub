@@ -18,6 +18,19 @@ enum TenantStatus {
   INACTIVE
 }
 
+enum MerchantStatus {
+  DRAFT
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Tenant {
   id          String         @id @default(uuid())
   code        String         @unique
@@ -26,6 +39,7 @@ model Tenant {
 
   users       User[]
   roles       Role[]
+  merchants Merchant[]
 
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -44,6 +58,7 @@ model User {
   tenant      Tenant         @relation(fields: [tenantId], references: [id])
 
   userRoles   UserRole[]
+  merchantClaims MerchantClaim[]
 
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -78,4 +93,92 @@ model UserRole {
 
   @@id([userId, roleId])
   @@index([roleId])
+}
+
+model Merchant {
+  id          String           @id @default(uuid())
+  tenantId    String
+  tenant      Tenant           @relation(fields: [tenantId], references: [id])
+
+  code        String
+  name        String
+  description String?
+
+  phone       String?
+  email       String?
+  website     String?
+
+  status      MerchantStatus   @default(DRAFT)
+
+  branches    Branch[]
+  claims      MerchantClaim[]
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+}
+
+model MerchantClaim {
+  id            String        @id @default(uuid())
+
+  merchantId    String
+  merchant      Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+
+  status        ClaimStatus   @default(PENDING)
+
+  submittedAt   DateTime      @default(now())
+  reviewedAt    DateTime?
+
+  @@index([merchantId])
+  @@index([userId])
+}
+
+model Branch {
+  id            String      @id @default(uuid())
+
+  merchantId    String
+  merchant      Merchant    @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  code          String
+  name          String
+
+  phone         String?
+  address       String?
+
+  latitude      Decimal?
+  longitude     Decimal?
+
+  services      Service[]
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([merchantId, code])
+  @@index([merchantId])
+}
+
+model Service {
+  id            String      @id @default(uuid())
+
+  branchId      String
+  branch        Branch      @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  code          String
+  name          String
+
+  duration      Int
+  price         Decimal
+
+  isActive      Boolean     @default(true)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([branchId, code])
+  @@index([branchId])
 }
