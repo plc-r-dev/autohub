@@ -36,6 +36,23 @@ enum CustomerStatus {
   INACTIVE
 }
 
+enum BookingSource {
+  AUTOHUB
+  WALK_IN
+  PHONE
+  MANUAL
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
 model Tenant {
   id          String         @id @default(uuid())
   code        String         @unique
@@ -46,6 +63,7 @@ model Tenant {
   roles       Role[]
   merchants Merchant[]
   customers Customer[]
+  bookings Booking[]
 
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -160,6 +178,7 @@ model Branch {
   longitude     Decimal?
 
   services      Service[]
+  bookings Booking[]
 
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -179,6 +198,7 @@ model Service {
 
   duration      Int
   price         Decimal
+  bookingItems BookingItem[]
 
   isActive      Boolean     @default(true)
 
@@ -203,6 +223,7 @@ model Customer {
   status      CustomerStatus @default(ACTIVE)
 
   vehicles    Vehicle[]
+  bookings Booking[]
 
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -228,4 +249,53 @@ model Vehicle {
 
   @@index([customerId])
   @@unique([customerId, licensePlate])
+}
+
+model Booking {
+  id            String          @id @default(uuid())
+
+  tenantId      String
+  tenant        Tenant          @relation(fields: [tenantId], references: [id])
+
+  customerId    String
+  customer      Customer        @relation(fields: [customerId], references: [id])
+
+  branchId      String
+  branch        Branch          @relation(fields: [branchId], references: [id])
+
+  source        BookingSource
+  status        BookingStatus   @default(PENDING)
+
+  bookingDate   DateTime
+
+  note          String?
+
+  items         BookingItem[]
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([tenantId])
+  @@index([customerId])
+  @@index([branchId])
+  @@index([bookingDate])
+}
+
+model BookingItem {
+  id            String      @id @default(uuid())
+
+  bookingId     String
+  booking       Booking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  serviceId     String
+  service       Service     @relation(fields: [serviceId], references: [id])
+
+  quantity      Int         @default(1)
+
+  unitPrice     Decimal
+
+  createdAt     DateTime    @default(now())
+
+  @@index([bookingId])
+  @@index([serviceId])
 }
