@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client"
   output   = "../lib/generated/prisma"
@@ -31,6 +32,12 @@ enum ClaimStatus {
   REJECTED
 }
 
+enum OnboardingRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum CustomerStatus {
   ACTIVE
   INACTIVE
@@ -53,249 +60,580 @@ enum BookingStatus {
   NO_SHOW
 }
 
+enum BillingStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  PAYMENT_SUBMITTED
+  PAYMENT_REJECTED
+  PAID
+}
+
+enum BillingPaymentReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum JobExecutionStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+  SKIPPED
+}
+
 model Tenant {
-  id          String         @id @default(uuid())
-  code        String         @unique
-  name        String
-  status      TenantStatus   @default(ACTIVE)
+  id     String       @id @default(uuid())
+  code   String       @unique
+  name   String
+  status TenantStatus @default(ACTIVE)
 
-  users       User[]
-  roles       Role[]
-  merchants Merchant[]
-  customers Customer[]
-  bookings Booking[]
+  users                      User[]
+  roles                      Role[]
+  merchants                  Merchant[]
+  customers                  Customer[]
+  bookings                   Booking[]
+  merchantOnboardingRequests MerchantOnboardingRequest[]
 
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model User {
-  id          String         @id @default(uuid())
-  lineUserId  String?        @unique
-  email       String?        @unique
-  firstName   String
-  lastName    String
-  phone       String?
-  status      UserStatus     @default(ACTIVE)
+  id         String     @id @default(uuid())
+  authUserId String?    @unique
+  lineUserId String?    @unique
+  email      String?    @unique
+  firstName  String
+  lastName   String
+  phone      String?
+  status     UserStatus @default(ACTIVE)
 
-  tenantId    String
-  tenant      Tenant         @relation(fields: [tenantId], references: [id])
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
 
-  userRoles   UserRole[]
-  merchantClaims MerchantClaim[]
+  merchantId String?
+  merchant   Merchant? @relation(fields: [merchantId], references: [id])
 
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  userRoles                  UserRole[]
+  merchantClaims             MerchantClaim[]
+  merchantOnboardingRequests MerchantOnboardingRequest[]
+  customer                   Customer?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId])
+  @@index([merchantId])
 }
 
 model Role {
-  id          String         @id @default(uuid())
-  code        String
-  name        String
+  id   String @id @default(uuid())
+  code String
+  name String
 
-  tenantId    String
-  tenant      Tenant         @relation(fields: [tenantId], references: [id])
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
 
-  userRoles   UserRole[]
+  userRoles UserRole[]
 
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, code])
 }
 
 model UserRole {
-  userId      String
-  roleId      String
+  userId String
+  roleId String
 
-  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role        Role           @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
-  assignedAt  DateTime       @default(now())
+  assignedAt DateTime @default(now())
 
   @@id([userId, roleId])
   @@index([roleId])
 }
 
 model Merchant {
-  id          String           @id @default(uuid())
-  tenantId    String
-  tenant      Tenant           @relation(fields: [tenantId], references: [id])
+  id       String @id @default(uuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
 
   code        String
   name        String
   description String?
 
-  phone       String?
-  email       String?
-  website     String?
+  phone   String?
+  email   String?
+  website String?
 
-  status      MerchantStatus   @default(DRAFT)
+  status MerchantStatus @default(DRAFT)
 
-  branches    Branch[]
-  claims      MerchantClaim[]
+  branches Branch[]
+  claims   MerchantClaim[]
+  users    User[]
+  billings Billing[]
 
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, code])
   @@index([tenantId])
 }
 
 model MerchantClaim {
-  id            String        @id @default(uuid())
+  id String @id @default(uuid())
 
-  merchantId    String
-  merchant      Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  merchantId String
+  merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
 
-  userId        String
-  user          User          @relation(fields: [userId], references: [id])
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  status        ClaimStatus   @default(PENDING)
+  status ClaimStatus @default(PENDING)
 
-  submittedAt   DateTime      @default(now())
-  reviewedAt    DateTime?
+  submittedAt DateTime  @default(now())
+  reviewedAt  DateTime?
 
   @@index([merchantId])
   @@index([userId])
 }
 
+model MerchantOnboardingRequest {
+  id String @id @default(uuid())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  businessName String
+  businessCode String
+  description  String?
+  phone        String?
+  email        String?
+  website      String?
+
+  status OnboardingRequestStatus @default(PENDING)
+
+  submittedAt DateTime  @default(now())
+  reviewedAt  DateTime?
+
+  @@index([userId])
+  @@index([tenantId])
+  @@index([status])
+}
+
 model Branch {
-  id            String      @id @default(uuid())
+  id String @id @default(uuid())
 
-  merchantId    String
-  merchant      Merchant    @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  merchantId String
+  merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
 
-  code          String
-  name          String
+  code String
+  name String
 
-  phone         String?
-  address       String?
+  phone   String?
+  address String?
 
-  latitude      Decimal?
-  longitude     Decimal?
+  latitude  Decimal?
+  longitude Decimal?
 
-  services      Service[]
-  bookings Booking[]
+  slotIntervalMinutes Int @default(15)
+  concurrentCapacity  Int @default(1)
 
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  services        Service[]
+  bookings        Booking[]
+  operatingHours  BranchOperatingHours[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([merchantId, code])
   @@index([merchantId])
 }
 
+model BranchOperatingHours {
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  dayOfWeek Int
+  openTime  String
+  closeTime String
+  isClosed  Boolean @default(false)
+
+  @@id([branchId, dayOfWeek])
+}
+
 model Service {
-  id            String      @id @default(uuid())
+  id String @id @default(uuid())
 
-  branchId      String
-  branch        Branch      @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
-  code          String
-  name          String
+  code String
+  name String
 
-  duration      Int
-  price         Decimal
+  duration       Int
+  bufferMinutes  Int      @default(0)
+  price          Decimal
   bookingItems BookingItem[]
 
-  isActive      Boolean     @default(true)
+  isActive Boolean @default(true)
 
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([branchId, code])
   @@index([branchId])
 }
 
 model Customer {
-  id          String         @id @default(uuid())
-  tenantId    String
-  tenant      Tenant         @relation(fields: [tenantId], references: [id])
+  id       String @id @default(uuid())
+  userId   String? @unique
+  user     User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
 
-  lineUserId  String?        @unique
-  firstName   String
-  lastName    String
-  phone       String?
-  email       String?
+  lineUserId String? @unique
+  firstName  String
+  lastName   String
+  phone      String?
+  email      String?
+  lineDisplayName String?
+  linePictureUrl  String?
+  notes           String?
 
-  status      CustomerStatus @default(ACTIVE)
+  isWalkIn Boolean        @default(false)
+  status   CustomerStatus @default(ACTIVE)
 
-  vehicles    Vehicle[]
+  vehicles Vehicle[]
   bookings Booking[]
 
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId])
 }
 
 model Vehicle {
-  id              String      @id @default(uuid())
+  id String @id @default(uuid())
 
-  customerId      String
-  customer        Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
-  brand           String
-  model           String
-  year            Int?
+  province String?
+  brand String
+  model String
+  year  Int?
 
-  licensePlate    String
-  color           String?
+  licensePlate String
+  color        String?
+  notes        String?
 
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  bookings Booking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([customerId])
   @@unique([customerId, licensePlate])
 }
 
 model Booking {
-  id            String          @id @default(uuid())
+  id String @id @default(uuid())
 
-  tenantId      String
-  tenant        Tenant          @relation(fields: [tenantId], references: [id])
+  bookingNumber String @unique
 
-  customerId    String
-  customer      Customer        @relation(fields: [customerId], references: [id])
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
 
-  branchId      String
-  branch        Branch          @relation(fields: [branchId], references: [id])
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
 
-  source        BookingSource
-  status        BookingStatus   @default(PENDING)
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
 
-  bookingDate   DateTime
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
 
-  note          String?
+  source BookingSource
+  status BookingStatus @default(PENDING)
 
-  items         BookingItem[]
+  bookingDate DateTime
 
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  confirmedAt DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
+  noShowAt    DateTime?
+
+  note String?
+
+  items BookingItem[]
+  billingItem BillingItem?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId])
   @@index([customerId])
   @@index([branchId])
   @@index([bookingDate])
+  @@index([vehicleId])
+}
+
+model BookingNumberCounter {
+  dateKey    String @id
+  lastNumber Int
 }
 
 model BookingItem {
-  id            String      @id @default(uuid())
+  id String @id @default(uuid())
 
-  bookingId     String
-  booking       Booking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
-  serviceId     String
-  service       Service     @relation(fields: [serviceId], references: [id])
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
 
-  quantity      Int         @default(1)
+  quantity Int @default(1)
 
-  unitPrice     Decimal
+  unitPrice Decimal
 
-  createdAt     DateTime    @default(now())
+  createdAt DateTime @default(now())
 
   @@index([bookingId])
   @@index([serviceId])
+}
+
+model Billing {
+  id String @id @default(uuid())
+
+  merchantId String
+  merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  periodStart DateTime
+  periodEnd   DateTime
+
+  bookingFee   Decimal @default(10)
+  vatRate      Decimal @default(0)
+  bookingCount Int     @default(0)
+  subtotal     Decimal @default(0)
+  vat          Decimal @default(0)
+  discount     Decimal @default(0)
+  total        Decimal @default(0)
+
+  status BillingStatus @default(DRAFT)
+
+  rejectReason String?
+
+  submittedAt        DateTime?
+  approvedAt         DateTime?
+  rejectedAt         DateTime?
+  paymentSubmittedAt DateTime?
+  paidAt             DateTime?
+
+  invoiceNumber String? @unique
+  receiptNumber String? @unique
+
+  items    BillingItem[]
+  payments BillingPayment[]
+  reminders BillingReminderEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([merchantId, periodStart, periodEnd])
+  @@index([merchantId])
+  @@index([status])
+}
+
+model BillingReminderEvent {
+  id String @id @default(uuid())
+
+  billingId String
+  billing   Billing @relation(fields: [billingId], references: [id], onDelete: Cascade)
+
+  reminderDate DateTime
+  dueDate      DateTime
+  createdAt    DateTime @default(now())
+
+  @@unique([billingId, reminderDate])
+  @@index([billingId])
+  @@index([reminderDate])
+}
+
+model BillingItem {
+  id String @id @default(uuid())
+
+  billingId String
+  billing   Billing @relation(fields: [billingId], references: [id], onDelete: Cascade)
+
+  bookingId String  @unique
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+
+  bookingNumber String
+  bookingDate   DateTime
+
+  fee    Decimal
+  amount Decimal
+
+  createdAt DateTime @default(now())
+
+  @@index([billingId])
+  @@index([bookingId])
+}
+
+model BillingPayment {
+  id String @id @default(uuid())
+
+  billingId String
+  billing   Billing @relation(fields: [billingId], references: [id], onDelete: Cascade)
+
+  paymentDate DateTime
+  amount      Decimal
+  bank        String
+
+  referenceNumber String?
+  note            String?
+
+  slipKey   String
+  slipUrl   String
+  fileName  String
+  fileSize  Int
+  mimeType  String
+  uploadedAt DateTime @default(now())
+
+  reviewStatus BillingPaymentReviewStatus @default(PENDING)
+  rejectReason String?
+  reviewedAt   DateTime?
+
+  submittedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([billingId])
+  @@index([reviewStatus])
+}
+
+model InvoiceNumberCounter {
+  monthKey   String @id
+  lastNumber Int
+}
+
+model ReceiptNumberCounter {
+  monthKey   String @id
+  lastNumber Int
+}
+
+model PlatformSettings {
+  id String @id @default("default")
+
+  bookingFee     Decimal @default(10)
+  vatRate        Decimal @default(0)
+  currency       String  @default("THB")
+  billingDueDays Int     @default(30)
+
+  companyName String @default("")
+  taxId       String @default("")
+  address     String @default("")
+
+  bankName      String @default("")
+  accountName   String @default("")
+  accountNumber String @default("")
+  bankBranch    String @default("")
+
+  storageProvider String @default("local")
+  bucketName      String @default("autohub-uploads")
+  storageRegion   String @default("")
+
+  timeZone   String @default("Asia/Bangkok")
+  dateFormat String @default("medium")
+  timeFormat String @default("short")
+
+  updatedAt DateTime @updatedAt
+}
+
+model JobExecution {
+  id String @id @default(uuid())
+
+  jobName    String
+  startedAt  DateTime
+  finishedAt DateTime?
+  duration   Int?
+  status     JobExecutionStatus
+  message    String?
+  attempt    Int @default(1)
+
+  createdAt DateTime @default(now())
+
+  @@index([jobName, startedAt(sort: Desc)])
+  @@index([status, startedAt(sort: Desc)])
+}
+
+model AuthUser {
+  id            String        @id
+  name          String
+  email         String
+  emailVerified Boolean       @default(false)
+  image         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  authsessions  AuthSession[]
+  authaccounts  AuthAccount[]
+
+  @@unique([email])
+  @@map("authUser")
+}
+
+model AuthSession {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  authuser  AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("authSession")
+}
+
+model AuthAccount {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  authuser              AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("authAccount")
+}
+
+model AuthVerification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("authVerification")
 }
