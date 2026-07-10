@@ -325,6 +325,17 @@ function makeBookingDate(offsetHours: number, daysAgo: number): Date {
   return date;
 }
 
+function requireAt<T>(items: readonly T[], index: number, label: string): T {
+  if (items.length === 0) {
+    throw new Error(`Seed data missing: ${label} is empty`);
+  }
+  const item = items[((index % items.length) + items.length) % items.length];
+  if (item === undefined) {
+    throw new Error(`Seed data missing: ${label}[${index}]`);
+  }
+  return item;
+}
+
 async function seedCustomersAndVehicles(prisma: PrismaClient, tenantId: string) {
   const customers: Array<{ id: string; userId: string; lineUserId: string }> = [];
 
@@ -386,7 +397,7 @@ async function seedCustomersAndVehicles(prisma: PrismaClient, tenantId: string) 
 
   let vehicleCounter = 1;
   for (let i = 0; i < customers.length; i += 1) {
-    const customer = customers[i];
+    const customer = requireAt(customers, i, "customers");
     const vehicleCount = i < 30 ? 2 : 1;
     for (let v = 0; v < vehicleCount; v += 1) {
       const plateNo = String(vehicleCounter).padStart(4, "0");
@@ -424,6 +435,7 @@ async function seedCustomersAndVehicles(prisma: PrismaClient, tenantId: string) 
 async function seedMerchantClaims(prisma: PrismaClient, tenantId: string, merchantIds: string[]) {
   const claimCount = Math.min(merchantIds.length, 8);
   for (let i = 1; i <= claimCount; i += 1) {
+    const merchantId = requireAt(merchantIds, i - 1, "merchantIds");
     const n = String(i).padStart(3, "0");
     const user = await prisma.user.upsert({
       where: { authUserId: `seed-merchant-claim-auth-${n}` },
@@ -448,7 +460,7 @@ async function seedMerchantClaims(prisma: PrismaClient, tenantId: string, mercha
 
     const existing = await prisma.merchantClaim.findFirst({
       where: {
-        merchantId: merchantIds[i - 1],
+        merchantId,
         userId: user.id,
       },
       select: { id: true },
@@ -456,7 +468,7 @@ async function seedMerchantClaims(prisma: PrismaClient, tenantId: string, mercha
     if (!existing) {
       await prisma.merchantClaim.create({
         data: {
-          merchantId: merchantIds[i - 1],
+          merchantId,
           userId: user.id,
           status: i % 3 === 0 ? "APPROVED" : i % 4 === 0 ? "REJECTED" : "PENDING",
           reviewedAt: i % 3 === 0 || i % 4 === 0 ? new Date() : null,
@@ -496,14 +508,16 @@ async function seedBookingsAndBilling(prisma: PrismaClient, tenantId: string) {
   > = ["PENDING", "CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "NO_SHOW"];
 
   for (let i = 1; i <= 200; i += 1) {
-    const branch = branches[(i - 1) % branches.length];
-    const customer = customers[(i - 1) % customers.length];
-    const vehicle = customer.vehicles[(i - 1) % customer.vehicles.length];
-    const service = branch.services[(i - 1) % branch.services.length];
-    const status = statuses[(i - 1) % statuses.length];
+    const branch = requireAt(branches, i - 1, "branches");
+    const customer = requireAt(customers, i - 1, "customers");
+    const vehicle = requireAt(customer.vehicles, i - 1, `customer[${customer.id}].vehicles`);
+    const service = requireAt(branch.services, i - 1, `branch[${branch.id}].services`);
+    const status = requireAt(statuses, i - 1, "statuses");
     const bookingDate = makeBookingDate(i % 11, i % 40);
     const bookingNumber = `SEED-${String(i).padStart(6, "0")}`;
     const unitPrice = new Prisma.Decimal(100 + ((i % 5) + 1) * 80);
+    const isConfirmed = status === "CONFIRMED" || status === "IN_PROGRESS" || status === "COMPLETED";
+    const isStarted = status === "IN_PROGRESS" || status === "COMPLETED";
 
     await prisma.booking.upsert({
       where: { bookingNumber },
@@ -515,10 +529,8 @@ async function seedBookingsAndBilling(prisma: PrismaClient, tenantId: string) {
         source: "AUTOHUB",
         status,
         bookingDate,
-        confirmedAt: ["CONFIRMED", "IN_PROGRESS", "COMPLETED"].includes(status)
-          ? bookingDate
-          : null,
-        startedAt: ["IN_PROGRESS", "COMPLETED"].includes(status) ? bookingDate : null,
+        confirmedAt: isConfirmed ? bookingDate : null,
+        startedAt: isStarted ? bookingDate : null,
         completedAt: status === "COMPLETED" ? bookingDate : null,
         cancelledAt: status === "CANCELLED" ? bookingDate : null,
         noShowAt: status === "NO_SHOW" ? bookingDate : null,
@@ -532,10 +544,8 @@ async function seedBookingsAndBilling(prisma: PrismaClient, tenantId: string) {
         source: "AUTOHUB",
         status,
         bookingDate,
-        confirmedAt: ["CONFIRMED", "IN_PROGRESS", "COMPLETED"].includes(status)
-          ? bookingDate
-          : null,
-        startedAt: ["IN_PROGRESS", "COMPLETED"].includes(status) ? bookingDate : null,
+        confirmedAt: isConfirmed ? bookingDate : null,
+        startedAt: isStarted ? bookingDate : null,
         completedAt: status === "COMPLETED" ? bookingDate : null,
         cancelledAt: status === "CANCELLED" ? bookingDate : null,
         noShowAt: status === "NO_SHOW" ? bookingDate : null,

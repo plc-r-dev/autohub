@@ -32,7 +32,7 @@ export async function approveMerchantClaim(
   try {
     await assertRequestManager();
 
-    await prisma.$transaction(async (tx) => {
+    notificationTarget = await prisma.$transaction(async (tx) => {
       const claim = await tx.merchantClaim.findUnique({
         where: { id: claimId },
         select: {
@@ -84,11 +84,12 @@ export async function approveMerchantClaim(
         select: { name: true },
       });
       if (merchant) {
-        notificationTarget = {
+        return {
           lineUserId: user?.lineUserId ?? null,
           merchantName: merchant.name,
         };
       }
+      return null;
     });
   } catch (error) {
     if (error instanceof Error && error.message === "CLAIM_NOT_PENDING") {
@@ -152,7 +153,7 @@ export async function approveMerchantOnboardingRequest(
   try {
     await assertRequestManager();
 
-    await prisma.$transaction(async (tx) => {
+    notificationTarget = await prisma.$transaction(async (tx) => {
       const request = await tx.merchantOnboardingRequest.findUnique({
         where: { id: requestId },
         select: {
@@ -218,7 +219,7 @@ export async function approveMerchantOnboardingRequest(
         where: { id: request.userId },
         select: { lineUserId: true },
       });
-      notificationTarget = {
+      return {
         lineUserId: user?.lineUserId ?? null,
         merchantName: merchant.name,
       };
