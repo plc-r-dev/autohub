@@ -52,7 +52,7 @@ export function buildBookingMessages(input: BookingTemplateInput) {
         input.subtitle,
         "",
         `Booking: ${input.bookingNumber}`,
-        `Merchant: ${input.merchantName}`,
+        `Service shop: ${input.merchantName}`,
         `Date: ${dateLabel}`,
         `Time: ${timeLabel}`,
         `Status: ${input.status}`,

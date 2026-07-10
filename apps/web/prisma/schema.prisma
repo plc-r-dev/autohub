@@ -170,7 +170,8 @@ model Merchant {
   email   String?
   website String?
 
-  status MerchantStatus @default(DRAFT)
+  status         MerchantStatus @default(DRAFT)
+  bookingEnabled Boolean        @default(false)
 
   branches Branch[]
   claims   MerchantClaim[]
@@ -182,6 +183,7 @@ model Merchant {
 
   @@unique([tenantId, code])
   @@index([tenantId])
+  @@index([bookingEnabled])
 }
 
 model MerchantClaim {

@@ -1,0 +1,28 @@
+/** AutoHub consumer design tokens */
+export const tokens = {
+  green: "#0F9B76",
+  greenDark: "#0D8666",
+  greenLight: "#ECFDF5",
+  bg: "#FAFAFA",
+  surface: "#FFFFFF",
+  text: "#0A0A0A",
+  textSecondary: "#64748B",
+  textMuted: "#94A3B8",
+  border: "#E2E8F0",
+  shadow: "0 1px 3px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.06)",
+  shadowSm: "0 1px 2px rgba(0,0,0,0.04)",
+  radius: "rounded-[20px]",
+  radiusLg: "rounded-[24px]",
+  maxWidth: "max-w-[1280px]",
+  form: {
+    background: "#FFFFFF",
+    label: "#111827",
+    labelFocused: "#0F9B76",
+    inputText: "#111827",
+    placeholder: "#9CA3AF",
+    border: "#D1D5DB",
+    borderHover: "#9CA3AF",
+    borderFocused: "#0F9B76",
+    radius: "16px",
+  },
+} as const;

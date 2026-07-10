@@ -7,6 +7,8 @@ import {
   isSlotCapacityAvailable,
 } from "@/lib/booking/engine/occupancy";
 import { getAvailableSlots } from "@/lib/booking/engine/available-slots";
+import { getMerchantBookingFactsByBranchId } from "@/lib/booking/discovery-queries";
+import { isMerchantBookable } from "@/lib/marketplace/booking-availability";
 
 export type BookingCreateInput = {
   branchId: string;
@@ -33,8 +35,16 @@ export type BookingValidationResult =
   | { ok: true; context: BookingCreateContext }
   | { ok: false; errors: string[] };
 
-async function loadBookingCatalog(branchId: string, serviceId: string) {
+const MERCHANT_NOT_JOINED_MESSAGE =
+  "This service shop has not joined AutoHub yet.";
+
+async function loadBookingCatalog(
+  branchId: string,
+  serviceId: string,
+  options?: { requireMarketplaceBookable?: boolean },
+) {
   const errors: string[] = [];
+  const requireMarketplaceBookable = options?.requireMarketplaceBookable ?? true;
 
   const branch = await prisma.branch.findUnique({
     where: { id: branchId },
@@ -69,8 +79,15 @@ async function loadBookingCatalog(branchId: string, serviceId: string) {
     return { errors, context: null };
   }
 
+  if (requireMarketplaceBookable) {
+    const marketplaceFacts = await getMerchantBookingFactsByBranchId(branchId);
+    if (!marketplaceFacts || !isMerchantBookable(marketplaceFacts)) {
+      errors.push(MERCHANT_NOT_JOINED_MESSAGE);
+    }
+  }
+
   if (branch.merchant.status !== "ACTIVE") {
-    errors.push("Merchant is not active.");
+    errors.push("Service shop is not active.");
   }
 
   const service = branch.services[0];
@@ -106,7 +123,9 @@ export async function resolveBookingCatalog(
   branchId: string,
   serviceId: string,
 ): Promise<BookingValidationResult> {
-  const { errors, context } = await loadBookingCatalog(branchId, serviceId);
+  const { errors, context } = await loadBookingCatalog(branchId, serviceId, {
+    requireMarketplaceBookable: true,
+  });
 
   if (!context) {
     return { ok: false, errors };
@@ -147,7 +166,9 @@ export async function validateBookingCreation(
     errors.push("Booking date and time must be in the future.");
   }
 
-  const catalog = await loadBookingCatalog(input.branchId, input.serviceId);
+  const catalog = await loadBookingCatalog(input.branchId, input.serviceId, {
+    requireMarketplaceBookable: !input.allowWalkIn,
+  });
 
   if (!catalog.context) {
     return { ok: false, errors: [...errors, ...catalog.errors] };

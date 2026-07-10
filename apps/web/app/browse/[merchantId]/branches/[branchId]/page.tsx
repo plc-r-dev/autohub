@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PageShell, customerNav } from "@/components/layout/page-shell";
-import { formatPrice } from "@/lib/booking/format";
+import { CustomerShell } from "@/components/customer/customer-shell";
+import { EmptyState, ServiceCard } from "@/components/customer/ui";
 import { getBrowseBranch } from "@/lib/booking/discovery-queries";
 
 type PageProps = {
@@ -10,48 +9,52 @@ type PageProps = {
 
 export default async function BrowseBranchPage({ params }: PageProps) {
   const { merchantId, branchId } = await params;
-
   const branch = await getBrowseBranch(merchantId, branchId);
+  if (!branch) notFound();
 
-  if (!branch) {
-    notFound();
-  }
+  const canBook = branch.merchant.booking.bookable;
+  const phone = branch.phone?.trim() || null;
 
   return (
-    <PageShell
-      title={branch.name}
-      description={`${branch.merchant.name} · ${branch.code}`}
-      nav={customerNav}
+    <CustomerShell
+      showNav={false}
       backHref={`/browse/${merchantId}`}
+      backLabel={branch.merchant.name}
     >
-      {branch.address ? <p className="text-sm">{branch.address}</p> : null}
-
-      {branch.services.length === 0 ? (
-        <p className="text-muted-foreground text-sm">No active services.</p>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {branch.services.map((service) => (
-            <article
-              key={service.id}
-              className="border-input flex items-start justify-between gap-4 rounded-md border p-4"
-            >
-              <div>
-                <p className="font-medium">{service.name}</p>
-                <p className="text-muted-foreground text-sm">
-                  {service.code} · {service.duration} min + {service.bufferMinutes}{" "}
-                  min buffer · {formatPrice(service.price)}
-                </p>
-              </div>
-              <Link
-                href={`/bookings/new?branchId=${branch.id}&serviceId=${service.id}`}
-                className="bg-primary text-primary-foreground hover:bg-primary/80 inline-flex h-8 items-center rounded-4xl px-3 text-sm font-medium"
-              >
-                Book
-              </Link>
-            </article>
-          ))}
+      <div className="mx-auto flex max-w-3xl flex-col gap-8">
+        <div>
+          <p className="text-[14px] font-medium text-[#0F9B76]">{branch.merchant.name}</p>
+          <h1 className="mt-1 text-[32px] font-semibold tracking-tight text-[#0A0A0A] md:text-[36px]">
+            {branch.name}
+          </h1>
+          {branch.address ? (
+            <p className="mt-3 text-[16px] text-[#64748B]">{branch.address}</p>
+          ) : null}
         </div>
-      )}
-    </PageShell>
+
+        <section className="flex flex-col gap-4">
+          {branch.services.length === 0 ? (
+            <EmptyState
+              title="No services"
+              description="This branch has no bookable services right now."
+            />
+          ) : (
+            branch.services.map((service) => (
+              <ServiceCard
+                key={service.id}
+                name={service.name}
+                duration={service.duration}
+                bufferMinutes={service.bufferMinutes}
+                price={service.price}
+                bookHref={`/bookings/new?branchId=${branch.id}&serviceId=${service.id}`}
+                showPrice={true}
+                canBook={canBook}
+                phone={phone}
+              />
+            ))
+          )}
+        </section>
+      </div>
+    </CustomerShell>
   );
 }

@@ -25,7 +25,7 @@ export async function requireDomainUser() {
   });
 
   if (!user) {
-    redirect("/onboarding");
+    redirect("/browse");
   }
 
   return { session, identity, user };

@@ -5,6 +5,21 @@ export function formatDateTime(value: Date | string) {
   }).format(new Date(value));
 }
 
+export function formatBookingDate(value: Date | string) {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(value));
+}
+
+export function formatBookingTime(value: Date | string) {
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
 export function formatPrice(value: { toString(): string } | number) {
   const amount = typeof value === "number" ? value : Number(value.toString());
   return new Intl.NumberFormat("en-US", {

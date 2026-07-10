@@ -74,6 +74,7 @@ export default async function MerchantBookingDetailPage({ params }: PageProps) {
           </div>
         ) : null}
         <BookingTimeline
+          status={booking.status}
           confirmedAt={booking.confirmedAt}
           startedAt={booking.startedAt}
           completedAt={booking.completedAt}

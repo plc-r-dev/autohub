@@ -72,6 +72,7 @@ export async function approveMerchantClaim(
         where: { id: claim.merchant.id },
         data: {
           status: "ACTIVE",
+          bookingEnabled: true,
         },
       });
 
@@ -196,6 +197,7 @@ export async function approveMerchantOnboardingRequest(
           email: request.email,
           website: request.website,
           status: "ACTIVE",
+          bookingEnabled: true,
         },
       });
 

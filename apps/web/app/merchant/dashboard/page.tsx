@@ -24,7 +24,7 @@ export default async function MerchantDashboardPage() {
   }
 
   if (!isApprovedMerchant(merchantAccess)) {
-    redirect("/dashboard");
+    redirect("/merchant/onboarding");
   }
 
   const domainUser = await prisma.user.findUnique({

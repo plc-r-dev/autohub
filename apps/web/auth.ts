@@ -31,12 +31,25 @@ export const auth = betterAuth({
   plugins: [
     genericOAuth({
       config: [
-        line({
-          providerId: "line",
-          clientId: process.env.LINE_CHANNEL_ID!,
-          clientSecret: process.env.LINE_CHANNEL_SECRET!,
-          pkce: true,
-        }),
+        {
+          ...line({
+            providerId: "line",
+            clientId: process.env.LINE_CHANNEL_ID!,
+            clientSecret: process.env.LINE_CHANNEL_SECRET!,
+            pkce: true,
+            redirectURI: `${process.env.BETTER_AUTH_URL}/api/auth/callback/line`,
+          }),
+          mapProfileToUser(profile) {
+            const lineUserId = String(profile.id ?? profile.sub ?? "");
+            return {
+              id: lineUserId,
+              name: profile.name ?? "LINE User",
+              email: profile.email ?? `${lineUserId}@line.autohub.local`,
+              image: profile.image,
+              emailVerified: false,
+            };
+          },
+        },
       ],
     }),
     customSession(async ({ user, session }) => {

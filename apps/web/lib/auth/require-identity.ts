@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { IdentityLink } from "@/lib/auth/identity";
 import { isIdentityLinked, resolveIdentityLink } from "@/lib/auth/identity";
 import { getServerSession } from "@/lib/auth/session";
+import { ensureCustomerProfile } from "@/lib/customer/ensure-customer-profile";
 import type { Session } from "@/auth";
 
 export type AuthenticatedIdentity = {
@@ -25,10 +26,23 @@ export async function requireLinkedIdentity(): Promise<AuthenticatedIdentity> {
     redirect("/login");
   }
 
-  const identity = await resolveIdentityLink(session.user.id);
+  let identity = await resolveIdentityLink(session.user.id);
 
   if (!isIdentityLinked(identity)) {
-    redirect("/onboarding");
+    try {
+      await ensureCustomerProfile({
+        authUserId: session.user.id,
+        displayName: session.user.name,
+        imageUrl: session.user.image,
+      });
+    } catch {
+      redirect("/login?error=auth");
+    }
+
+    identity = await resolveIdentityLink(session.user.id);
+    if (!isIdentityLinked(identity)) {
+      redirect("/login?error=auth");
+    }
   }
 
   return { session, identity };

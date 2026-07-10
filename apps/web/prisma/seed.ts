@@ -265,6 +265,7 @@ async function seedMerchant(prisma: PrismaClient, tenantId: string, merchant: Me
       phone: merchant.phone,
       website: merchant.website,
       status: "ACTIVE",
+      bookingEnabled: true,
     },
     create: {
       tenantId,
@@ -274,6 +275,7 @@ async function seedMerchant(prisma: PrismaClient, tenantId: string, merchant: Me
       phone: merchant.phone,
       website: merchant.website,
       status: "ACTIVE",
+      bookingEnabled: true,
     },
     select: { id: true },
   });
@@ -433,27 +435,43 @@ async function seedCustomersAndVehicles(prisma: PrismaClient, tenantId: string) 
 }
 
 async function seedMerchantClaims(prisma: PrismaClient, tenantId: string, merchantIds: string[]) {
-  const claimCount = Math.min(merchantIds.length, 8);
-  for (let i = 1; i <= claimCount; i += 1) {
-    const merchantId = requireAt(merchantIds, i - 1, "merchantIds");
-    const n = String(i).padStart(3, "0");
+  for (let i = 0; i < merchantIds.length; i += 1) {
+    const merchantId = requireAt(merchantIds, i, "merchantIds");
+    const n = String(i + 1).padStart(3, "0");
+
+    // First 10 merchants are bookable partners; next 2 joining; rest discovered-only.
+    const claimStatus =
+      i < 10 ? "APPROVED" : i < 12 ? "PENDING" : null;
+    const bookingEnabled = i < 10;
+
+    await prisma.merchant.update({
+      where: { id: merchantId },
+      data: { bookingEnabled },
+    });
+
+    if (!claimStatus) {
+      continue;
+    }
+
     const user = await prisma.user.upsert({
       where: { authUserId: `seed-merchant-claim-auth-${n}` },
       update: {
         firstName: `Claimant${n}`,
         lastName: "Seed",
-        phone: `+6691000${String(i).padStart(4, "0")}`,
+        phone: `+6691000${String(i + 1).padStart(4, "0")}`,
         email: `seed.claimant.${n}@example.com`,
         tenantId,
+        ...(claimStatus === "APPROVED" ? { merchantId } : {}),
       },
       create: {
         authUserId: `seed-merchant-claim-auth-${n}`,
         lineUserId: `seed-merchant-claim-line-${n}`,
         firstName: `Claimant${n}`,
         lastName: "Seed",
-        phone: `+6691000${String(i).padStart(4, "0")}`,
+        phone: `+6691000${String(i + 1).padStart(4, "0")}`,
         email: `seed.claimant.${n}@example.com`,
         tenantId,
+        ...(claimStatus === "APPROVED" ? { merchantId } : {}),
       },
       select: { id: true },
     });
@@ -465,13 +483,22 @@ async function seedMerchantClaims(prisma: PrismaClient, tenantId: string, mercha
       },
       select: { id: true },
     });
+
     if (!existing) {
       await prisma.merchantClaim.create({
         data: {
           merchantId,
           userId: user.id,
-          status: i % 3 === 0 ? "APPROVED" : i % 4 === 0 ? "REJECTED" : "PENDING",
-          reviewedAt: i % 3 === 0 || i % 4 === 0 ? new Date() : null,
+          status: claimStatus,
+          reviewedAt: claimStatus === "APPROVED" ? new Date() : null,
+        },
+      });
+    } else {
+      await prisma.merchantClaim.update({
+        where: { id: existing.id },
+        data: {
+          status: claimStatus,
+          reviewedAt: claimStatus === "APPROVED" ? new Date() : null,
         },
       });
     }

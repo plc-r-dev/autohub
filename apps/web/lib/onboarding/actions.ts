@@ -20,10 +20,13 @@ function formDataToObject(formData: FormData): Record<string, string> {
   return Object.fromEntries(formData.entries()) as Record<string, string>;
 }
 
-async function assertUnlinkedAuthUser(authUserId: string) {
+async function assertUnlinkedAuthUser(
+  authUserId: string,
+  linkedRedirect = "/browse",
+) {
   const identity = await resolveIdentityLink(authUserId);
   if (isIdentityLinked(identity)) {
-    redirect("/dashboard");
+    redirect(linkedRedirect);
   }
 }
 
@@ -39,6 +42,90 @@ async function assertTenantExists(tenantId: string) {
   if (!tenant) {
     throw new Error("Selected tenant is not available");
   }
+}
+
+async function resolveDomainUserIdForMerchantOnboarding(
+  authUserId: string,
+  input: {
+    tenantId: string;
+    firstName: string;
+    lastName: string;
+    phone?: string;
+    email?: string;
+  },
+): Promise<string> {
+  const identity = await resolveIdentityLink(authUserId);
+
+  if (isIdentityLinked(identity) && identity.domainUserId) {
+    const existingUser = await prisma.user.findUnique({
+      where: { id: identity.domainUserId },
+      select: { id: true },
+    });
+
+    if (!existingUser) {
+      throw new Error("USER_NOT_FOUND");
+    }
+
+    if (input.email) {
+      const existingEmailUser = await prisma.user.findUnique({
+        where: { email: input.email },
+        select: { id: true },
+      });
+      if (existingEmailUser && existingEmailUser.id !== existingUser.id) {
+        throw new Error("EMAIL_IN_USE");
+      }
+    }
+
+    await prisma.user.update({
+      where: { id: existingUser.id },
+      data: {
+        tenantId: input.tenantId,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        phone: input.phone,
+        email: input.email,
+      },
+    });
+
+    return existingUser.id;
+  }
+
+  const lineUserId = await getLineUserId(authUserId);
+
+  if (lineUserId) {
+    const existingLineUser = await prisma.user.findUnique({
+      where: { lineUserId },
+      select: { id: true },
+    });
+    if (existingLineUser) {
+      throw new Error("LINE_USER_IN_USE");
+    }
+  }
+
+  if (input.email) {
+    const existingEmailUser = await prisma.user.findUnique({
+      where: { email: input.email },
+      select: { id: true },
+    });
+    if (existingEmailUser) {
+      throw new Error("EMAIL_IN_USE");
+    }
+  }
+
+  const user = await prisma.user.create({
+    data: {
+      authUserId,
+      lineUserId,
+      tenantId: input.tenantId,
+      firstName: input.firstName,
+      lastName: input.lastName,
+      phone: input.phone,
+      email: input.email,
+    },
+    select: { id: true },
+  });
+
+  return user.id;
 }
 
 export async function completeCustomerOnboarding(
@@ -125,7 +212,7 @@ export async function completeCustomerOnboarding(
     return { error: "Unable to complete customer onboarding. Please try again." };
   }
 
-  redirect("/dashboard");
+  redirect("/browse");
 }
 
 export async function completeMerchantOnboarding(
@@ -136,8 +223,6 @@ export async function completeMerchantOnboarding(
   if (!session) {
     return { error: "You must be signed in to continue." };
   }
-
-  await assertUnlinkedAuthUser(session.user.id);
 
   const parsed = merchantOnboardingSchema.safeParse(formDataToObject(formData));
   if (!parsed.success) {
@@ -151,41 +236,18 @@ export async function completeMerchantOnboarding(
   try {
     await assertTenantExists(input.tenantId);
 
-    const lineUserId = await getLineUserId(session.user.id);
-
-    if (lineUserId) {
-      const existingLineUser = await prisma.user.findUnique({
-        where: { lineUserId },
-        select: { id: true },
-      });
-      if (existingLineUser) {
-        return { error: "This LINE account is already linked to another profile." };
-      }
-    }
-
-    if (input.email) {
-      const existingEmailUser = await prisma.user.findUnique({
-        where: { email: input.email },
-        select: { id: true },
-      });
-      if (existingEmailUser) {
-        return { error: "This email is already in use." };
-      }
-    }
+    const domainUserId = await resolveDomainUserIdForMerchantOnboarding(
+      session.user.id,
+      {
+        tenantId: input.tenantId,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        phone: input.phone,
+        email: input.email,
+      },
+    );
 
     await prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          authUserId: session.user.id,
-          lineUserId,
-          tenantId: input.tenantId,
-          firstName: input.firstName,
-          lastName: input.lastName,
-          phone: input.phone,
-          email: input.email,
-        },
-      });
-
       if (input.mode === "claim") {
         const merchant = await tx.merchant.findFirst({
           where: {
@@ -202,7 +264,7 @@ export async function completeMerchantOnboarding(
         const existingClaim = await tx.merchantClaim.findFirst({
           where: {
             merchantId: input.merchantId,
-            userId: user.id,
+            userId: domainUserId,
             status: "PENDING",
           },
           select: { id: true },
@@ -215,7 +277,7 @@ export async function completeMerchantOnboarding(
         await tx.merchantClaim.create({
           data: {
             merchantId: input.merchantId,
-            userId: user.id,
+            userId: domainUserId,
           },
         });
       } else {
@@ -233,7 +295,7 @@ export async function completeMerchantOnboarding(
 
         await tx.merchantOnboardingRequest.create({
           data: {
-            userId: user.id,
+            userId: domainUserId,
             tenantId: input.tenantId,
             businessName: input.businessName,
             businessCode: input.businessCode,
@@ -256,6 +318,12 @@ export async function completeMerchantOnboarding(
       if (error.message === "BUSINESS_CODE_EXISTS") {
         return { error: "This business code is already taken in the selected tenant." };
       }
+      if (error.message === "EMAIL_IN_USE") {
+        return { error: "This email is already in use." };
+      }
+      if (error.message === "LINE_USER_IN_USE") {
+        return { error: "This LINE account is already linked to another profile." };
+      }
     }
 
     return { error: "Unable to complete merchant onboarding. Please try again." };
@@ -269,8 +337,6 @@ export async function searchMerchantsAction(tenantId: string, query: string) {
   if (!session) {
     return [];
   }
-
-  await assertUnlinkedAuthUser(session.user.id);
 
   if (!tenantId) {
     return [];

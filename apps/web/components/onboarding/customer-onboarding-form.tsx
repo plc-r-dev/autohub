@@ -1,12 +1,12 @@
 "use client";
 
 import { useActionState } from "react";
-import { Button } from "@workspace/ui/components/button";
 import {
-  FormField,
-  inputClassName,
-  selectClassName,
-} from "@/components/onboarding/form-field";
+  Button,
+  CustomerFormField,
+  SelectField,
+  TextField,
+} from "@/components/customer/ui";
 import {
   completeCustomerOnboarding,
   type OnboardingActionState,
@@ -41,28 +41,21 @@ export function CustomerOnboardingForm({
   return (
     <form action={formAction} className="flex flex-col gap-4">
       {state.error ? (
-        <p className="text-destructive text-sm">{state.error}</p>
+        <p className="rounded-[16px] bg-red-50 px-4 py-3 text-[14px] text-red-600">{state.error}</p>
       ) : null}
 
       {tenants.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
-          No tenants are available yet. Contact an administrator before
-          continuing.
+        <p className="text-[14px] text-[#64748B]">
+          No tenants are available yet. Contact an administrator before continuing.
         </p>
       ) : (
         <>
-          <FormField
+          <CustomerFormField
             id="tenantId"
             label="Tenant"
             error={state.fieldErrors?.tenantId?.[0]}
           >
-            <select
-              id="tenantId"
-              name="tenantId"
-              required
-              className={selectClassName}
-              defaultValue=""
-            >
+            <SelectField id="tenantId" name="tenantId" required defaultValue="">
               <option value="" disabled>
                 Select a tenant
               </option>
@@ -71,63 +64,52 @@ export function CustomerOnboardingForm({
                   {tenant.name} ({tenant.code})
                 </option>
               ))}
-            </select>
-          </FormField>
+            </SelectField>
+          </CustomerFormField>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <FormField
+            <CustomerFormField
               id="firstName"
               label="First name"
               error={state.fieldErrors?.firstName?.[0]}
             >
-              <input
+              <TextField
                 id="firstName"
                 name="firstName"
                 required
-                className={inputClassName}
                 defaultValue={defaultFirstName}
               />
-            </FormField>
+            </CustomerFormField>
 
-            <FormField
+            <CustomerFormField
               id="lastName"
               label="Last name"
               error={state.fieldErrors?.lastName?.[0]}
             >
-              <input
+              <TextField
                 id="lastName"
                 name="lastName"
                 required
-                className={inputClassName}
                 defaultValue={defaultLastName}
               />
-            </FormField>
+            </CustomerFormField>
           </div>
 
-          <FormField
-            id="phone"
-            label="Phone"
-            error={state.fieldErrors?.phone?.[0]}
-          >
-            <input id="phone" name="phone" className={inputClassName} />
-          </FormField>
+          <CustomerFormField id="phone" label="Phone" error={state.fieldErrors?.phone?.[0]}>
+            <TextField id="phone" name="phone" />
+          </CustomerFormField>
 
-          <FormField
-            id="email"
-            label="Email"
-            error={state.fieldErrors?.email?.[0]}
-          >
-            <input
+          <CustomerFormField id="email" label="Email" error={state.fieldErrors?.email?.[0]}>
+            <TextField
               id="email"
               name="email"
               type="email"
-              className={inputClassName}
               defaultValue={defaultEmail}
             />
-          </FormField>
+          </CustomerFormField>
 
-          <Button type="submit" disabled={isPending}>
-            {isPending ? "Creating profile..." : "Complete onboarding"}
+          <Button type="submit" disabled={isPending} className="w-full">
+            {isPending ? "Creating profile…" : "Complete onboarding"}
           </Button>
         </>
       )}

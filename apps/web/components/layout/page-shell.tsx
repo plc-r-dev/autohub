@@ -75,7 +75,8 @@ export const merchantNav: NavItem[] = [
 ];
 
 export const customerNav: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/browse", label: "Browse" },
-  { href: "/bookings", label: "My bookings" },
+  { href: "/browse", label: "Home" },
+  { href: "/bookings", label: "Bookings" },
+  { href: "/profile", label: "Profile" },
+  { href: "/more", label: "More" },
 ];
