@@ -1,16 +1,15 @@
+import { ArrowRight, Clock } from "lucide-react";
 import { ButtonLink } from "@/components/customer/ui/button";
 import { ServiceShopImage } from "@/components/customer/ui/service-shop-image";
 import { formatPrice } from "@/lib/booking/format";
+import { cn } from "@workspace/ui/lib/utils";
 
 type ServiceCardProps = {
   name: string;
   duration: number;
-  bufferMinutes?: number;
   price: { toString(): string };
   bookHref: string;
-  showPrice?: boolean;
   canBook?: boolean;
-  description?: string;
   /** Service image, sourced via ServiceShopImage. Omit to render without an image. */
   serviceStoreId?: string;
   imageSeed?: string;
@@ -18,66 +17,87 @@ type ServiceCardProps = {
 };
 
 /**
- * Service-only card: name, description, duration, price, and the Book Now
- * CTA. Deliberately carries no store-level metadata (phone, address, etc.)
- * — that information belongs on the page header, not this card.
+ * The card is not a link — "Book Now" (ButtonLink, system primary color) is
+ * the one explicit action, leaving room for other card-level actions
+ * (favorite, share, compare) later without them fighting a whole-card tap
+ * target. Row layout on mobile (booking-app menu feel), column layout on
+ * desktop (catalog tile feel) via flex-direction, not two components.
  */
 export function ServiceCard({
   name,
   duration,
-  bufferMinutes,
   price,
   bookHref,
-  showPrice = true,
   canBook = true,
-  description,
   serviceStoreId,
   imageSeed,
   imageSlot,
 }: ServiceCardProps) {
   return (
-    <article className="overflow-hidden rounded-[20px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-      {serviceStoreId ? (
-        <div className="relative h-40 w-full overflow-hidden">
+    <article
+      className={cn(
+        "group relative flex flex-row overflow-hidden rounded-[20px] bg-white ring-1 ring-black/[0.04] transition-all duration-200 md:flex-col",
+        canBook
+          ? "hover:-translate-y-0.5 hover:shadow-[0_16px_28px_rgba(0,0,0,0.09)] hover:ring-[#0F9B76]/30"
+          : "opacity-60",
+      )}
+    >
+      <div className="relative aspect-square w-28 shrink-0 overflow-hidden sm:w-32 md:aspect-[4/3] md:w-full">
+        {serviceStoreId ? (
           <ServiceShopImage
             serviceStoreId={serviceStoreId}
             serviceStoreName={imageSeed ?? name}
             slot={imageSlot}
             className="h-full"
-            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            imageClassName="transition-transform duration-300 md:group-hover:scale-105"
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 45vw, 112px"
           />
-        </div>
-      ) : (
-        <div className="h-1 bg-gradient-to-r from-[#0F9B76] to-[#5EEAD4]" />
-      )}
-      <div className="p-6">
-        <h3 className="text-[18px] font-semibold tracking-tight text-[#0A0A0A]">{name}</h3>
-        {description ? (
-          <p className="mt-1 line-clamp-2 text-[13px] text-[#64748B]">{description}</p>
-        ) : null}
-        <div className="mt-4 flex flex-wrap gap-2">
-          <span className="rounded-full bg-[#F8FAFC] px-3 py-1.5 text-[13px] font-medium text-[#64748B]">
-            {duration} min
-          </span>
-          {bufferMinutes != null ? (
-            <span className="rounded-full bg-[#F8FAFC] px-3 py-1.5 text-[13px] font-medium text-[#64748B]">
-              +{bufferMinutes} min buffer
-            </span>
-          ) : null}
-          {showPrice ? (
-            <span className="rounded-full bg-[#ECFDF5] px-3 py-1.5 text-[13px] font-semibold text-[#0F9B76]">
+        ) : (
+          <div className="h-full bg-gradient-to-br from-[#0F9B76] to-[#0A6B52]" />
+        )}
+      </div>
+
+      <div className="flex min-w-0 flex-1 items-center justify-between gap-3 p-4 md:block md:p-5">
+        <div className="min-w-0">
+          <h3 className="truncate text-[15px] font-semibold tracking-tight text-[#0A0A0A] md:text-[17px]">
+            {name}
+          </h3>
+          <div className="mt-1.5 flex items-center gap-1.5 text-[13px] text-[#64748B]">
+            <Clock className="size-3.5 shrink-0" />
+            <span>{duration} min</span>
+            <span className="text-[#CBD5E1]">·</span>
+            <span className="text-[15px] font-bold text-[#0F9B76] md:text-[18px]">
               {formatPrice(price)}
             </span>
+          </div>
+
+          {canBook ? (
+            <ButtonLink
+              href={bookHref}
+              variant="primary"
+              size="md"
+              aria-label={`Book ${name}`}
+              className="mt-4 hidden w-full md:flex"
+            >
+              Book Now
+              <ArrowRight className="size-4" />
+            </ButtonLink>
           ) : null}
         </div>
-      </div>
-      {canBook ? (
-        <div className="border-t border-[#F1F5F9] px-6 py-4">
-          <ButtonLink href={bookHref} size="md" className="w-full">
-            Book Now
-          </ButtonLink>
+
+        <div className="shrink-0 md:hidden">
+          {canBook ? (
+            <ButtonLink href={bookHref} variant="primary" size="sm" aria-label={`Book ${name}`}>
+              Book
+              <ArrowRight className="size-3.5" />
+            </ButtonLink>
+          ) : (
+            <span className="text-[11px] font-medium whitespace-nowrap text-[#94A3B8]">
+              Unavailable
+            </span>
+          )}
         </div>
-      ) : null}
+      </div>
     </article>
   );
 }

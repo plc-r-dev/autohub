@@ -15,7 +15,6 @@ import { ServiceShopImage } from "@/components/customer/ui/service-shop-image";
 import { ImagePreviewLightbox } from "@/components/customer/ui/image-preview-lightbox";
 import { getServiceShopGalleryImages, getServiceShopImage } from "@/lib/media/service-shop-images";
 import { buildBookingWizardHref } from "@/lib/booking/wizard";
-import { getServiceDisplayDescription } from "@/lib/booking/customer-display";
 import type { HoursRow, StoreOpenStatus } from "@/lib/booking/store-hours-display";
 import { cn } from "@workspace/ui/lib/utils";
 
@@ -77,156 +76,201 @@ export function ServiceStoreDetailView({
     category,
     items: services.filter((service) => service.category === category),
   }));
+  const showGroupLabels = grouped.length > 1;
 
   return (
-    <div className="flex flex-col gap-5 pb-28">
+    <div className="flex flex-col gap-6 pb-28 lg:pb-10">
+      {/* Identity banner — full width, compact on mobile, roomier on desktop */}
       <section className="relative overflow-hidden rounded-[20px] bg-[#062C21] shadow-lg">
-        <div className="relative h-[200px]">
+        <div className="relative h-[180px] md:h-[240px]">
           <button type="button" onClick={() => setPreviewOpen(true)} className="absolute inset-0">
             <ServiceShopImage
               serviceStoreId={serviceStoreId}
               serviceStoreName={name}
               className="h-full"
-              sizes="420px"
+              sizes="(min-width: 1024px) 1280px, 100vw"
               priority
             />
           </button>
-          <div className="absolute inset-0 bg-gradient-to-t from-[#062C21] via-transparent to-transparent" />
-          <div className="absolute top-4 left-4 flex size-14 items-center justify-center overflow-hidden rounded-full border-2 border-white/30 bg-white/10 backdrop-blur-sm">
-            <ServiceShopImage
-              serviceStoreId={serviceStoreId}
-              serviceStoreName={name}
-              slot={1}
-              className="size-full rounded-full"
-              sizes="56px"
-            />
-          </div>
-        </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#062C21] via-[#062C21]/10 to-transparent" />
 
-        <div className="relative -mt-8 px-4 pb-4">
-          <div className="rounded-[18px] bg-white p-4 shadow-md">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#FFF7ED] px-2.5 py-1 text-[12px] font-semibold text-[#9A3412]">
-                <Star className="size-3.5 fill-amber-400 text-amber-400" />
-                {rating}
-              </span>
-              <span className="text-[12px] text-[#64748B]">({reviewCount} reviews)</span>
-              <span
-                className={cn(
-                  "rounded-full px-2.5 py-1 text-[11px] font-semibold text-white",
-                  openStatus.isOpen ? "bg-[#0F9B76]" : "bg-[#64748B]",
-                )}
-              >
-                {openStatus.label}
-              </span>
+          <div className="absolute right-0 bottom-0 left-0 flex flex-wrap items-end justify-between gap-3 p-4 md:p-6">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-semibold text-[#9A3412]">
+                  <Star className="size-3.5 fill-amber-400 text-amber-400" />
+                  {rating}
+                </span>
+                <span className="text-[12px] text-white/70">({reviewCount})</span>
+                <span
+                  className={cn(
+                    "rounded-full px-2.5 py-1 text-[11px] font-semibold text-white",
+                    openStatus.isOpen ? "bg-[#0F9B76]" : "bg-white/20",
+                  )}
+                >
+                  {openStatus.label}
+                </span>
+              </div>
+              <h1 className="mt-2 truncate text-[22px] font-semibold tracking-tight text-white md:text-[30px]">
+                {name}
+              </h1>
+              {distance ? (
+                <p className="mt-0.5 text-[13px] text-white/70">{distance} away</p>
+              ) : null}
             </div>
-            <h1 className="mt-3 text-[22px] font-semibold tracking-tight text-[#0A0A0A]">{name}</h1>
-            {distance ? <p className="mt-1 text-[13px] text-[#64748B]">{distance} away</p> : null}
-            {address ? (
-              <p className="mt-2 flex items-start gap-2 text-[13px] text-[#64748B]">
-                <MapPin className="mt-0.5 size-4 shrink-0" />
-                {address}
-              </p>
-            ) : null}
 
-            <div className="mt-4 grid grid-cols-3 gap-2">
+            <div className="hidden shrink-0 gap-2 md:flex">
+              {canBook ? (
+                <ButtonLink href={primaryBookHref} variant="primary" size="sm">
+                  Book Now
+                </ButtonLink>
+              ) : null}
               {phone ? (
                 <a
                   href={`tel:${phone}`}
-                  className="flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-[12px] bg-[#F8FAFC] text-[11px] font-semibold text-[#0A0A0A]"
+                  className="flex h-10 items-center gap-2 rounded-full bg-white/95 px-4 text-[13px] font-semibold text-[#0A0A0A] hover:bg-white"
                 >
                   <Phone className="size-4" />
                   Call
                 </a>
               ) : null}
               <a
-                href={`https://line.me/R/`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-[12px] bg-[#ECFDF5] text-[11px] font-semibold text-[#047857]"
-              >
-                <MessageCircle className="size-4" />
-                LINE
-              </a>
-              <a
                 href={`https://maps.google.com/?q=${encodeURIComponent(mapsQuery)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-[12px] bg-[#F8FAFC] text-[11px] font-semibold text-[#0A0A0A]"
+                className="flex h-10 items-center gap-2 rounded-full bg-white/95 px-4 text-[13px] font-semibold text-[#0A0A0A] hover:bg-white"
               >
                 <Navigation className="size-4" />
-                Maps
+                Directions
               </a>
             </div>
           </div>
         </div>
-      </section>
 
-      <section className="rounded-[18px] bg-white p-4 shadow-sm">
-        <h2 className="text-[15px] font-semibold text-[#0A0A0A]">Opening hours</h2>
-        <ul className="mt-3 space-y-2">
-          {hours.map((row) => (
-            <li
-              key={row.day}
-              className={cn(
-                "flex justify-between text-[13px]",
-                row.isToday ? "font-semibold text-[#0A0A0A]" : "text-[#64748B]",
-              )}
+        {/* Mobile-only quick actions row */}
+        <div className="grid grid-cols-3 gap-2 bg-white p-3 md:hidden">
+          {phone ? (
+            <a
+              href={`tel:${phone}`}
+              className="flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-[12px] bg-[#F8FAFC] text-[11px] font-semibold text-[#0A0A0A]"
             >
-              <span>{row.day}</span>
-              <span>{row.hours}</span>
-            </li>
-          ))}
-        </ul>
+              <Phone className="size-4" />
+              Call
+            </a>
+          ) : null}
+          <a
+            href="https://line.me/R/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-[12px] bg-[#ECFDF5] text-[11px] font-semibold text-[#047857]"
+          >
+            <MessageCircle className="size-4" />
+            LINE
+          </a>
+          <a
+            href={`https://maps.google.com/?q=${encodeURIComponent(mapsQuery)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-[12px] bg-[#F8FAFC] text-[11px] font-semibold text-[#0A0A0A]"
+          >
+            <Navigation className="size-4" />
+            Maps
+          </a>
+        </div>
       </section>
 
-      <section className="rounded-[18px] bg-white p-4 shadow-sm">
-        <h2 className="text-[15px] font-semibold text-[#0A0A0A]">About</h2>
-        <p className="mt-2 text-[14px] leading-relaxed text-[#64748B]">{description}</p>
-      </section>
-
-      <ServiceStoreGallery serviceStoreId={serviceStoreId} serviceStoreName={name} />
-
-      <section className="space-y-4">
-        <h2 className="text-[15px] font-semibold text-[#0A0A0A]">Services</h2>
-        {grouped.map((group) => (
-          <div key={group.category} className="space-y-3">
-            <p className="text-[12px] font-semibold tracking-wide text-[#94A3B8] uppercase">
-              {group.category}
-            </p>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {group.items.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  name={service.name}
-                  duration={service.duration}
-                  price={service.price}
-                  bookHref={buildBookingWizardHref({
-                    serviceStoreId,
-                    serviceId: service.id,
-                    branchId: service.branchId,
-                    step: "vehicle",
-                  })}
-                  showPrice={true}
-                  canBook={canBook}
-                  description={getServiceDisplayDescription(service.name, description)}
-                  serviceStoreId={serviceStoreId}
-                  imageSeed={service.name}
-                  imageSlot={service.name.length % 6}
-                />
-              ))}
-            </div>
+      {/* Services (primary) + secondary info sidebar */}
+      <div className="lg:grid lg:grid-cols-[1fr_300px] lg:items-start lg:gap-8">
+        <section className="order-1 flex flex-col gap-4">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-[19px] font-semibold tracking-tight text-[#0A0A0A] md:text-[22px]">
+              Services
+            </h2>
+            <span className="text-[13px] text-[#94A3B8]">
+              {services.length} {services.length === 1 ? "option" : "options"}
+            </span>
           </div>
-        ))}
-      </section>
+
+          {grouped.map((group) => (
+            <div key={group.category} className="flex flex-col gap-3">
+              {showGroupLabels ? (
+                <p className="text-[12px] font-semibold tracking-wide text-[#94A3B8] uppercase">
+                  {group.category}
+                </p>
+              ) : null}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {group.items.map((service) => (
+                  <ServiceCard
+                    key={service.id}
+                    name={service.name}
+                    duration={service.duration}
+                    price={service.price}
+                    bookHref={buildBookingWizardHref({
+                      serviceStoreId,
+                      serviceId: service.id,
+                      branchId: service.branchId,
+                      step: "vehicle",
+                    })}
+                    canBook={canBook}
+                    serviceStoreId={serviceStoreId}
+                    imageSeed={service.name}
+                    imageSlot={service.name.length % 6}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
+
+        <aside className="order-2 mt-8 flex flex-col gap-4 lg:mt-0 lg:sticky lg:top-6">
+          {address ? (
+            <div className="rounded-[16px] bg-white p-4 shadow-sm">
+              <p className="flex items-start gap-2 text-[13px] text-[#64748B]">
+                <MapPin className="mt-0.5 size-4 shrink-0" />
+                {address}
+              </p>
+            </div>
+          ) : null}
+
+          <div className="rounded-[16px] bg-white p-4 shadow-sm">
+            <h2 className="text-[14px] font-semibold text-[#0A0A0A]">Opening hours</h2>
+            <ul className="mt-2.5 space-y-1.5">
+              {hours.map((row) => (
+                <li
+                  key={row.day}
+                  className={cn(
+                    "flex justify-between text-[13px]",
+                    row.isToday ? "font-semibold text-[#0A0A0A]" : "text-[#64748B]",
+                  )}
+                >
+                  <span>{row.day}</span>
+                  <span>{row.hours}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {description ? (
+            <div className="rounded-[16px] bg-white p-4 shadow-sm">
+              <h2 className="text-[14px] font-semibold text-[#0A0A0A]">About</h2>
+              <p className="mt-2 line-clamp-4 text-[13px] leading-relaxed text-[#64748B]">
+                {description}
+              </p>
+            </div>
+          ) : null}
+
+          <div className="rounded-[16px] bg-white p-4 shadow-sm">
+            <h2 className="mb-3 text-[14px] font-semibold text-[#0A0A0A]">Photos</h2>
+            <ServiceStoreGallery serviceStoreId={serviceStoreId} serviceStoreName={name} />
+          </div>
+        </aside>
+      </div>
 
       {canBook ? (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#E8EDF2] bg-white/95 px-4 py-3 backdrop-blur-md">
-          <div className="mx-auto w-full max-w-[420px]">
-            <ButtonLink href={primaryBookHref} className="w-full" variant="dark">
-              Book Now
-            </ButtonLink>
-          </div>
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#E8EDF2] bg-white/95 px-4 py-3 backdrop-blur-md lg:hidden">
+          <ButtonLink href={primaryBookHref} className="w-full" variant="primary" size="lg">
+            Book Now
+          </ButtonLink>
         </div>
       ) : null}
 

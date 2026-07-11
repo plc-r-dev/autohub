@@ -31,7 +31,7 @@ export default async function BrowseBranchPage({ params }: PageProps) {
           ) : null}
         </div>
 
-        <section className="flex flex-col gap-4">
+        <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {branch.services.length === 0 ? (
             <EmptyState
               title="No services"
@@ -43,7 +43,6 @@ export default async function BrowseBranchPage({ params }: PageProps) {
                 key={service.id}
                 name={service.name}
                 duration={service.duration}
-                bufferMinutes={service.bufferMinutes}
                 price={service.price}
                 bookHref={buildBookingWizardHref({
                   serviceStoreId,
@@ -51,8 +50,10 @@ export default async function BrowseBranchPage({ params }: PageProps) {
                   serviceId: service.id,
                   step: "vehicle",
                 })}
-                showPrice={true}
                 canBook={canBook}
+                serviceStoreId={serviceStoreId}
+                imageSeed={service.name}
+                imageSlot={service.name.length % 6}
               />
             ))
           )}

@@ -1,7 +1,7 @@
 /** Curated car-care photos — one unique image per service shop via stable hashing. */
 const CAR_CARE_IMAGES = [
   {
-    src: "https://images.unsplash.com/photo-1520340356584-efb89bbffa6a?auto=format&fit=crop&w=1200&q=80",
+    src: "https://images.unsplash.com/photo-1553260168-69b041873e65?auto=format&fit=crop&w=1200&q=80",
     alt: "Car being washed at a service bay",
   },
   {
@@ -29,7 +29,7 @@ const CAR_CARE_IMAGES = [
     alt: "Luxury car wash and detail",
   },
   {
-    src: "https://images.unsplash.com/photo-1607860108750-9775d4b3a0eb?auto=format&fit=crop&w=1200&q=80",
+    src: "https://images.unsplash.com/photo-1601362840469-51e4d8d58785?auto=format&fit=crop&w=1200&q=80",
     alt: "Exterior wash at a car care shop",
   },
   {
