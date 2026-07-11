@@ -1,4 +1,5 @@
 import { ButtonLink, Card } from "@/components/customer/ui";
+import { BookingStatusBadge } from "@/components/customer/booking-status-badge";
 import { formatBookingDate, formatBookingTime, formatPrice } from "@/lib/booking/format";
 import { formatVehicleSelectLabel } from "@/lib/customer/vehicle-format";
 import { CheckCircle2 } from "lucide-react";
@@ -11,7 +12,8 @@ export type BookingSuccessService = {
 
 type BookingSuccessPanelProps = {
   bookingNumber: string;
-  merchantName: string;
+  bookingStatus?: string;
+  serviceStoreName: string;
   branchName?: string;
   bookingDate: Date | string;
   vehicle: {
@@ -35,7 +37,8 @@ function formatSummaryValue(
 
 export function BookingSuccessPanel({
   bookingNumber,
-  merchantName,
+  bookingStatus = "PENDING",
+  serviceStoreName,
   branchName,
   bookingDate,
   vehicle,
@@ -60,16 +63,19 @@ export function BookingSuccessPanel({
         <p className="mt-10 text-[11px] font-semibold tracking-widest text-[#94A3B8] uppercase">
           Booking number
         </p>
-        <p className="mt-1 text-[32px] font-semibold tracking-tight text-[#0A0A0A]">
+        <p className="mt-1 text-[28px] font-semibold tracking-tight text-[#0A0A0A]">
           {bookingNumber}
         </p>
+        <div className="mt-4 flex justify-center">
+          <BookingStatusBadge status={bookingStatus} />
+        </div>
 
         <div className="mt-8 space-y-6 rounded-[20px] bg-[#F8FAFC] p-6 text-left">
           <div>
             <p className="text-[11px] font-semibold tracking-widest text-[#94A3B8] uppercase">
               Service shop
             </p>
-            <p className="mt-2 text-[18px] font-semibold text-[#0A0A0A]">{merchantName}</p>
+            <p className="mt-2 text-[18px] font-semibold text-[#0A0A0A]">{serviceStoreName}</p>
             {branchName ? (
               <p className="mt-1 text-[14px] text-[#64748B]">{branchName}</p>
             ) : null}
@@ -127,9 +133,9 @@ export function BookingSuccessPanel({
       </div>
 
       <div className="flex flex-col gap-3 border-t border-[#F1F5F9] p-6">
-        <ButtonLink href="/bookings">View booking</ButtonLink>
-        <ButtonLink href="/browse" variant="secondary">
-          Back home
+        <ButtonLink href="/bookings">View My Bookings</ButtonLink>
+        <ButtonLink href="/browse?nearby=1" variant="secondary">
+          Back to Nearby Stores
         </ButtonLink>
       </div>
     </Card>

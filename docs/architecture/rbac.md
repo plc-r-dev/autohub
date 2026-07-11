@@ -2,7 +2,7 @@
 
 RBAC is **planned but not implemented** in AutoHub. The database schema defines role structures, but no application code assigns roles, checks permissions, or enforces access based on roles.
 
-> **Important:** Do not assume RBAC is active. Current route protection uses authentication, identity linking, and merchant access state only.
+> **Important:** Do not assume RBAC is active. Current route protection uses authentication, identity linking, and serviceStore access state only.
 
 ## Current state
 
@@ -23,7 +23,7 @@ A named role within a tenant.
 | Field | Notes |
 |-------|-------|
 | `id` | UUID |
-| `code` | Unique per tenant (e.g. `admin`, `merchant_operator`) |
+| `code` | Unique per tenant (e.g. `admin`, `serviceStore_operator`) |
 | `name` | Display name |
 | `tenantId` | FK → `Tenant` |
 
@@ -46,7 +46,7 @@ Join table linking domain `User` to `Role`.
 
 Composite primary key: `[userId, roleId]`
 
-**Current implementation:** Table exists. No records are created by onboarding, merchant approval, or any other application flow.
+**Current implementation:** Table exists. No records are created by onboarding, serviceStore approval, or any other application flow.
 
 ## Planned: Permission model
 
@@ -65,15 +65,15 @@ flowchart TD
 
 | Concept | Example |
 |---------|---------|
-| Resource | `merchant`, `booking`, `branch`, `service` |
+| Resource | `serviceStore`, `booking`, `branch`, `service` |
 | Action | `read`, `create`, `update`, `delete`, `approve` |
-| Scope | Tenant-level or merchant-level |
+| Scope | Tenant-level or serviceStore-level |
 
 Example permission codes:
 
-- `merchant:read`
+- `serviceStore:read`
 - `booking:create`
-- `merchant_request:approve`
+- `serviceStore_request:approve`
 
 ## Planned access control flow (future)
 
@@ -108,20 +108,20 @@ Current route protection in `proxy.ts`:
 |-------|-----------|
 | Authenticated | Better Auth session |
 | Identity linked | `resolveIdentityLink()` |
-| Merchant approved | `getMerchantAccessState()` |
-| Admin merchant requests | `requireLinkedIdentity()` only |
+| ServiceStore approved | `getServiceStoreAccessState()` |
+| Admin serviceStore requests | `requireLinkedIdentity()` only |
 
-The admin merchant request page (`/admin/merchant-requests`) is accessible to **any linked user**. This is a known gap until RBAC is implemented.
+The admin serviceStore request page (`/admin/service-store-requests`) is accessible to **any linked user**. This is a known gap until RBAC is implemented.
 
 ## Planned integration points (future)
 
 | Area | Planned RBAC usage |
 |------|-------------------|
-| Admin merchant approval | Restrict to `merchant_request:approve` |
-| Merchant dashboard | Require `merchant:read` or merchant operator role |
+| Admin serviceStore approval | Restrict to `serviceStore_request:approve` |
+| ServiceStore dashboard | Require `serviceStore:read` or serviceStore operator role |
 | Booking management | `booking:*` permissions |
 | Tenant administration | Tenant admin role |
-| Branch/service management | Merchant-scoped permissions |
+| Branch/service management | ServiceStore-scoped permissions |
 
 ## Design principles (planned)
 
@@ -129,14 +129,14 @@ The admin merchant request page (`/admin/merchant-requests`) is accessible to **
 2. **Permissions are granular** — Resource + action, not role names in application code
 3. **Separation from authentication** — RBAC runs after identity resolution
 4. **Separation from onboarding** — Roles assigned explicitly, not during onboarding
-5. **No automatic role assignment** — Merchant approval links `User` to `Merchant` but does not assign roles (current and planned initial behavior)
+5. **No automatic role assignment** — ServiceStore approval links `User` to `ServiceStore` but does not assign roles (current and planned initial behavior)
 
 ## What is NOT implemented
 
 - `Permission` model
 - `RolePermission` join table
 - `hasPermission()` or equivalent helper
-- Role assignment during onboarding or merchant approval
+- Role assignment during onboarding or serviceStore approval
 - Role-based route guards
 - Role-based server action guards
 - Admin UI for role management
@@ -146,6 +146,6 @@ The admin merchant request page (`/admin/merchant-requests`) is accessible to **
 
 - [authentication.md](./authentication.md) — Current auth (no RBAC)
 - [onboarding.md](./onboarding.md) — Why onboarding does not assign roles
-- [merchant.md](./merchant.md) — Admin page lacks RBAC gate
+- [serviceStore.md](./serviceStore.md) — Admin page lacks RBAC gate
 - [tenant.md](./tenant.md) — Tenant-scoped roles
 - [roadmap.md](./roadmap.md) — RBAC on roadmap

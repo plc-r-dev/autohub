@@ -19,11 +19,21 @@ enum TenantStatus {
   INACTIVE
 }
 
-enum MerchantStatus {
+enum ServiceStoreStatus {
   DRAFT
   PENDING_VERIFICATION
+  ONBOARDING
   ACTIVE
+  READY_FOR_BOOKING
   SUSPENDED
+}
+
+enum ServiceStoreMemberRole {
+  OWNER
+  MANAGER
+  STAFF
+  FINANCE
+  VIEWER
 }
 
 enum ClaimStatus {
@@ -89,12 +99,12 @@ model Tenant {
   name   String
   status TenantStatus @default(ACTIVE)
 
-  users                      User[]
-  roles                      Role[]
-  merchants                  Merchant[]
-  customers                  Customer[]
-  bookings                   Booking[]
-  merchantOnboardingRequests MerchantOnboardingRequest[]
+  users                         User[]
+  roles                         Role[]
+  serviceStores                 ServiceStore[]
+  customers                     Customer[]
+  bookings                      Booking[]
+  serviceStoreOnboardingRequests ServiceStoreOnboardingRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -113,19 +123,20 @@ model User {
   tenantId String
   tenant   Tenant @relation(fields: [tenantId], references: [id])
 
-  merchantId String?
-  merchant   Merchant? @relation(fields: [merchantId], references: [id])
+  serviceStoreId String?
+  serviceStore   ServiceStore? @relation(fields: [serviceStoreId], references: [id])
 
-  userRoles                  UserRole[]
-  merchantClaims             MerchantClaim[]
-  merchantOnboardingRequests MerchantOnboardingRequest[]
-  customer                   Customer?
+  userRoles                       UserRole[]
+  serviceStoreMembers             ServiceStoreMember[]
+  serviceStoreClaims              ServiceStoreClaim[]
+  serviceStoreOnboardingRequests  ServiceStoreOnboardingRequest[]
+  customer                        Customer?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([tenantId])
-  @@index([merchantId])
+  @@index([serviceStoreId])
 }
 
 model Role {
@@ -157,7 +168,7 @@ model UserRole {
   @@index([roleId])
 }
 
-model Merchant {
+model ServiceStore {
   id       String @id @default(uuid())
   tenantId String
   tenant   Tenant @relation(fields: [tenantId], references: [id])
@@ -170,11 +181,20 @@ model Merchant {
   email   String?
   website String?
 
-  status         MerchantStatus @default(DRAFT)
-  bookingEnabled Boolean        @default(false)
+  googlePlaceId     String?
+  businessCategory  String?
+
+  payoutBankName      String?
+  payoutAccountName   String?
+  payoutAccountNumber String?
+  payoutBankBranch    String?
+
+  status         ServiceStoreStatus @default(DRAFT)
+  bookingEnabled Boolean            @default(false)
 
   branches Branch[]
-  claims   MerchantClaim[]
+  claims   ServiceStoreClaim[]
+  members  ServiceStoreMember[]
   users    User[]
   billings Billing[]
 
@@ -186,25 +206,55 @@ model Merchant {
   @@index([bookingEnabled])
 }
 
-model MerchantClaim {
+model ServiceStoreMember {
   id String @id @default(uuid())
 
-  merchantId String
-  merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  serviceStoreId String
+  serviceStore   ServiceStore @relation(fields: [serviceStoreId], references: [id], onDelete: Cascade)
 
   userId String
-  user   User   @relation(fields: [userId], references: [id])
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role ServiceStoreMemberRole @default(STAFF)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([serviceStoreId, userId])
+  @@index([userId])
+}
+
+model ServiceStoreClaim {
+  id String @id @default(uuid())
+
+  serviceStoreId String
+  serviceStore   ServiceStore @relation(fields: [serviceStoreId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User @relation(fields: [userId], references: [id])
+
+  googlePlaceId    String?
+  businessCategory String?
+
+  proposedName        String?
+  proposedPhone       String?
+  proposedEmail       String?
+  proposedWebsite     String?
+  proposedDescription String?
+  proposedAddress     String?
+  proposedLatitude    Decimal?
+  proposedLongitude   Decimal?
 
   status ClaimStatus @default(PENDING)
 
   submittedAt DateTime  @default(now())
   reviewedAt  DateTime?
 
-  @@index([merchantId])
+  @@index([serviceStoreId])
   @@index([userId])
 }
 
-model MerchantOnboardingRequest {
+model ServiceStoreOnboardingRequest {
   id String @id @default(uuid())
 
   userId String
@@ -233,8 +283,8 @@ model MerchantOnboardingRequest {
 model Branch {
   id String @id @default(uuid())
 
-  merchantId String
-  merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  serviceStoreId String
+  serviceStore   ServiceStore @relation(fields: [serviceStoreId], references: [id], onDelete: Cascade)
 
   code String
   name String
@@ -255,8 +305,8 @@ model Branch {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([merchantId, code])
-  @@index([merchantId])
+  @@unique([serviceStoreId, code])
+  @@index([serviceStoreId])
 }
 
 model BranchOperatingHours {
@@ -416,8 +466,8 @@ model BookingItem {
 model Billing {
   id String @id @default(uuid())
 
-  merchantId String
-  merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  serviceStoreId String
+  serviceStore   ServiceStore @relation(fields: [serviceStoreId], references: [id], onDelete: Cascade)
 
   periodStart DateTime
   periodEnd   DateTime
@@ -450,8 +500,8 @@ model Billing {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([merchantId, periodStart, periodEnd])
-  @@index([merchantId])
+  @@unique([serviceStoreId, periodStart, periodEnd])
+  @@index([serviceStoreId])
   @@index([status])
 }
 

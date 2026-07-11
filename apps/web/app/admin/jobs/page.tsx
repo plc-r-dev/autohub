@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AdminLayout } from "@/components/admin/admin-layout";
-import { requireLinkedIdentity } from "@/lib/auth/require-identity";
+import { requireAdminSession } from "@/lib/auth/require-admin";
 import { runAllJobsNowAction, runJobNowAction } from "@/lib/jobs/actions";
 import { getJobsOverview } from "@/lib/jobs/queries";
 
@@ -22,7 +22,7 @@ function formatDuration(value?: number | null): string {
 }
 
 export default async function AdminJobsPage() {
-  await requireLinkedIdentity();
+  await requireAdminSession();
   const jobs = await getJobsOverview();
 
   return (

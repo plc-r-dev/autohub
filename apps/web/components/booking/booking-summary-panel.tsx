@@ -3,7 +3,7 @@ import { formatBookingDate, formatBookingTime, formatPrice } from "@/lib/booking
 import { cn } from "@workspace/ui/lib/utils";
 
 type BookingSummaryPanelProps = {
-  merchantName: string;
+  serviceStoreName: string;
   branchName: string;
   vehicleLabel: string | null;
   serviceName: string | null;
@@ -42,7 +42,7 @@ function SummaryRow({
 }
 
 export function BookingSummaryPanel({
-  merchantName,
+  serviceStoreName,
   branchName,
   vehicleLabel,
   serviceName,
@@ -64,7 +64,7 @@ export function BookingSummaryPanel({
         Booking summary
       </h2>
       <dl className={cn("space-y-4", compact ? "mt-4" : "mt-6")}>
-        <SummaryRow label="Service shop" value={`${merchantName} · ${branchName}`} />
+        <SummaryRow label="Service shop" value={`${serviceStoreName} · ${branchName}`} />
         <SummaryRow label="Vehicle" value={vehicleLabel} />
         <SummaryRow label="Service" value={serviceName} />
         <SummaryRow label="Date" value={dateLabel} />

@@ -3,7 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Prisma, PrismaClient } from "../lib/generated/prisma/client";
 import { Pool } from "pg";
 
-type MerchantSeed = {
+type ServiceStoreSeed = {
   province: "Bangkok" | "Nonthaburi" | "Pathum Thani";
   code: string;
   name: string;
@@ -14,7 +14,7 @@ type MerchantSeed = {
   longitude: number;
 };
 
-const MERCHANTS: MerchantSeed[] = [
+const MERCHANTS: ServiceStoreSeed[] = [
   {
     province: "Bangkok",
     code: "BKK-01",
@@ -209,8 +209,8 @@ async function seedTenant(prisma: PrismaClient) {
 async function seedTenantRole(prisma: PrismaClient, tenantId: string) {
   await prisma.role.upsert({
     where: { tenantId_code: { tenantId, code: "MERCHANT_OWNER" } },
-    update: { name: "Merchant Owner" },
-    create: { tenantId, code: "MERCHANT_OWNER", name: "Merchant Owner" },
+    update: { name: "Service Store Owner" },
+    create: { tenantId, code: "SERVICE_STORE_OWNER", name: "Service Store Owner" },
   });
 }
 
@@ -251,29 +251,29 @@ async function replaceOperatingHours(prisma: PrismaClient, branchId: string) {
   });
 }
 
-async function seedMerchant(prisma: PrismaClient, tenantId: string, merchant: MerchantSeed) {
-  const savedMerchant = await prisma.merchant.upsert({
+async function seedServiceStore(prisma: PrismaClient, tenantId: string, serviceStore: ServiceStoreSeed) {
+  const savedServiceStore = await prisma.serviceStore.upsert({
     where: {
       tenantId_code: {
         tenantId,
-        code: merchant.code,
+        code: serviceStore.code,
       },
     },
     update: {
-      name: merchant.name,
+      name: serviceStore.name,
       description: "Development seed with publicly known car wash businesses.",
-      phone: merchant.phone,
-      website: merchant.website,
+      phone: serviceStore.phone,
+      website: serviceStore.website,
       status: "ACTIVE",
       bookingEnabled: true,
     },
     create: {
       tenantId,
-      code: merchant.code,
-      name: merchant.name,
+      code: serviceStore.code,
+      name: serviceStore.name,
       description: "Development seed with publicly known car wash businesses.",
-      phone: merchant.phone,
-      website: merchant.website,
+      phone: serviceStore.phone,
+      website: serviceStore.website,
       status: "ACTIVE",
       bookingEnabled: true,
     },
@@ -282,28 +282,28 @@ async function seedMerchant(prisma: PrismaClient, tenantId: string, merchant: Me
 
   const branch = await prisma.branch.upsert({
     where: {
-      merchantId_code: {
-        merchantId: savedMerchant.id,
+      serviceStoreId_code: {
+        serviceStoreId: savedServiceStore.id,
         code: "MAIN",
       },
     },
     update: {
-      name: `${merchant.name} - Main Branch`,
-      phone: merchant.phone,
-      address: merchant.address,
-      latitude: new Prisma.Decimal(merchant.latitude.toString()),
-      longitude: new Prisma.Decimal(merchant.longitude.toString()),
+      name: `${serviceStore.name} - Main Branch`,
+      phone: serviceStore.phone,
+      address: serviceStore.address,
+      latitude: new Prisma.Decimal(serviceStore.latitude.toString()),
+      longitude: new Prisma.Decimal(serviceStore.longitude.toString()),
       slotIntervalMinutes: 15,
       concurrentCapacity: 2,
     },
     create: {
-      merchantId: savedMerchant.id,
+      serviceStoreId: savedServiceStore.id,
       code: "MAIN",
-      name: `${merchant.name} - Main Branch`,
-      phone: merchant.phone,
-      address: merchant.address,
-      latitude: new Prisma.Decimal(merchant.latitude.toString()),
-      longitude: new Prisma.Decimal(merchant.longitude.toString()),
+      name: `${serviceStore.name} - Main Branch`,
+      phone: serviceStore.phone,
+      address: serviceStore.address,
+      latitude: new Prisma.Decimal(serviceStore.latitude.toString()),
+      longitude: new Prisma.Decimal(serviceStore.longitude.toString()),
       slotIntervalMinutes: 15,
       concurrentCapacity: 2,
     },
@@ -434,18 +434,18 @@ async function seedCustomersAndVehicles(prisma: PrismaClient, tenantId: string) 
   return customers;
 }
 
-async function seedMerchantClaims(prisma: PrismaClient, tenantId: string, merchantIds: string[]) {
-  for (let i = 0; i < merchantIds.length; i += 1) {
-    const merchantId = requireAt(merchantIds, i, "merchantIds");
+async function seedServiceStoreClaims(prisma: PrismaClient, tenantId: string, serviceStoreIds: string[]) {
+  for (let i = 0; i < serviceStoreIds.length; i += 1) {
+    const serviceStoreId = requireAt(serviceStoreIds, i, "serviceStoreIds");
     const n = String(i + 1).padStart(3, "0");
 
-    // First 10 merchants are bookable partners; next 2 joining; rest discovered-only.
+    // First 10 serviceStores are bookable partners; next 2 joining; rest discovered-only.
     const claimStatus =
       i < 10 ? "APPROVED" : i < 12 ? "PENDING" : null;
     const bookingEnabled = i < 10;
 
-    await prisma.merchant.update({
-      where: { id: merchantId },
+    await prisma.serviceStore.update({
+      where: { id: serviceStoreId },
       data: { bookingEnabled },
     });
 
@@ -454,47 +454,47 @@ async function seedMerchantClaims(prisma: PrismaClient, tenantId: string, mercha
     }
 
     const user = await prisma.user.upsert({
-      where: { authUserId: `seed-merchant-claim-auth-${n}` },
+      where: { authUserId: `seed-service-store-claim-auth-${n}` },
       update: {
         firstName: `Claimant${n}`,
         lastName: "Seed",
         phone: `+6691000${String(i + 1).padStart(4, "0")}`,
         email: `seed.claimant.${n}@example.com`,
         tenantId,
-        ...(claimStatus === "APPROVED" ? { merchantId } : {}),
+        ...(claimStatus === "APPROVED" ? { serviceStoreId } : {}),
       },
       create: {
-        authUserId: `seed-merchant-claim-auth-${n}`,
-        lineUserId: `seed-merchant-claim-line-${n}`,
+        authUserId: `seed-service-store-claim-auth-${n}`,
+        lineUserId: `seed-service-store-claim-line-${n}`,
         firstName: `Claimant${n}`,
         lastName: "Seed",
         phone: `+6691000${String(i + 1).padStart(4, "0")}`,
         email: `seed.claimant.${n}@example.com`,
         tenantId,
-        ...(claimStatus === "APPROVED" ? { merchantId } : {}),
+        ...(claimStatus === "APPROVED" ? { serviceStoreId } : {}),
       },
       select: { id: true },
     });
 
-    const existing = await prisma.merchantClaim.findFirst({
+    const existing = await prisma.serviceStoreClaim.findFirst({
       where: {
-        merchantId,
+        serviceStoreId,
         userId: user.id,
       },
       select: { id: true },
     });
 
     if (!existing) {
-      await prisma.merchantClaim.create({
+      await prisma.serviceStoreClaim.create({
         data: {
-          merchantId,
+          serviceStoreId,
           userId: user.id,
           status: claimStatus,
           reviewedAt: claimStatus === "APPROVED" ? new Date() : null,
         },
       });
     } else {
-      await prisma.merchantClaim.update({
+      await prisma.serviceStoreClaim.update({
         where: { id: existing.id },
         data: {
           status: claimStatus,
@@ -509,7 +509,7 @@ async function seedBookingsAndBilling(prisma: PrismaClient, tenantId: string) {
   const branches = await prisma.branch.findMany({
     select: {
       id: true,
-      merchantId: true,
+      serviceStoreId: true,
       services: {
         where: { isActive: true },
         orderBy: { code: "asc" },
@@ -610,12 +610,12 @@ async function seedBookingsAndBilling(prisma: PrismaClient, tenantId: string) {
   periodEnd.setDate(0);
   periodEnd.setHours(23, 59, 59, 999);
 
-  const merchantIds = [...new Set(branches.map((branch) => branch.merchantId))];
-  for (const merchantId of merchantIds) {
+  const serviceStoreIds = [...new Set(branches.map((branch) => branch.serviceStoreId))];
+  for (const serviceStoreId of serviceStoreIds) {
     const completedBookings = await prisma.booking.findMany({
       where: {
         status: "COMPLETED",
-        branch: { merchantId },
+        branch: { serviceStoreId },
       },
       select: { id: true, bookingNumber: true, bookingDate: true },
       take: 20,
@@ -630,8 +630,8 @@ async function seedBookingsAndBilling(prisma: PrismaClient, tenantId: string) {
 
     const billing = await prisma.billing.upsert({
       where: {
-        merchantId_periodStart_periodEnd: {
-          merchantId,
+        serviceStoreId_periodStart_periodEnd: {
+          serviceStoreId,
           periodStart,
           periodEnd,
         },
@@ -648,7 +648,7 @@ async function seedBookingsAndBilling(prisma: PrismaClient, tenantId: string) {
         submittedAt: new Date(),
       },
       create: {
-        merchantId,
+        serviceStoreId,
         periodStart,
         periodEnd,
         bookingFee,
@@ -690,14 +690,14 @@ async function main() {
     const tenant = await seedTenant(prisma);
     await seedTenantRole(prisma, tenant.id);
 
-    for (const merchant of MERCHANTS) {
-      await seedMerchant(prisma, tenant.id, merchant);
+    for (const serviceStore of MERCHANTS) {
+      await seedServiceStore(prisma, tenant.id, serviceStore);
     }
 
-    const merchants = await prisma.merchant.findMany({
+    const serviceStores = await prisma.serviceStore.findMany({
       where: {
         tenantId: tenant.id,
-        code: { in: MERCHANTS.map((merchant) => merchant.code) },
+        code: { in: MERCHANTS.map((serviceStore) => serviceStore.code) },
       },
       select: { id: true, code: true },
       orderBy: { code: "asc" },
@@ -705,22 +705,22 @@ async function main() {
 
     await seedCustomersAndVehicles(prisma, tenant.id);
     await seedBookingsAndBilling(prisma, tenant.id);
-    await seedMerchantClaims(
+    await seedServiceStoreClaims(
       prisma,
       tenant.id,
-      merchants.map((merchant) => merchant.id),
+      serviceStores.map((serviceStore) => serviceStore.id),
     );
 
     const summary = {
-      Bangkok: MERCHANTS.filter((merchant) => merchant.province === "Bangkok").length,
-      Nonthaburi: MERCHANTS.filter((merchant) => merchant.province === "Nonthaburi").length,
-      "Pathum Thani": MERCHANTS.filter((merchant) => merchant.province === "Pathum Thani").length,
+      Bangkok: MERCHANTS.filter((serviceStore) => serviceStore.province === "Bangkok").length,
+      Nonthaburi: MERCHANTS.filter((serviceStore) => serviceStore.province === "Nonthaburi").length,
+      "Pathum Thani": MERCHANTS.filter((serviceStore) => serviceStore.province === "Pathum Thani").length,
       Total: MERCHANTS.length,
       Customers: 50,
       Vehicles: 80,
       Bookings: 200,
     };
-    console.log("Development merchant seed completed.");
+    console.log("Development serviceStore seed completed.");
     console.log(summary);
   } finally {
     await prisma.$disconnect();

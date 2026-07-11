@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
-export async function searchMerchantCustomers(
-  merchantId: string,
+export async function searchServiceStoreCustomers(
+  serviceStoreId: string,
   search?: string,
 ) {
   const keyword = search?.trim();
@@ -27,7 +27,7 @@ export async function searchMerchantCustomers(
       ...where,
       bookings: {
         some: {
-          branch: { merchantId },
+          branch: { serviceStoreId },
         },
       },
     },
@@ -46,7 +46,7 @@ export async function searchMerchantCustomers(
         select: {
           bookings: {
             where: {
-              branch: { merchantId },
+              branch: { serviceStoreId },
             },
           },
         },
@@ -56,16 +56,16 @@ export async function searchMerchantCustomers(
   });
 }
 
-type MerchantCustomerListParams = {
+type ServiceStoreCustomerListParams = {
   q?: string;
   page: number;
   pageSize: number;
   sort: "asc" | "desc";
 };
 
-export async function searchMerchantCustomersPaginated(
-  merchantId: string,
-  params: MerchantCustomerListParams,
+export async function searchServiceStoreCustomersPaginated(
+  serviceStoreId: string,
+  params: ServiceStoreCustomerListParams,
 ) {
   const keyword = params.q?.trim();
   const keywordWhere = keyword
@@ -89,7 +89,7 @@ export async function searchMerchantCustomersPaginated(
     ...keywordWhere,
     bookings: {
       some: {
-        branch: { merchantId },
+        branch: { serviceStoreId },
       },
     },
   };
@@ -111,7 +111,7 @@ export async function searchMerchantCustomersPaginated(
         _count: {
           select: {
             bookings: {
-              where: { branch: { merchantId } },
+              where: { branch: { serviceStoreId } },
             },
           },
         },
@@ -125,8 +125,8 @@ export async function searchMerchantCustomersPaginated(
   return { totalCount, rows };
 }
 
-export async function getMerchantCustomerDetail(
-  merchantId: string,
+export async function getServiceStoreCustomerDetail(
+  serviceStoreId: string,
   customerId: string,
 ) {
   const customer = await prisma.customer.findFirst({
@@ -134,7 +134,7 @@ export async function getMerchantCustomerDetail(
       id: customerId,
       bookings: {
         some: {
-          branch: { merchantId },
+          branch: { serviceStoreId },
         },
       },
     },
@@ -143,7 +143,7 @@ export async function getMerchantCustomerDetail(
         orderBy: { createdAt: "asc" },
       },
       bookings: {
-        where: { branch: { merchantId } },
+        where: { branch: { serviceStoreId } },
         include: {
           vehicle: true,
           items: {
@@ -204,8 +204,8 @@ export async function getMerchantCustomerDetail(
   };
 }
 
-export async function getMerchantVehicleDetail(
-  merchantId: string,
+export async function getServiceStoreVehicleDetail(
+  serviceStoreId: string,
   customerId: string,
   vehicleId: string,
 ) {
@@ -216,7 +216,7 @@ export async function getMerchantVehicleDetail(
       customer: {
         bookings: {
           some: {
-            branch: { merchantId },
+            branch: { serviceStoreId },
           },
         },
       },
@@ -224,7 +224,7 @@ export async function getMerchantVehicleDetail(
     include: {
       customer: true,
       bookings: {
-        where: { branch: { merchantId } },
+        where: { branch: { serviceStoreId } },
         include: {
           items: {
             include: { service: { select: { name: true } } },

@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
-import { requireLinkedIdentity } from "@/lib/auth/require-identity";
-import {
-  getMerchantAccessState,
-  isApprovedMerchant,
-} from "@/lib/merchant/access";
+import { isIdentityLinked } from "@/lib/auth/identity";
+import { PORTALS } from "@/lib/auth/portals";
+import { requireCustomerIdentity, requireServiceStoreSession } from "@/lib/auth/require-identity";
+import { requireServiceStoreContext } from "@/lib/service-store/context";
 import { prisma } from "@/lib/prisma";
 
+/** Customer domain user — auto-provisions Customer profile from LINE session. */
 export async function requireDomainUser() {
-  const { session, identity } = await requireLinkedIdentity();
+  const { session, identity } = await requireCustomerIdentity();
 
   const user = await prisma.user.findUnique({
     where: { id: identity.domainUserId! },
@@ -20,32 +20,47 @@ export async function requireDomainUser() {
       email: true,
       phone: true,
       tenantId: true,
-      merchantId: true,
+      serviceStoreId: true,
     },
   });
 
   if (!user) {
-    redirect("/browse");
+    redirect(PORTALS.customer.home);
   }
 
   return { session, identity, user };
 }
 
-export async function requireApprovedMerchantUser() {
-  const { session, identity, user } = await requireDomainUser();
+/** Service Store domain user — does not require or create a Customer profile. */
+export async function requireServiceStoreDomainUser() {
+  const { session, identity } = await requireServiceStoreSession();
 
-  const merchantAccess = await getMerchantAccessState(user.id);
-  if (!isApprovedMerchant(merchantAccess) || !user.merchantId) {
-    redirect("/merchant/waiting");
+  if (!isIdentityLinked(identity)) {
+    redirect(PORTALS.serviceStore.onboarding);
   }
 
-  const merchant = await prisma.merchant.findUnique({
-    where: { id: user.merchantId },
+  const user = await prisma.user.findUnique({
+    where: { id: identity.domainUserId! },
+    select: {
+      id: true,
+      authUserId: true,
+      lineUserId: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      tenantId: true,
+      serviceStoreId: true,
+    },
   });
 
-  if (!merchant) {
-    redirect("/merchant/waiting");
+  if (!user) {
+    redirect(PORTALS.serviceStore.onboarding);
   }
 
-  return { session, identity, user, merchant };
+  return { session, identity, user };
+}
+
+export async function requireApprovedServiceStoreUser() {
+  return requireServiceStoreContext();
 }

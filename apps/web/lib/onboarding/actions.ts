@@ -6,9 +6,12 @@ import { getServerSession } from "@/lib/auth/session";
 import { getLineUserId } from "@/lib/onboarding/context";
 import {
   customerOnboardingSchema,
-  merchantOnboardingSchema,
+  serviceStoreClaimSchema,
+  serviceStoreCreateSchema,
+  serviceStoreOnboardingSchema,
 } from "@/lib/onboarding/schemas";
-import { searchMerchants } from "@/lib/onboarding/queries";
+import { searchServiceStores } from "@/lib/onboarding/queries";
+import { slugifyBusinessCode } from "@/lib/service-store/domain";
 import { prisma } from "@/lib/prisma";
 
 export type OnboardingActionState = {
@@ -44,7 +47,7 @@ async function assertTenantExists(tenantId: string) {
   }
 }
 
-async function resolveDomainUserIdForMerchantOnboarding(
+async function resolveDomainUserIdForServiceStoreOnboarding(
   authUserId: string,
   input: {
     tenantId: string;
@@ -126,6 +129,207 @@ async function resolveDomainUserIdForMerchantOnboarding(
   });
 
   return user.id;
+}
+
+async function generateUniqueBusinessCode(tenantId: string, name: string) {
+  const base = slugifyBusinessCode(name) || "service-store";
+  let candidate = base;
+  let suffix = 2;
+  while (true) {
+    const existing = await prisma.serviceStore.findFirst({
+      where: { tenantId, code: candidate },
+      select: { id: true },
+    });
+    if (!existing) {
+      return candidate;
+    }
+    candidate = `${base}-${suffix}`;
+    suffix += 1;
+  }
+}
+
+function mapOnboardingError(error: unknown): OnboardingActionState {
+  if (error instanceof Error) {
+    if (error.message === "MERCHANT_NOT_FOUND") {
+      return { error: "The selected business could not be found." };
+    }
+    if (error.message === "CLAIM_EXISTS") {
+      return { error: "You already have a pending claim for this business." };
+    }
+    if (error.message === "BUSINESS_CODE_EXISTS") {
+      return { error: "This business code is already taken in the selected tenant." };
+    }
+    if (error.message === "EMAIL_IN_USE") {
+      return { error: "This email is already in use." };
+    }
+    if (error.message === "LINE_USER_IN_USE") {
+      return { error: "This LINE account is already linked to another profile." };
+    }
+  }
+  return { error: "Unable to complete onboarding. Please try again." };
+}
+
+export async function submitServiceStoreClaim(
+  _prevState: OnboardingActionState,
+  formData: FormData,
+): Promise<OnboardingActionState> {
+  const session = await getServerSession();
+  if (!session) {
+    return { error: "You must be signed in to continue." };
+  }
+
+  const parsed = serviceStoreClaimSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) {
+    return { fieldErrors: parsed.error.flatten().fieldErrors };
+  }
+
+  const input = parsed.data;
+
+  try {
+    await assertTenantExists(input.tenantId);
+
+    const domainUserId = await resolveDomainUserIdForServiceStoreOnboarding(session.user.id, {
+      tenantId: input.tenantId,
+      firstName: input.firstName,
+      lastName: input.lastName,
+      phone: input.phone,
+      email: input.email,
+    });
+
+    await prisma.$transaction(async (tx) => {
+      const serviceStore = await tx.serviceStore.findFirst({
+        where: { id: input.serviceStoreId, tenantId: input.tenantId },
+        select: { id: true },
+      });
+
+      if (!serviceStore) {
+        throw new Error("MERCHANT_NOT_FOUND");
+      }
+
+      const existingClaim = await tx.serviceStoreClaim.findFirst({
+        where: {
+          serviceStoreId: input.serviceStoreId,
+          userId: domainUserId,
+          status: "PENDING",
+        },
+        select: { id: true },
+      });
+
+      if (existingClaim) {
+        throw new Error("CLAIM_EXISTS");
+      }
+
+      await tx.serviceStoreClaim.create({
+        data: {
+          serviceStoreId: input.serviceStoreId,
+          userId: domainUserId,
+          googlePlaceId: input.googlePlaceId,
+          businessCategory: input.businessCategory,
+          proposedName: input.proposedName,
+          proposedPhone: input.proposedPhone,
+          proposedEmail: input.proposedEmail,
+          proposedWebsite: input.proposedWebsite,
+          proposedDescription: input.proposedDescription,
+          proposedAddress: input.proposedAddress,
+          proposedLatitude: input.proposedLatitude,
+          proposedLongitude: input.proposedLongitude,
+        },
+      });
+    });
+  } catch (error) {
+    return mapOnboardingError(error);
+  }
+
+  redirect("/service-store/waiting");
+}
+
+export async function createServiceStoreDirect(
+  _prevState: OnboardingActionState,
+  formData: FormData,
+): Promise<OnboardingActionState> {
+  const session = await getServerSession();
+  if (!session) {
+    return { error: "You must be signed in to continue." };
+  }
+
+  const parsed = serviceStoreCreateSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) {
+    return { fieldErrors: parsed.error.flatten().fieldErrors };
+  }
+
+  const input = parsed.data;
+
+  try {
+    await assertTenantExists(input.tenantId);
+
+    const domainUserId = await resolveDomainUserIdForServiceStoreOnboarding(session.user.id, {
+      tenantId: input.tenantId,
+      firstName: input.firstName,
+      lastName: input.lastName,
+      phone: input.phone,
+      email: input.email,
+    });
+
+    const businessCode = await generateUniqueBusinessCode(input.tenantId, input.businessName);
+    const { getDefaultOperatingHours } = await import("@/lib/booking/engine/time");
+
+    await prisma.$transaction(async (tx) => {
+      const serviceStore = await tx.serviceStore.create({
+        data: {
+          tenantId: input.tenantId,
+          code: businessCode,
+          name: input.businessName,
+          phone: input.businessPhone,
+          email: input.businessEmail,
+          website: input.website,
+          description: input.description,
+          googlePlaceId: input.googlePlaceId,
+          businessCategory: input.businessCategory,
+          status: "ONBOARDING",
+          bookingEnabled: false,
+        },
+      });
+
+      const branch = await tx.branch.create({
+        data: {
+          serviceStoreId: serviceStore.id,
+          code: "main",
+          name: input.businessName,
+          phone: input.businessPhone,
+          address: input.address,
+          latitude: input.latitude,
+          longitude: input.longitude,
+        },
+      });
+
+      await tx.branchOperatingHours.createMany({
+        data: getDefaultOperatingHours().map((hours) => ({
+          branchId: branch.id,
+          ...hours,
+        })),
+      });
+
+      await tx.serviceStoreMember.create({
+        data: {
+          serviceStoreId: serviceStore.id,
+          userId: domainUserId,
+          role: "OWNER",
+        },
+      });
+
+      await tx.user.update({
+        where: { id: domainUserId },
+        data: {
+          serviceStoreId: serviceStore.id,
+          tenantId: input.tenantId,
+        },
+      });
+    });
+  } catch (error) {
+    return mapOnboardingError(error);
+  }
+
+  redirect("/service-store/setup");
 }
 
 export async function completeCustomerOnboarding(
@@ -215,7 +419,7 @@ export async function completeCustomerOnboarding(
   redirect("/browse");
 }
 
-export async function completeMerchantOnboarding(
+export async function completeServiceStoreOnboarding(
   _prevState: OnboardingActionState,
   formData: FormData,
 ): Promise<OnboardingActionState> {
@@ -224,7 +428,7 @@ export async function completeMerchantOnboarding(
     return { error: "You must be signed in to continue." };
   }
 
-  const parsed = merchantOnboardingSchema.safeParse(formDataToObject(formData));
+  const parsed = serviceStoreOnboardingSchema.safeParse(formDataToObject(formData));
   if (!parsed.success) {
     return {
       fieldErrors: parsed.error.flatten().fieldErrors,
@@ -236,7 +440,7 @@ export async function completeMerchantOnboarding(
   try {
     await assertTenantExists(input.tenantId);
 
-    const domainUserId = await resolveDomainUserIdForMerchantOnboarding(
+    const domainUserId = await resolveDomainUserIdForServiceStoreOnboarding(
       session.user.id,
       {
         tenantId: input.tenantId,
@@ -249,21 +453,21 @@ export async function completeMerchantOnboarding(
 
     await prisma.$transaction(async (tx) => {
       if (input.mode === "claim") {
-        const merchant = await tx.merchant.findFirst({
+        const serviceStore = await tx.serviceStore.findFirst({
           where: {
-            id: input.merchantId,
+            id: input.serviceStoreId,
             tenantId: input.tenantId,
           },
           select: { id: true },
         });
 
-        if (!merchant) {
+        if (!serviceStore) {
           throw new Error("MERCHANT_NOT_FOUND");
         }
 
-        const existingClaim = await tx.merchantClaim.findFirst({
+        const existingClaim = await tx.serviceStoreClaim.findFirst({
           where: {
-            merchantId: input.merchantId,
+            serviceStoreId: input.serviceStoreId,
             userId: domainUserId,
             status: "PENDING",
           },
@@ -274,14 +478,14 @@ export async function completeMerchantOnboarding(
           throw new Error("CLAIM_EXISTS");
         }
 
-        await tx.merchantClaim.create({
+        await tx.serviceStoreClaim.create({
           data: {
-            merchantId: input.merchantId,
+            serviceStoreId: input.serviceStoreId,
             userId: domainUserId,
           },
         });
       } else {
-        const existingMerchantCode = await tx.merchant.findFirst({
+        const existingServiceStoreCode = await tx.serviceStore.findFirst({
           where: {
             tenantId: input.tenantId,
             code: input.businessCode,
@@ -289,11 +493,11 @@ export async function completeMerchantOnboarding(
           select: { id: true },
         });
 
-        if (existingMerchantCode) {
+        if (existingServiceStoreCode) {
           throw new Error("BUSINESS_CODE_EXISTS");
         }
 
-        await tx.merchantOnboardingRequest.create({
+        await tx.serviceStoreOnboardingRequest.create({
           data: {
             userId: domainUserId,
             tenantId: input.tenantId,
@@ -326,13 +530,13 @@ export async function completeMerchantOnboarding(
       }
     }
 
-    return { error: "Unable to complete merchant onboarding. Please try again." };
+    return { error: "Unable to complete serviceStore onboarding. Please try again." };
   }
 
-  redirect("/merchant/waiting");
+  redirect("/service-store/waiting");
 }
 
-export async function searchMerchantsAction(tenantId: string, query: string) {
+export async function searchServiceStoresAction(tenantId: string, query: string) {
   const session = await getServerSession();
   if (!session) {
     return [];
@@ -342,5 +546,5 @@ export async function searchMerchantsAction(tenantId: string, query: string) {
     return [];
   }
 
-  return searchMerchants(tenantId, query);
+  return searchServiceStores(tenantId, query);
 }

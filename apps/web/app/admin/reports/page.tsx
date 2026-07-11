@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AdminLayout } from "@/components/admin/admin-layout";
-import { requireLinkedIdentity } from "@/lib/auth/require-identity";
+import { requireAdminSession } from "@/lib/auth/require-admin";
 import { formatBillingCurrency, formatBillingDate } from "@/lib/billing/format";
 import { getReportData } from "@/lib/reporting/queries";
 import { prisma } from "@/lib/prisma";
@@ -9,7 +9,7 @@ type PageProps = {
   searchParams: Promise<{
     from?: string;
     to?: string;
-    merchantId?: string;
+    serviceStoreId?: string;
     branchId?: string;
     bookingStatus?: string;
   }>;
@@ -40,20 +40,20 @@ function buildExportLink(
 }
 
 export default async function AdminReportsPage({ searchParams }: PageProps) {
-  await requireLinkedIdentity();
+  await requireAdminSession();
   const params = await searchParams;
 
   const filters = {
     from: parseDate(params.from),
     to: parseDate(params.to),
-    merchantId: params.merchantId,
+    serviceStoreId: params.serviceStoreId,
     branchId: params.branchId,
     bookingStatus: params.bookingStatus,
   };
 
-  const [reportData, merchants, branches] = await Promise.all([
+  const [reportData, serviceStores, branches] = await Promise.all([
     getReportData(filters),
-    prisma.merchant.findMany({
+    prisma.serviceStore.findMany({
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
@@ -82,14 +82,14 @@ export default async function AdminReportsPage({ searchParams }: PageProps) {
           className="border-input h-9 rounded-md border px-3 text-sm"
         />
         <select
-          name="merchantId"
-          defaultValue={params.merchantId}
+          name="serviceStoreId"
+          defaultValue={params.serviceStoreId}
           className="border-input h-9 rounded-md border px-3 text-sm"
         >
-          <option value="">All merchants</option>
-          {merchants.map((merchant) => (
-            <option key={merchant.id} value={merchant.id}>
-              {merchant.name}
+          <option value="">All Service Stores</option>
+          {serviceStores.map((serviceStore) => (
+            <option key={serviceStore.id} value={serviceStore.id}>
+              {serviceStore.name}
             </option>
           ))}
         </select>

@@ -7,8 +7,8 @@ import { getServiceShopImage } from "@/lib/media/service-shop-images";
 import { cn } from "@workspace/ui/lib/utils";
 
 type ServiceShopImageProps = {
-  merchantId: string;
-  merchantName: string;
+  serviceStoreId: string;
+  serviceStoreName: string;
   slot?: number;
   className?: string;
   imageClassName?: string;
@@ -20,8 +20,8 @@ type ServiceShopImageProps = {
 };
 
 export function ServiceShopImage({
-  merchantId,
-  merchantName,
+  serviceStoreId,
+  serviceStoreName,
   slot = 0,
   className,
   imageClassName,
@@ -31,7 +31,7 @@ export function ServiceShopImage({
   previewImages,
   previewIndex = 0,
 }: ServiceShopImageProps) {
-  const { src, alt } = getServiceShopImage(merchantId, merchantName, slot);
+  const { src, alt } = getServiceShopImage(serviceStoreId, serviceStoreName, slot);
   const [previewOpen, setPreviewOpen] = useState(false);
   const images = previewImages ?? [{ src, alt }];
   const startIndex = previewImages ? previewIndex : 0;
@@ -66,7 +66,7 @@ export function ServiceShopImage({
           setPreviewOpen(true);
         }}
         className="group block w-full cursor-zoom-in text-left"
-        aria-label={`Preview ${merchantName} photo`}
+        aria-label={`Preview ${serviceStoreName} photo`}
       >
         {imageContent}
       </button>

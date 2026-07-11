@@ -1,9 +1,9 @@
 import type { BillingStatus } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
-export async function getMerchantBillings(merchantId: string) {
+export async function getServiceStoreBillings(serviceStoreId: string) {
   return prisma.billing.findMany({
-    where: { merchantId },
+    where: { serviceStoreId },
     select: {
       id: true,
       periodStart: true,
@@ -21,7 +21,7 @@ export async function getMerchantBillings(merchantId: string) {
   });
 }
 
-type MerchantBillingListParams = {
+type ServiceStoreBillingListParams = {
   q?: string;
   status?: BillingStatus;
   page: number;
@@ -29,13 +29,13 @@ type MerchantBillingListParams = {
   sort: "asc" | "desc";
 };
 
-export async function getMerchantBillingsPaginated(
-  merchantId: string,
-  params: MerchantBillingListParams,
+export async function getServiceStoreBillingsPaginated(
+  serviceStoreId: string,
+  params: ServiceStoreBillingListParams,
 ) {
   const keyword = params.q?.trim();
   const where = {
-    merchantId,
+    serviceStoreId,
     ...(params.status ? { status: params.status } : {}),
     ...(keyword
       ? {
@@ -70,9 +70,9 @@ export async function getMerchantBillingsPaginated(
   return { totalCount, rows };
 }
 
-export async function getMerchantBilling(billingId: string, merchantId: string) {
+export async function getServiceStoreBilling(billingId: string, serviceStoreId: string) {
   return prisma.billing.findFirst({
-    where: { id: billingId, merchantId },
+    where: { id: billingId, serviceStoreId },
     include: {
       items: {
         orderBy: { bookingDate: "asc" },
@@ -80,7 +80,7 @@ export async function getMerchantBilling(billingId: string, merchantId: string) 
       payments: {
         orderBy: { createdAt: "desc" },
       },
-      merchant: {
+      serviceStore: {
         select: { name: true, code: true },
       },
     },
@@ -103,7 +103,7 @@ export async function getAdminBillingsForReview() {
       total: true,
       submittedAt: true,
       paymentSubmittedAt: true,
-      merchant: { select: { name: true, code: true } },
+      serviceStore: { select: { name: true, code: true } },
     },
     orderBy: [{ status: "asc" }, { periodStart: "desc" }],
   });
@@ -112,7 +112,7 @@ export async function getAdminBillingsForReview() {
 type AdminBillingListParams = {
   q?: string;
   status?: BillingStatus;
-  merchantId?: string;
+  serviceStoreId?: string;
   page: number;
   pageSize: number;
   sort: "asc" | "desc";
@@ -130,13 +130,13 @@ export async function getAdminBillingsForReviewPaginated(
             in: ["SUBMITTED", "PAYMENT_SUBMITTED"] as BillingStatus[],
           },
         }),
-    ...(params.merchantId ? { merchantId: params.merchantId } : {}),
+    ...(params.serviceStoreId ? { serviceStoreId: params.serviceStoreId } : {}),
     ...(keyword
       ? {
           OR: [
             { invoiceNumber: { contains: keyword, mode: "insensitive" as const } },
-            { merchant: { name: { contains: keyword, mode: "insensitive" as const } } },
-            { merchant: { code: { contains: keyword, mode: "insensitive" as const } } },
+            { serviceStore: { name: { contains: keyword, mode: "insensitive" as const } } },
+            { serviceStore: { code: { contains: keyword, mode: "insensitive" as const } } },
           ],
         }
       : {}),
@@ -155,7 +155,7 @@ export async function getAdminBillingsForReviewPaginated(
         total: true,
         submittedAt: true,
         paymentSubmittedAt: true,
-        merchant: { select: { id: true, name: true, code: true } },
+        serviceStore: { select: { id: true, name: true, code: true } },
       },
       orderBy: { periodStart: params.sort },
       skip: (params.page - 1) * params.pageSize,
@@ -170,7 +170,7 @@ export async function getAdminBillingDetail(billingId: string) {
   return prisma.billing.findUnique({
     where: { id: billingId },
     include: {
-      merchant: { select: { id: true, name: true, code: true } },
+      serviceStore: { select: { id: true, name: true, code: true } },
       items: {
         orderBy: { bookingDate: "asc" },
       },

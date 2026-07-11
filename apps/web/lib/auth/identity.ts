@@ -10,7 +10,7 @@ export type IdentityLinkStatus =
 
 /** Entry points for onboarding flows. */
 export const ONBOARDING_TARGET = {
-  MERCHANT: "merchant",
+  MERCHANT: "serviceStore",
   CUSTOMER: "customer",
 } as const;
 

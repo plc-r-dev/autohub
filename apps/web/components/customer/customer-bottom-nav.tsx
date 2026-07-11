@@ -11,7 +11,7 @@ const TABS = [
     href: "/bookings",
     label: "Bookings",
     icon: Calendar,
-    match: (path: string) => path === "/bookings",
+    match: (path: string) => path === "/bookings" || path.startsWith("/bookings/"),
   },
   {
     href: "/vehicles",
@@ -32,7 +32,7 @@ export function CustomerBottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-1/2 z-20 w-full max-w-[480px] -translate-x-1/2 border-t border-[#E4E4E7] bg-white/95 backdrop-blur-md"
+      className="fixed bottom-0 left-1/2 z-20 w-full max-w-[480px] -translate-x-1/2 border-t border-[#E4E4E7] bg-white/95 backdrop-blur-md md:hidden"
       style={{ paddingBottom: "max(0.25rem, env(safe-area-inset-bottom))" }}
       aria-label="Main navigation"
     >

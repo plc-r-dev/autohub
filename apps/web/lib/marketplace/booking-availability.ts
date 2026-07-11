@@ -1,3 +1,5 @@
+import { READINESS_STATUS } from "@/lib/service-store/domain";
+
 export const MarketplaceBookingStatus = {
   BOOKABLE: "BOOKABLE",
   DISCOVERED: "DISCOVERED",
@@ -8,12 +10,14 @@ export const MarketplaceBookingStatus = {
 export type MarketplaceBookingStatus =
   (typeof MarketplaceBookingStatus)[keyof typeof MarketplaceBookingStatus];
 
-export type MarketplaceMerchantFacts = {
-  status: "DRAFT" | "PENDING_VERIFICATION" | "ACTIVE" | "SUSPENDED";
+export type MarketplaceServiceStoreFacts = {
+  status: "DRAFT" | "PENDING_VERIFICATION" | "ONBOARDING" | "ACTIVE" | "READY_FOR_BOOKING" | "SUSPENDED";
   hasApprovedClaim: boolean;
   hasPendingClaim: boolean;
+  hasOwnerMember: boolean;
   activeBranchCount: number;
   activeServiceCount: number;
+  readinessStatus: "READY" | "NOT_READY";
 };
 
 export type MarketplaceBookingPresentation = {
@@ -56,30 +60,22 @@ const PRESENTATION: Record<
     partnerBadge: null,
     ctaLabel: "View Details",
     ctaAction: "details",
-    unavailableMessage: "This service shop has not joined AutoHub yet.",
+    unavailableMessage: "This Service Store is completing setup and is not bookable yet.",
   },
 };
 
-// TODO(Marketplace Phase 2): Restore Merchant.bookingEnabled in bookability checks
-// once discovered-only listings return to the customer browse experience.
 export function resolveMarketplaceBookingStatus(
-  facts: MarketplaceMerchantFacts,
+  facts: MarketplaceServiceStoreFacts,
 ): MarketplaceBookingStatus {
-  const hasCatalog =
-    facts.activeBranchCount > 0 && facts.activeServiceCount > 0;
-
-  const bookable =
-    facts.hasApprovedClaim && facts.status === "ACTIVE" && hasCatalog;
-
-  if (bookable) {
+  if (facts.readinessStatus === READINESS_STATUS.READY) {
     return MarketplaceBookingStatus.BOOKABLE;
   }
 
-  if (facts.hasPendingClaim && !facts.hasApprovedClaim) {
+  if (facts.hasPendingClaim && !facts.hasApprovedClaim && !facts.hasOwnerMember) {
     return MarketplaceBookingStatus.CLAIM_PENDING;
   }
 
-  if (facts.hasApprovedClaim && facts.status === "ACTIVE" && !hasCatalog) {
+  if (facts.hasApprovedClaim || facts.hasOwnerMember) {
     return MarketplaceBookingStatus.SETUP_INCOMPLETE;
   }
 
@@ -87,7 +83,7 @@ export function resolveMarketplaceBookingStatus(
 }
 
 export function toMarketplaceBookingPresentation(
-  facts: MarketplaceMerchantFacts,
+  facts: MarketplaceServiceStoreFacts,
 ): MarketplaceBookingPresentation {
   const status = resolveMarketplaceBookingStatus(facts);
   return {
@@ -97,6 +93,9 @@ export function toMarketplaceBookingPresentation(
   };
 }
 
-export function isMerchantBookable(facts: MarketplaceMerchantFacts): boolean {
-  return resolveMarketplaceBookingStatus(facts) === MarketplaceBookingStatus.BOOKABLE;
+export function isServiceStoreBookable(facts: MarketplaceServiceStoreFacts): boolean {
+  return (
+    facts.readinessStatus === READINESS_STATUS.READY &&
+    (facts.status === "READY_FOR_BOOKING" || facts.status === "ACTIVE")
+  );
 }

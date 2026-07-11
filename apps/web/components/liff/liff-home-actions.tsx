@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const ACTIONS = [
   {
-    href: "/browse#merchants",
+    href: "/browse#serviceStores",
     emoji: "🚗",
     label: "Book a Service",
     description: "Find a car wash near you",

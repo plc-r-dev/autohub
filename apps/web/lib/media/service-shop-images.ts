@@ -83,26 +83,26 @@ function hashSeed(value: string): number {
 }
 
 export function getServiceShopImage(
-  merchantId: string,
-  merchantName: string,
+  serviceStoreId: string,
+  serviceStoreName: string,
   slot = 0,
 ): { src: string; alt: string } {
   const index =
-    (hashSeed(`${merchantId}:${slot}`) + slot * 7) % CAR_CARE_IMAGES.length;
+    (hashSeed(`${serviceStoreId}:${slot}`) + slot * 7) % CAR_CARE_IMAGES.length;
   const image = CAR_CARE_IMAGES[index]!;
 
   return {
     src: image.src,
-    alt: `${merchantName} — ${image.alt}`,
+    alt: `${serviceStoreName} — ${image.alt}`,
   };
 }
 
 export function getServiceShopGalleryImages(
-  merchantId: string,
-  merchantName: string,
+  serviceStoreId: string,
+  serviceStoreName: string,
   count: number,
 ): Array<{ src: string; alt: string }> {
-  const start = hashSeed(`${merchantId}:gallery`) % CAR_CARE_IMAGES.length;
+  const start = hashSeed(`${serviceStoreId}:gallery`) % CAR_CARE_IMAGES.length;
 
   return Array.from({ length: count }, (_, offset) => {
     const index = (start + offset + 1) % CAR_CARE_IMAGES.length;
@@ -110,7 +110,7 @@ export function getServiceShopGalleryImages(
 
     return {
       src: image.src,
-      alt: `${merchantName} — ${image.alt}`,
+      alt: `${serviceStoreName} — ${image.alt}`,
     };
   });
 }

@@ -31,23 +31,23 @@ erDiagram
   %% Tenant hierarchy
   Tenant ||--o{ User : has
   Tenant ||--o{ Role : has
-  Tenant ||--o{ Merchant : has
+  Tenant ||--o{ ServiceStore : has
   Tenant ||--o{ Customer : has
   Tenant ||--o{ Booking : has
-  Tenant ||--o{ MerchantOnboardingRequest : has
+  Tenant ||--o{ ServiceStoreOnboardingRequest : has
 
   %% User relationships
-  User }o--o| Merchant : "merchantId"
+  User }o--o| ServiceStore : "serviceStoreId"
   User ||--o{ UserRole : has
-  User ||--o{ MerchantClaim : submits
-  User ||--o{ MerchantOnboardingRequest : submits
+  User ||--o{ ServiceStoreClaim : submits
+  User ||--o{ ServiceStoreOnboardingRequest : submits
 
   %% RBAC
   Role ||--o{ UserRole : assigned
 
-  %% Merchant hierarchy
-  Merchant ||--o{ Branch : has
-  Merchant ||--o{ MerchantClaim : receives
+  %% ServiceStore hierarchy
+  ServiceStore ||--o{ Branch : has
+  ServiceStore ||--o{ ServiceStoreClaim : receives
   Branch ||--o{ Service : offers
 
   %% Booking
@@ -136,7 +136,7 @@ erDiagram
 | `name` | String | |
 | `status` | TenantStatus | Default `ACTIVE` |
 
-**Relations:** `users`, `roles`, `merchants`, `customers`, `bookings`, `merchantOnboardingRequests`
+**Relations:** `users`, `roles`, `serviceStores`, `customers`, `bookings`, `serviceStoreOnboardingRequests`
 
 ### User (domain)
 
@@ -151,11 +151,11 @@ erDiagram
 | `phone` | String? | |
 | `status` | UserStatus | Default `ACTIVE` |
 | `tenantId` | String | FK → `Tenant.id` |
-| `merchantId` | String? | FK → `Merchant.id` (SET NULL) |
+| `serviceStoreId` | String? | FK → `ServiceStore.id` (SET NULL) |
 
-**Relations:** `tenant`, `merchant`, `userRoles`, `merchantClaims`, `merchantOnboardingRequests`
+**Relations:** `tenant`, `serviceStore`, `userRoles`, `serviceStoreClaims`, `serviceStoreOnboardingRequests`
 
-**Indexes:** `tenantId`, `merchantId`
+**Indexes:** `tenantId`, `serviceStoreId`
 
 ### Role
 
@@ -182,7 +182,7 @@ erDiagram
 
 **Application usage:** Schema only.
 
-### Merchant
+### ServiceStore
 
 | Column | Type | Constraints |
 |--------|------|-------------|
@@ -192,24 +192,24 @@ erDiagram
 | `name` | String | |
 | `description` | String? | |
 | `phone`, `email`, `website` | String? | |
-| `status` | MerchantStatus | Default `DRAFT` |
+| `status` | ServiceStoreStatus | Default `DRAFT` |
 
 **Relations:** `tenant`, `branches`, `claims`, `users`
 
 **Unique:** `[tenantId, code]`
 
-### MerchantClaim
+### ServiceStoreClaim
 
 | Column | Type | Constraints |
 |--------|------|-------------|
 | `id` | String | PK, UUID |
-| `merchantId` | String | FK → `Merchant.id` (CASCADE) |
+| `serviceStoreId` | String | FK → `ServiceStore.id` (CASCADE) |
 | `userId` | String | FK → `User.id` |
 | `status` | ClaimStatus | Default `PENDING` |
 | `submittedAt` | DateTime | |
 | `reviewedAt` | DateTime? | |
 
-### MerchantOnboardingRequest
+### ServiceStoreOnboardingRequest
 
 | Column | Type | Constraints |
 |--------|------|-------------|
@@ -231,8 +231,8 @@ erDiagram
 | Column | Type | Constraints |
 |--------|------|-------------|
 | `id` | String | PK, UUID |
-| `merchantId` | String | FK → `Merchant.id` (CASCADE) |
-| `code` | String | Unique per merchant |
+| `serviceStoreId` | String | FK → `ServiceStore.id` (CASCADE) |
+| `code` | String | Unique per serviceStore |
 | `name` | String | |
 | `phone`, `address` | String? | |
 | `latitude`, `longitude` | Decimal? | |
@@ -312,7 +312,7 @@ erDiagram
 |------|--------|
 | `UserStatus` | `ACTIVE`, `INACTIVE`, `SUSPENDED` |
 | `TenantStatus` | `ACTIVE`, `INACTIVE` |
-| `MerchantStatus` | `DRAFT`, `PENDING_VERIFICATION`, `ACTIVE`, `SUSPENDED` |
+| `ServiceStoreStatus` | `DRAFT`, `PENDING_VERIFICATION`, `ACTIVE`, `SUSPENDED` |
 | `ClaimStatus` | `PENDING`, `APPROVED`, `REJECTED` |
 | `OnboardingRequestStatus` | `PENDING`, `APPROVED`, `REJECTED` |
 | `CustomerStatus` | `ACTIVE`, `INACTIVE` |
@@ -326,8 +326,8 @@ erDiagram
 | `20260709024834_init` | Initial business schema |
 | `20260709044338_add_better_auth` | Auth tables |
 | `20260709050900_add_user_auth_user_id` | `User.authUserId` |
-| `20260709061400_add_merchant_onboarding_request` | `MerchantOnboardingRequest` |
-| `20260709064200_add_user_merchant_id` | `User.merchantId` |
+| `20260709061400_add_serviceStore_onboarding_request` | `ServiceStoreOnboardingRequest` |
+| `20260709064200_add_user_serviceStore_id` | `User.serviceStoreId` |
 
 ## Key relationships explained
 
@@ -339,23 +339,23 @@ Not a database FK. Linked logically via `User.authUserId = AuthUser.id`.
 AuthUser.id ←── User.authUserId (unique, nullable)
 ```
 
-### User ↔ Merchant (operator link)
+### User ↔ ServiceStore (operator link)
 
 ```
-User.merchantId → Merchant.id (nullable, set on approval)
+User.serviceStoreId → ServiceStore.id (nullable, set on approval)
 ```
 
-### Merchant ↔ Tenant
+### ServiceStore ↔ Tenant
 
 ```
-Merchant.tenantId → Tenant.id
-User.tenantId     → Tenant.id (aligned on merchant approval)
+ServiceStore.tenantId → Tenant.id
+User.tenantId     → Tenant.id (aligned on serviceStore approval)
 ```
 
 ### Booking domain chain
 
 ```
-Tenant → Customer → Booking ← Branch ← Merchant
+Tenant → Customer → Booking ← Branch ← ServiceStore
 Booking → BookingItem → Service
 Customer → Vehicle
 ```
@@ -366,10 +366,10 @@ Customer → Vehicle
 |-------|-------------------|
 | `AuthUser`, `AuthSession`, `AuthAccount`, `AuthVerification` | Better Auth |
 | `Tenant` | Read during onboarding |
-| `User` | Created during onboarding; updated on merchant approval |
-| `Merchant` | Search during onboarding; created on request approval |
-| `MerchantClaim` | Created during onboarding; approved/rejected via admin |
-| `MerchantOnboardingRequest` | Created during onboarding; approved/rejected via admin |
+| `User` | Created during onboarding; updated on serviceStore approval |
+| `ServiceStore` | Search during onboarding; created on request approval |
+| `ServiceStoreClaim` | Created during onboarding; approved/rejected via admin |
+| `ServiceStoreOnboardingRequest` | Created during onboarding; approved/rejected via admin |
 | `Role`, `UserRole` | None |
 | `Branch`, `Service` | None |
 | `Customer`, `Vehicle` | None |

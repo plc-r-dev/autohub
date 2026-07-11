@@ -37,25 +37,25 @@ This roadmap reflects the **current state** of AutoHub and planned next phases. 
 ### ✅ Onboarding
 
 - Customer onboarding: profile + tenant selection → domain `User`
-- Merchant onboarding: profile + claim existing business OR request new business
-- `MerchantClaim` and `MerchantOnboardingRequest` creation
+- ServiceStore onboarding: profile + claim existing business OR request new business
+- `ServiceStoreClaim` and `ServiceStoreOnboardingRequest` creation
 - Zod validation, server actions
 - Tenant selection from existing active tenants (never auto-created)
 - No RBAC assignment during onboarding
 
 **Documentation:** [onboarding.md](./onboarding.md)
 
-### ✅ Merchant Approval
+### ✅ ServiceStore Approval
 
-- Admin page: `/admin/merchant-requests`
-- List pending `MerchantClaim` and `MerchantOnboardingRequest`
+- Admin page: `/admin/service-store-requests`
+- List pending `ServiceStoreClaim` and `ServiceStoreOnboardingRequest`
 - Approve/reject server actions
-- On approval: link `User.merchantId`, update `User.tenantId`, create `Merchant` (from request)
-- Merchant dashboard (`/merchant/dashboard`) for approved merchants
-- Waiting page (`/merchant/waiting`) for pending merchants
-- Proxy routing for merchant access states
+- On approval: link `User.serviceStoreId`, update `User.tenantId`, create `ServiceStore` (from request)
+- ServiceStore dashboard (`/service-store/dashboard`) for approved serviceStores
+- Waiting page (`/service-store/waiting`) for pending serviceStores
+- Proxy routing for serviceStore access states
 
-**Documentation:** [merchant.md](./merchant.md)
+**Documentation:** [serviceStore.md](./serviceStore.md)
 
 ## Phase summary
 
@@ -68,9 +68,9 @@ gantt
     LINE Login            :done, 2026-07, 1w
     Identity Linking      :done, 2026-07, 1w
     Onboarding            :done, 2026-07, 1w
-    Merchant Approval     :done, 2026-07, 1w
+    ServiceStore Approval     :done, 2026-07, 1w
   section Next
-    Merchant Management   :active, 2026-08, 2w
+    ServiceStore Management   :active, 2026-08, 2w
     Booking               :2026-08, 3w
     Booking Engine        :2026-09, 4w
     RBAC                  :2026-09, 2w
@@ -83,21 +83,21 @@ gantt
 
 ## Next phases
 
-### Merchant Management
+### ServiceStore Management
 
 **Status:** Not started
 
 | Feature | Description |
 |---------|-------------|
-| Merchant CRUD UI | Create, edit, deactivate merchants |
-| Branch management | Add/edit branches per merchant |
+| ServiceStore CRUD UI | Create, edit, deactivate serviceStores |
+| Branch management | Add/edit branches per serviceStore |
 | Service catalog | Manage services per branch |
-| Merchant settings | Business profile, contact info |
-| Operator management | Invite/manage merchant users |
+| ServiceStore settings | Business profile, contact info |
+| Operator management | Invite/manage serviceStore users |
 
-**Dependencies:** Merchant Approval (complete)
+**Dependencies:** ServiceStore Approval (complete)
 
-**Documentation:** [merchant.md](./merchant.md)
+**Documentation:** [serviceStore.md](./serviceStore.md)
 
 ### Booking
 
@@ -108,10 +108,10 @@ gantt
 | `Customer` record creation | Link customers to domain users or LINE |
 | `Vehicle` management | Customer vehicle profiles |
 | Booking creation UI | Customer-facing booking flow |
-| Merchant booking view | View/manage bookings per branch |
+| ServiceStore booking view | View/manage bookings per branch |
 | Booking status transitions | Implement `BookingStatus` workflow |
 
-**Dependencies:** Merchant Management (branches, services), Customer model integration
+**Dependencies:** ServiceStore Management (branches, services), Customer model integration
 
 **Documentation:** [booking.md](./booking.md)
 
@@ -142,7 +142,7 @@ gantt
 | Permission checking | `hasPermission()` helper |
 | Route guards | Role-based route protection |
 | Admin access control | Restrict `/admin/*` routes |
-| Merchant operator roles | Scoped merchant permissions |
+| ServiceStore operator roles | Scoped serviceStore permissions |
 
 **Dependencies:** Identity Linking (complete)
 
@@ -157,7 +157,7 @@ gantt
 | Payment provider integration | Stripe or regional provider |
 | Booking payment | Pay on booking confirmation |
 | Refund handling | Cancellation refunds |
-| Merchant payout | Revenue distribution |
+| ServiceStore payout | Revenue distribution |
 
 **Dependencies:** Booking, Booking Engine
 
@@ -169,10 +169,10 @@ gantt
 |---------|-------------|
 | Email notifications | Booking confirmation, reminders |
 | LINE messaging | LINE push notifications |
-| Merchant alerts | New booking, approval status |
+| ServiceStore alerts | New booking, approval status |
 | Admin alerts | Pending request notifications |
 
-**Dependencies:** Booking, Merchant Approval
+**Dependencies:** Booking, ServiceStore Approval
 
 ### Analytics
 
@@ -180,7 +180,7 @@ gantt
 
 | Feature | Description |
 |---------|-------------|
-| Merchant dashboard metrics | Bookings, revenue, utilization |
+| ServiceStore dashboard metrics | Bookings, revenue, utilization |
 | Platform analytics | Tenant-level reporting |
 | Booking funnel | Conversion tracking |
 | Service popularity | Most booked services |
@@ -191,11 +191,11 @@ gantt
 
 | Item | Priority | Notes |
 |------|----------|-------|
-| RBAC for admin routes | High | `/admin/merchant-requests` is unprotected |
+| RBAC for admin routes | High | `/admin/service-store-requests` is unprotected |
 | `Customer` creation during onboarding | Medium | Only `User` created today |
 | Tenant CRUD / seeding tooling | Medium | Manual DB seeding required |
 | Query-level tenant isolation | Medium | FK only, no middleware enforcement |
-| Rejected merchant re-submission | Low | No flow after rejection |
+| Rejected serviceStore re-submission | Low | No flow after rejection |
 | Remove unused `Geist` import | Low | Lint warning in `layout.tsx` |
 
 ## Schema-ready but not implemented

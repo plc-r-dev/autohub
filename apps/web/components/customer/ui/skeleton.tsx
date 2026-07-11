@@ -4,7 +4,7 @@ export function Skeleton({ className }: { className?: string }) {
   return <div className={cn("animate-pulse rounded-[20px] bg-[#E2E8F0]/70", className)} />;
 }
 
-export function MerchantCardSkeleton() {
+export function ServiceStoreCardSkeleton() {
   return (
     <div className="overflow-hidden rounded-[20px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
       <Skeleton className="h-44 rounded-none" />

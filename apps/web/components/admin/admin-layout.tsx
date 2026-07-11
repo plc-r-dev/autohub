@@ -26,10 +26,10 @@ export function AdminLayout({ title, description, children }: AdminLayoutProps) 
             Dashboard
           </Link>
           <Link
-            href="/admin/merchant-requests"
+            href="/admin/service-store-requests"
             className="border-input hover:bg-muted rounded-md border px-3 py-1.5 text-sm"
           >
-            Merchant requests
+            Service Store requests
           </Link>
           <Link
             href="/admin/billings"

@@ -66,6 +66,36 @@ export const auth = betterAuth({
     }),
     nextCookies(),
   ],
+  // TEMPORARY DEBUG LOGGING — added to diagnose the 500 on POST /api/auth/sign-in/oauth2.
+  // Better Auth's default error response collapses the real error into a generic
+  // INTERNAL_SERVER_ERROR before it reaches the client or the dev log. This hook
+  // logs the raw error (name/message/code/meta/stack) as it actually occurs.
+  // Remove once the root cause is confirmed and fixed.
+  onAPIError: {
+    onError(error) {
+      const err = error as {
+        name?: string;
+        message?: string;
+        code?: unknown;
+        meta?: unknown;
+        stack?: unknown;
+        cause?: unknown;
+      };
+      const details = {
+        name: err?.name ?? (error instanceof Error ? error.name : typeof error),
+        message: err?.message ?? String(error),
+        code: err?.code,
+        meta: err?.meta,
+        cause: err?.cause,
+        stack: err?.stack,
+      };
+      try {
+        console.error("[auth-debug] Better Auth API error:", JSON.stringify(details, null, 2));
+      } catch {
+        console.error("[auth-debug] Better Auth API error (raw, unserializable):", error);
+      }
+    },
+  },
 });
 
 export type Session = typeof auth.$Infer.Session;

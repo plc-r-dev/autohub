@@ -12,7 +12,7 @@ export type BillingGenerationResult = {
   skippedCount: number;
   createdBillings: Array<{
     id: string;
-    merchantId: string;
+    serviceStoreId: string;
   }>;
 };
 
@@ -39,34 +39,34 @@ export async function generateBillingsForPeriod(
       id: true,
       bookingNumber: true,
       bookingDate: true,
-      branch: { select: { merchantId: true } },
+      branch: { select: { serviceStoreId: true } },
     },
   });
 
-  const groupedByMerchant = new Map<
+  const groupedByServiceStore = new Map<
     string,
     Array<{ id: string; bookingNumber: string; bookingDate: Date }>
   >();
 
   for (const booking of completedBookings) {
-    const list = groupedByMerchant.get(booking.branch.merchantId) ?? [];
+    const list = groupedByServiceStore.get(booking.branch.serviceStoreId) ?? [];
     list.push({
       id: booking.id,
       bookingNumber: booking.bookingNumber,
       bookingDate: booking.bookingDate,
     });
-    groupedByMerchant.set(booking.branch.merchantId, list);
+    groupedByServiceStore.set(booking.branch.serviceStoreId, list);
   }
 
   let createdCount = 0;
   let skippedCount = 0;
-  const createdBillings: Array<{ id: string; merchantId: string }> = [];
+  const createdBillings: Array<{ id: string; serviceStoreId: string }> = [];
 
-  for (const [merchantId, bookings] of groupedByMerchant.entries()) {
+  for (const [serviceStoreId, bookings] of groupedByServiceStore.entries()) {
     const existing = await prisma.billing.findUnique({
       where: {
-        merchantId_periodStart_periodEnd: {
-          merchantId,
+        serviceStoreId_periodStart_periodEnd: {
+          serviceStoreId,
           periodStart: input.periodStart,
           periodEnd: input.periodEnd,
         },
@@ -87,7 +87,7 @@ export async function generateBillingsForPeriod(
 
     const created = await prisma.billing.create({
       data: {
-        merchantId,
+        serviceStoreId,
         periodStart: input.periodStart,
         periodEnd: input.periodEnd,
         bookingFee: feeDecimal,
@@ -111,7 +111,7 @@ export async function generateBillingsForPeriod(
     });
 
     createdCount += 1;
-    createdBillings.push({ id: created.id, merchantId });
+    createdBillings.push({ id: created.id, serviceStoreId });
   }
 
   return { createdCount, skippedCount, createdBillings };

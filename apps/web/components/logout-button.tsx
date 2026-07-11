@@ -4,7 +4,11 @@ import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@workspace/ui/components/button";
 
-export function LogoutButton() {
+type LogoutButtonProps = {
+  redirectTo?: string;
+};
+
+export function LogoutButton({ redirectTo = "/login" }: LogoutButtonProps) {
   const router = useRouter();
 
   return (
@@ -14,7 +18,7 @@ export function LogoutButton() {
         await authClient.signOut({
           fetchOptions: {
             onSuccess: () => {
-              router.push("/login");
+              router.push(redirectTo);
               router.refresh();
             },
           },

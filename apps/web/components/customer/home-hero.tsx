@@ -13,7 +13,7 @@ export function HomeHero({ displayName }: HomeHeroProps) {
           Hello, {displayName}
         </h1>
         <p className="mt-4 max-w-lg text-[16px] leading-relaxed text-[#64748B] md:text-[18px]">
-          Book service in under 30 seconds. Wash, detail, coat — trusted merchants near you.
+          Book service in under 30 seconds. Wash, detail, coat — trusted serviceStores near you.
         </p>
       </div>
     </section>

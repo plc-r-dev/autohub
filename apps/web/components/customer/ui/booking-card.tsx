@@ -5,7 +5,7 @@ import { ChevronRight } from "lucide-react";
 
 export type BookingCardData = {
   bookingNumber: string;
-  merchantName: string;
+  serviceStoreName: string;
   bookingDate: Date | string;
   vehiclePlate: string;
   status: string;
@@ -20,7 +20,7 @@ export function BookingCard({ booking }: { booking: BookingCardData }) {
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="truncate text-[18px] font-semibold tracking-tight text-[#0A0A0A]">
-            {booking.merchantName}
+            {booking.serviceStoreName}
           </p>
           <p className="mt-1 text-[13px] text-[#94A3B8]">{booking.bookingNumber}</p>
         </div>

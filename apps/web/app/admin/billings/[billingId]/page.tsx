@@ -3,7 +3,7 @@ import { AdminLayout } from "@/components/admin/admin-layout";
 import { AdminBillingReviewActions } from "@/components/billing/admin-billing-review-actions";
 import { AdminPaymentReviewActions } from "@/components/billing/admin-payment-review-actions";
 import { PaymentSlipPreview } from "@/components/billing/payment-slip-preview";
-import { requireLinkedIdentity } from "@/lib/auth/require-identity";
+import { requireAdminSession } from "@/lib/auth/require-admin";
 import {
   billingPaymentReviewStatusLabel,
   formatBillingCurrency,
@@ -18,7 +18,7 @@ type PageProps = {
 };
 
 export default async function AdminBillingDetailPage({ params }: PageProps) {
-  await requireLinkedIdentity();
+  await requireAdminSession();
   const { billingId } = await params;
   const billing = await getAdminBillingDetail(billingId);
 
@@ -39,7 +39,7 @@ export default async function AdminBillingDetailPage({ params }: PageProps) {
   return (
     <AdminLayout
       title="Billing detail"
-      description={`${billing.merchant.name} · ${formatBillingDate(billing.periodStart)} - ${formatBillingDate(billing.periodEnd)}`}
+      description={`${billing.serviceStore.name} · ${formatBillingDate(billing.periodStart)} - ${formatBillingDate(billing.periodEnd)}`}
     >
       <div className="border-input flex flex-col gap-3 rounded-md border p-4 text-sm">
         <p>Status: {billingStatusLabel(billing.status)}</p>

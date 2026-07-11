@@ -7,7 +7,7 @@ export type ListSearchParams = {
   from?: string;
   to?: string;
   branchId?: string;
-  merchantId?: string;
+  serviceStoreId?: string;
   customerId?: string;
   vehicleId?: string;
 };

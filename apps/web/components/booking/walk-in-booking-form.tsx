@@ -1,13 +1,14 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
-import { Button } from "@workspace/ui/components/button";
 import {
-  FormField,
-  inputClassName,
-  selectClassName,
-  textareaClassName,
-} from "@/components/onboarding/form-field";
+  ServiceStoreButton,
+  ServiceStoreFormField,
+  serviceStoreFormErrorClassName,
+  serviceStoreInputClassName,
+  serviceStoreSelectClassName,
+  serviceStoreTextareaClassName,
+} from "@/components/service-store/ui";
 import { createWalkInBooking, type BookingActionState } from "@/lib/booking/actions";
 import { formatPrice } from "@/lib/booking/format";
 
@@ -53,15 +54,15 @@ export function WalkInBookingForm({ branches }: WalkInBookingFormProps) {
   );
 
   return (
-    <form action={formAction} className="flex max-w-lg flex-col gap-4">
-      {state.error ? <p className="text-destructive text-sm">{state.error}</p> : null}
+    <form action={formAction} className="flex max-w-lg flex-col gap-5">
+      {state.error ? <p className={serviceStoreFormErrorClassName}>{state.error}</p> : null}
 
-      <FormField id="branchId" label="Branch" error={state.fieldErrors?.branchId?.[0]}>
+      <ServiceStoreFormField id="branchId" label="Branch" error={state.fieldErrors?.branchId?.[0]}>
         <select
           id="branchId"
           name="branchId"
           required
-          className={selectClassName}
+          className={serviceStoreSelectClassName}
           value={branchId}
           onChange={(event) => setBranchId(event.target.value)}
         >
@@ -71,20 +72,20 @@ export function WalkInBookingForm({ branches }: WalkInBookingFormProps) {
             </option>
           ))}
         </select>
-      </FormField>
+      </ServiceStoreFormField>
 
-      <FormField id="serviceId" label="Service" error={state.fieldErrors?.serviceId?.[0]}>
-        <select id="serviceId" name="serviceId" required className={selectClassName}>
+      <ServiceStoreFormField id="serviceId" label="Service" error={state.fieldErrors?.serviceId?.[0]}>
+        <select id="serviceId" name="serviceId" required className={serviceStoreSelectClassName}>
           {services.map((service) => (
             <option key={service.id} value={service.id}>
-              {service.name} · {service.duration} min + {service.bufferMinutes} min
-              buffer · {formatPrice(service.price)}
+              {service.name} · {service.duration} min + {service.bufferMinutes} min buffer ·{" "}
+              {formatPrice(service.price)}
             </option>
           ))}
         </select>
-      </FormField>
+      </ServiceStoreFormField>
 
-      <FormField
+      <ServiceStoreFormField
         id="bookingDate"
         label="Date and time"
         error={state.fieldErrors?.bookingDate?.[0]}
@@ -94,12 +95,12 @@ export function WalkInBookingForm({ branches }: WalkInBookingFormProps) {
           name="bookingDate"
           type="datetime-local"
           required
-          className={inputClassName}
+          className={serviceStoreInputClassName}
           defaultValue={nowDateTimeValue()}
         />
-      </FormField>
+      </ServiceStoreFormField>
 
-      <FormField
+      <ServiceStoreFormField
         id="customerType"
         label="Customer type"
         error={state.fieldErrors?.customerType?.[0]}
@@ -108,7 +109,7 @@ export function WalkInBookingForm({ branches }: WalkInBookingFormProps) {
           id="customerType"
           name="customerType"
           required
-          className={selectClassName}
+          className={serviceStoreSelectClassName}
           value={customerType}
           onChange={(event) =>
             setCustomerType(event.target.value as "existing" | "temporary")
@@ -117,9 +118,9 @@ export function WalkInBookingForm({ branches }: WalkInBookingFormProps) {
           <option value="existing">Existing customer</option>
           <option value="temporary">Temporary walk-in customer</option>
         </select>
-      </FormField>
+      </ServiceStoreFormField>
 
-      <FormField
+      <ServiceStoreFormField
         id="vehicleMode"
         label="Vehicle mode"
         error={state.fieldErrors?.vehicleId?.[0]}
@@ -128,7 +129,7 @@ export function WalkInBookingForm({ branches }: WalkInBookingFormProps) {
           id="vehicleMode"
           name="vehicleMode"
           required
-          className={selectClassName}
+          className={serviceStoreSelectClassName}
           value={vehicleMode}
           onChange={(event) =>
             setVehicleMode(event.target.value as "existing" | "new")
@@ -137,10 +138,10 @@ export function WalkInBookingForm({ branches }: WalkInBookingFormProps) {
           <option value="new">Create vehicle for this booking</option>
           <option value="existing">Use existing vehicle by plate</option>
         </select>
-      </FormField>
+      </ServiceStoreFormField>
 
       {customerType === "existing" ? (
-        <FormField
+        <ServiceStoreFormField
           id="customerPhone"
           label="Customer phone"
           error={state.fieldErrors?.customerPhone?.[0]}
@@ -149,34 +150,34 @@ export function WalkInBookingForm({ branches }: WalkInBookingFormProps) {
             id="customerPhone"
             name="customerPhone"
             required
-            className={inputClassName}
+            className={serviceStoreInputClassName}
             placeholder="Phone number on file"
           />
-        </FormField>
+        </ServiceStoreFormField>
       ) : (
         <>
-          <FormField
+          <ServiceStoreFormField
             id="firstName"
             label="First name"
             error={state.fieldErrors?.firstName?.[0]}
           >
-            <input id="firstName" name="firstName" required className={inputClassName} />
-          </FormField>
-          <FormField
+            <input id="firstName" name="firstName" required className={serviceStoreInputClassName} />
+          </ServiceStoreFormField>
+          <ServiceStoreFormField
             id="lastName"
             label="Last name"
             error={state.fieldErrors?.lastName?.[0]}
           >
-            <input id="lastName" name="lastName" required className={inputClassName} />
-          </FormField>
-          <FormField id="phone" label="Phone" error={state.fieldErrors?.phone?.[0]}>
-            <input id="phone" name="phone" className={inputClassName} />
-          </FormField>
+            <input id="lastName" name="lastName" required className={serviceStoreInputClassName} />
+          </ServiceStoreFormField>
+          <ServiceStoreFormField id="phone" label="Phone" error={state.fieldErrors?.phone?.[0]}>
+            <input id="phone" name="phone" className={serviceStoreInputClassName} />
+          </ServiceStoreFormField>
         </>
       )}
 
       {vehicleMode === "existing" ? (
-        <FormField
+        <ServiceStoreFormField
           id="vehicleLicensePlate"
           label="Existing vehicle plate"
           error={state.fieldErrors?.vehicleLicensePlate?.[0]}
@@ -185,13 +186,13 @@ export function WalkInBookingForm({ branches }: WalkInBookingFormProps) {
             id="vehicleLicensePlate"
             name="vehicleLicensePlate"
             required
-            className={inputClassName}
+            className={serviceStoreInputClassName}
             placeholder="Exact customer plate"
           />
-        </FormField>
+        </ServiceStoreFormField>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
-          <FormField
+          <ServiceStoreFormField
             id="vehicleLicensePlate"
             label="License plate"
             error={state.fieldErrors?.vehicleLicensePlate?.[0]}
@@ -200,58 +201,58 @@ export function WalkInBookingForm({ branches }: WalkInBookingFormProps) {
               id="vehicleLicensePlate"
               name="vehicleLicensePlate"
               required
-              className={inputClassName}
+              className={serviceStoreInputClassName}
             />
-          </FormField>
-          <FormField
+          </ServiceStoreFormField>
+          <ServiceStoreFormField
             id="vehicleProvince"
             label="Province"
             error={state.fieldErrors?.vehicleProvince?.[0]}
           >
-            <input id="vehicleProvince" name="vehicleProvince" className={inputClassName} />
-          </FormField>
-          <FormField
+            <input id="vehicleProvince" name="vehicleProvince" className={serviceStoreInputClassName} />
+          </ServiceStoreFormField>
+          <ServiceStoreFormField
             id="vehicleBrand"
             label="Brand"
             error={state.fieldErrors?.vehicleBrand?.[0]}
           >
-            <input id="vehicleBrand" name="vehicleBrand" required className={inputClassName} />
-          </FormField>
-          <FormField
+            <input id="vehicleBrand" name="vehicleBrand" required className={serviceStoreInputClassName} />
+          </ServiceStoreFormField>
+          <ServiceStoreFormField
             id="vehicleModel"
             label="Model"
             error={state.fieldErrors?.vehicleModel?.[0]}
           >
-            <input id="vehicleModel" name="vehicleModel" required className={inputClassName} />
-          </FormField>
-          <FormField id="vehicleYear" label="Year" error={state.fieldErrors?.vehicleYear?.[0]}>
-            <input id="vehicleYear" name="vehicleYear" type="number" className={inputClassName} />
-          </FormField>
-          <FormField
+            <input id="vehicleModel" name="vehicleModel" required className={serviceStoreInputClassName} />
+          </ServiceStoreFormField>
+          <ServiceStoreFormField id="vehicleYear" label="Year" error={state.fieldErrors?.vehicleYear?.[0]}>
+            <input id="vehicleYear" name="vehicleYear" type="number" className={serviceStoreInputClassName} />
+          </ServiceStoreFormField>
+          <ServiceStoreFormField
             id="vehicleColor"
             label="Color"
             error={state.fieldErrors?.vehicleColor?.[0]}
           >
-            <input id="vehicleColor" name="vehicleColor" className={inputClassName} />
-          </FormField>
-          <FormField
+            <input id="vehicleColor" name="vehicleColor" className={serviceStoreInputClassName} />
+          </ServiceStoreFormField>
+          <ServiceStoreFormField
             id="vehicleNotes"
             label="Vehicle notes"
             error={state.fieldErrors?.vehicleNotes?.[0]}
             className="sm:col-span-2"
           >
-            <textarea id="vehicleNotes" name="vehicleNotes" className={textareaClassName} />
-          </FormField>
+            <textarea id="vehicleNotes" name="vehicleNotes" className={serviceStoreTextareaClassName} />
+          </ServiceStoreFormField>
         </div>
       )}
 
-      <FormField id="note" label="Note" error={state.fieldErrors?.note?.[0]}>
-        <textarea id="note" name="note" className={textareaClassName} />
-      </FormField>
+      <ServiceStoreFormField id="note" label="Note" error={state.fieldErrors?.note?.[0]}>
+        <textarea id="note" name="note" className={serviceStoreTextareaClassName} />
+      </ServiceStoreFormField>
 
-      <Button type="submit" disabled={isPending || services.length === 0}>
+      <ServiceStoreButton type="submit" disabled={isPending || services.length === 0}>
         {isPending ? "Creating..." : "Create walk-in booking"}
-      </Button>
+      </ServiceStoreButton>
     </form>
   );
 }

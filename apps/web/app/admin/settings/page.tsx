@@ -1,10 +1,10 @@
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { PlatformSettingsForm } from "@/components/admin/platform-settings-form";
-import { requireLinkedIdentity } from "@/lib/auth/require-identity";
+import { requireAdminSession } from "@/lib/auth/require-admin";
 import { getPlatformSettings } from "@/lib/platform-settings/queries";
 
 export default async function AdminPlatformSettingsPage() {
-  await requireLinkedIdentity();
+  await requireAdminSession();
   const settings = await getPlatformSettings();
 
   return (

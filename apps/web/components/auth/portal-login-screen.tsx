@@ -6,11 +6,12 @@ import { authClient } from "@/lib/auth-client";
 import { Button } from "@workspace/ui/components/button";
 
 type PortalLoginFormProps = {
-  portal: "customer" | "merchant" | "admin";
+  portal: "customer" | "serviceStore" | "admin";
   title: string;
   description: string;
   defaultCallbackUrl: string;
   errorCallbackURL: string;
+  embedded?: boolean;
 };
 
 function PortalLoginForm({
@@ -58,7 +59,7 @@ function PortalLoginForm({
           <span className="text-xs font-medium text-[#6b7c8c]">LINE Official Account</span>
         </div>
         <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-[#06C755] text-2xl font-bold text-white">
-          {portal === "admin" ? "A" : portal === "merchant" ? "M" : "A"}
+          {portal === "admin" ? "A" : portal === "serviceStore" ? "S" : "C"}
         </div>
         <h1 className="text-xl font-semibold text-[#111]">{title}</h1>
         <p className="mt-2 text-sm leading-relaxed text-[#6b7c8c]">{description}</p>
@@ -79,7 +80,20 @@ function PortalLoginForm({
   );
 }
 
-export function PortalLoginScreen(props: PortalLoginFormProps) {
+export function PortalLoginScreen({
+  embedded = false,
+  ...props
+}: PortalLoginFormProps) {
+  const form = (
+    <Suspense>
+      <PortalLoginForm {...props} embedded={embedded} />
+    </Suspense>
+  );
+
+  if (embedded) {
+    return form;
+  }
+
   return (
     <div className="min-h-svh bg-[#f0f2f5]">
       <div
@@ -89,9 +103,7 @@ export function PortalLoginScreen(props: PortalLoginFormProps) {
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
-        <Suspense>
-          <PortalLoginForm {...props} />
-        </Suspense>
+        {form}
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import { getLineClient } from "@/lib/line/line-client";
 import {
   buildBillingMessages,
   buildBookingMessages,
-  buildMerchantApprovedMessages,
+  buildServiceStoreApprovedMessages,
 } from "@/lib/line/message-builder";
 
 export type NotificationSendResult =
@@ -117,7 +117,7 @@ async function sendLineMessages(
 type BookingEventInput = {
   recipientLineUserId: string | null | undefined;
   bookingNumber: string;
-  merchantName: string;
+  serviceStoreName: string;
   bookingDate: Date;
   status: string;
   customerPath?: string;
@@ -134,7 +134,7 @@ export async function sendBookingCreated(input: BookingEventInput) {
       title: "Booking created",
       subtitle: "Your booking has been created and is pending confirmation.",
       bookingNumber: input.bookingNumber,
-      merchantName: input.merchantName,
+      serviceStoreName: input.serviceStoreName,
       bookingDate: input.bookingDate,
       status: input.status,
       deepLinkPath: buildCustomerBookingPath(input.bookingNumber, input.customerPath),
@@ -149,7 +149,7 @@ export async function sendBookingConfirmed(input: BookingEventInput) {
       title: "Booking confirmed",
       subtitle: "Your booking has been confirmed.",
       bookingNumber: input.bookingNumber,
-      merchantName: input.merchantName,
+      serviceStoreName: input.serviceStoreName,
       bookingDate: input.bookingDate,
       status: input.status,
       deepLinkPath: buildCustomerBookingPath(input.bookingNumber, input.customerPath),
@@ -164,7 +164,7 @@ export async function sendBookingReminder(input: BookingEventInput) {
       title: "Booking reminder",
       subtitle: "Your booking starts in 30 minutes.",
       bookingNumber: input.bookingNumber,
-      merchantName: input.merchantName,
+      serviceStoreName: input.serviceStoreName,
       bookingDate: input.bookingDate,
       status: input.status,
       deepLinkPath: buildCustomerBookingPath(input.bookingNumber, input.customerPath),
@@ -183,7 +183,7 @@ export async function sendBookingStarted(input: BookingEventInput) {
       title: "Service started",
       subtitle: "Your booking service has started.",
       bookingNumber: input.bookingNumber,
-      merchantName: input.merchantName,
+      serviceStoreName: input.serviceStoreName,
       bookingDate: input.bookingDate,
       status: input.status,
       deepLinkPath: buildCustomerBookingPath(input.bookingNumber, input.customerPath),
@@ -198,7 +198,7 @@ export async function sendBookingCompleted(input: BookingEventInput) {
       title: "Booking completed",
       subtitle: "Your booking has been completed.",
       bookingNumber: input.bookingNumber,
-      merchantName: input.merchantName,
+      serviceStoreName: input.serviceStoreName,
       bookingDate: input.bookingDate,
       status: input.status,
       deepLinkPath: buildCustomerBookingPath(input.bookingNumber, input.customerPath),
@@ -213,7 +213,7 @@ export async function sendBookingCancelled(input: BookingEventInput) {
       title: "Booking cancelled",
       subtitle: "Your booking has been cancelled.",
       bookingNumber: input.bookingNumber,
-      merchantName: input.merchantName,
+      serviceStoreName: input.serviceStoreName,
       bookingDate: input.bookingDate,
       status: input.status,
       deepLinkPath: buildCustomerBookingPath(input.bookingNumber, input.customerPath),
@@ -228,7 +228,7 @@ export async function sendBookingNoShow(input: BookingEventInput) {
       title: "No-show recorded",
       subtitle: "Your booking was marked as no-show.",
       bookingNumber: input.bookingNumber,
-      merchantName: input.merchantName,
+      serviceStoreName: input.serviceStoreName,
       bookingDate: input.bookingDate,
       status: input.status,
       deepLinkPath: buildCustomerBookingPath(input.bookingNumber, input.customerPath),
@@ -236,18 +236,47 @@ export async function sendBookingNoShow(input: BookingEventInput) {
   );
 }
 
-type MerchantApprovedInput = {
+type ServiceStoreBookingEventInput = {
   recipientLineUserId: string | null | undefined;
-  merchantName: string;
+  bookingNumber: string;
+  serviceStoreName: string;
+  bookingDate: Date;
+  status: string;
 };
 
-export async function sendMerchantApproved(input: MerchantApprovedInput) {
+/**
+ * Store-facing counterpart to sendBookingCancelled — used when a PENDING
+ * booking is auto-cancelled by the pending-booking-expiration job because
+ * the customer never showed up to have it confirmed. Deep-links into the
+ * service-store portal's booking detail page, not the customer one.
+ */
+export async function sendPendingBookingAutoCancelled(input: ServiceStoreBookingEventInput) {
+  return sendLineMessages(
+    { event: "PENDING_BOOKING_AUTO_CANCELLED", recipientLineUserId: input.recipientLineUserId },
+    buildBookingMessages({
+      title: "Booking auto-cancelled",
+      subtitle: "A pending booking was not confirmed in time and was automatically cancelled.",
+      bookingNumber: input.bookingNumber,
+      serviceStoreName: input.serviceStoreName,
+      bookingDate: input.bookingDate,
+      status: input.status,
+      deepLinkPath: `/service-store/bookings/${input.bookingNumber}`,
+    }),
+  );
+}
+
+type ServiceStoreApprovedInput = {
+  recipientLineUserId: string | null | undefined;
+  serviceStoreName: string;
+};
+
+export async function sendServiceStoreApproved(input: ServiceStoreApprovedInput) {
   return sendLineMessages(
     { event: "MERCHANT_APPROVED", recipientLineUserId: input.recipientLineUserId },
-    buildMerchantApprovedMessages({
-      subtitle: "Your merchant account has been approved.",
-      merchantName: input.merchantName,
-      deepLinkPath: "/merchant/dashboard",
+    buildServiceStoreApprovedMessages({
+      subtitle: "Your serviceStore account has been approved.",
+      serviceStoreName: input.serviceStoreName,
+      deepLinkPath: "/service-store/dashboard",
     }),
   );
 }
@@ -256,7 +285,7 @@ type BillingEventInput = {
   recipientLineUserId: string | null | undefined;
   billingId: string;
   billingNumber: string;
-  merchantName: string;
+  serviceStoreName: string;
   status: string;
 };
 
@@ -267,9 +296,9 @@ export async function sendBillingGenerated(input: BillingEventInput) {
       title: "Billing generated",
       subtitle: "A new billing statement has been generated.",
       billingNumber: input.billingNumber,
-      merchantName: input.merchantName,
+      serviceStoreName: input.serviceStoreName,
       status: input.status,
-      deepLinkPath: `/merchant/billings/${input.billingId}`,
+      deepLinkPath: `/service-store/billings/${input.billingId}`,
     }),
   );
 }
@@ -281,9 +310,9 @@ export async function sendBillingApproved(input: BillingEventInput) {
       title: "Billing approved",
       subtitle: "Your billing statement has been approved.",
       billingNumber: input.billingNumber,
-      merchantName: input.merchantName,
+      serviceStoreName: input.serviceStoreName,
       status: input.status,
-      deepLinkPath: `/merchant/billings/${input.billingId}`,
+      deepLinkPath: `/service-store/billings/${input.billingId}`,
     }),
   );
 }
@@ -295,9 +324,9 @@ export async function sendPaymentApproved(input: BillingEventInput) {
       title: "Payment approved",
       subtitle: "Your payment submission has been approved.",
       billingNumber: input.billingNumber,
-      merchantName: input.merchantName,
+      serviceStoreName: input.serviceStoreName,
       status: input.status,
-      deepLinkPath: `/merchant/billings/${input.billingId}`,
+      deepLinkPath: `/service-store/billings/${input.billingId}`,
     }),
   );
 }

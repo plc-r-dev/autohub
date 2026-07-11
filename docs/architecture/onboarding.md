@@ -20,19 +20,19 @@ The proxy redirects unlinked authenticated users to `/onboarding`.
 | Path | Route | Constant |
 |------|-------|----------|
 | Customer | `/onboarding/customer` | `ONBOARDING_TARGET.CUSTOMER` |
-| Merchant | `/onboarding/merchant` | `ONBOARDING_TARGET.MERCHANT` |
+| ServiceStore | `/onboarding/serviceStore` | `ONBOARDING_TARGET.MERCHANT` |
 
 ```mermaid
 flowchart TD
   Start[/onboarding] --> Choice{Choose path}
   Choice -->|Customer| CP[/onboarding/customer]
-  Choice -->|Merchant| MP[/onboarding/merchant]
+  Choice -->|ServiceStore| MP[/onboarding/serviceStore]
   CP --> CF[Profile form]
   MP --> MF[Profile + business form]
   CF --> CU[Create domain User]
   MF --> MU[Create domain User + claim or request]
   CU --> CD[/dashboard]
-  MU --> MW[/merchant/waiting]
+  MU --> MW[/service-store/waiting]
 ```
 
 ## Customer onboarding
@@ -59,17 +59,17 @@ flowchart TD
 |--------|---------|
 | Domain `User` | Yes |
 | `Customer` | No |
-| `Merchant` | No |
+| `ServiceStore` | No |
 | `Tenant` | No |
 | Roles | No |
 
 > **Note:** The `Customer` model exists in the schema but is **not** created during customer onboarding. Only the domain `User` is created.
 
-## Merchant onboarding
+## ServiceStore onboarding
 
-**Route:** `/onboarding/merchant`
+**Route:** `/onboarding/serviceStore`
 
-**Server action:** `completeMerchantOnboarding` (`lib/onboarding/actions.ts`)
+**Server action:** `completeServiceStoreOnboarding` (`lib/onboarding/actions.ts`)
 
 ### Steps
 
@@ -79,82 +79,82 @@ flowchart TD
 
 #### Mode A: Claim existing business
 
-- Search merchants within the selected tenant by name or code
-- Select a merchant from search results
+- Search serviceStores within the selected tenant by name or code
+- Select a serviceStore from search results
 - Server creates:
   - Domain `User` (with `authUserId` linked)
-  - `MerchantClaim` with `status: PENDING`
+  - `ServiceStoreClaim` with `status: PENDING`
 
 #### Mode B: Request new business
 
 - Enter business details: `businessName`, `businessCode`, optional `description`, `phone`, `email`, `website`
 - Server creates:
   - Domain `User` (with `authUserId` linked)
-  - `MerchantOnboardingRequest` with `status: PENDING`
+  - `ServiceStoreOnboardingRequest` with `status: PENDING`
 
-4. Redirect to `/merchant/waiting`
+4. Redirect to `/service-store/waiting`
 
-### What is NOT created during merchant onboarding
+### What is NOT created during serviceStore onboarding
 
 | Record | Created |
 |--------|---------|
-| `Merchant` (new) | No — only on approval of onboarding request |
+| `ServiceStore` (new) | No — only on approval of onboarding request |
 | `Tenant` | No |
-| `User.merchantId` | No — set on approval |
+| `User.serviceStoreId` | No — set on approval |
 | Roles | No |
 
-## Merchant claim
+## ServiceStore claim
 
-A **merchant claim** (`MerchantClaim`) represents a domain user's request to operate an existing merchant.
+A **serviceStore claim** (`ServiceStoreClaim`) represents a domain user's request to operate an existing serviceStore.
 
 | Field | Purpose |
 |-------|---------|
-| `merchantId` | Target merchant |
+| `serviceStoreId` | Target serviceStore |
 | `userId` | Claiming domain user |
 | `status` | `PENDING` → `APPROVED` or `REJECTED` |
 | `submittedAt` | Claim submission time |
 | `reviewedAt` | Set on approval/rejection |
 
-Claims are created during merchant onboarding (claim mode) and reviewed via the admin merchant request management UI.
+Claims are created during serviceStore onboarding (claim mode) and reviewed via the admin serviceStore request management UI.
 
-## Merchant onboarding request
+## ServiceStore onboarding request
 
-A **merchant onboarding request** (`MerchantOnboardingRequest`) represents a request to register a new business.
+A **serviceStore onboarding request** (`ServiceStoreOnboardingRequest`) represents a request to register a new business.
 
 | Field | Purpose |
 |-------|---------|
 | `userId` | Requesting domain user |
 | `tenantId` | Target tenant |
-| `businessName`, `businessCode` | Proposed merchant identity |
+| `businessName`, `businessCode` | Proposed serviceStore identity |
 | `description`, `phone`, `email`, `website` | Optional business details |
 | `status` | `PENDING` → `APPROVED` or `REJECTED` |
 
-On approval, a new `Merchant` record is created from the request data. See [merchant.md](./merchant.md).
+On approval, a new `ServiceStore` record is created from the request data. See [serviceStore.md](./serviceStore.md).
 
 ## Waiting approval flow
 
-After merchant onboarding, the user is redirected to `/merchant/waiting`.
+After serviceStore onboarding, the user is redirected to `/service-store/waiting`.
 
 ```mermaid
 stateDiagram-v2
-  [*] --> Pending: Merchant onboarding complete
-  Pending --> Waiting: /merchant/waiting
+  [*] --> Pending: ServiceStore onboarding complete
+  Pending --> Waiting: /service-store/waiting
   Waiting --> Approved: Admin approves claim or request
   Waiting --> Rejected: Admin rejects
-  Approved --> Dashboard: /merchant/dashboard
-  Rejected --> [*]: No merchantId set
+  Approved --> Dashboard: /service-store/dashboard
+  Rejected --> [*]: No serviceStoreId set
 ```
 
-**Pending detection** (`lib/merchant/access.ts`):
+**Pending detection** (`lib/service-store/access.ts`):
 
-A merchant user is `pending` when:
+A serviceStore user is `pending` when:
 
-- `User.merchantId` is `null`, AND
-- A `PENDING` `MerchantClaim` or `PENDING` `MerchantOnboardingRequest` exists
+- `User.serviceStoreId` is `null`, AND
+- A `PENDING` `ServiceStoreClaim` or `PENDING` `ServiceStoreOnboardingRequest` exists
 
 **Approved detection:**
 
-- `User.merchantId` is set
+- `User.serviceStoreId` is set
 
 The waiting page displays the pending claim or onboarding request details. No automatic polling or notification is implemented.
 
@@ -165,7 +165,7 @@ Input validation uses Zod schemas in `lib/onboarding/schemas.ts`:
 | Schema | Used for |
 |--------|----------|
 | `customerOnboardingSchema` | Customer profile |
-| `merchantOnboardingSchema` | Merchant profile + claim or request (discriminated union on `mode`) |
+| `serviceStoreOnboardingSchema` | ServiceStore profile + claim or request (discriminated union on `mode`) |
 
 ## Tenant selection
 
@@ -190,7 +190,7 @@ flowchart TD
   subgraph Onboarding["Onboarding"]
     Profile[Create domain profile]
     TenantSelect[Select tenant]
-    MerchantReq[Submit claim or request]
+    ServiceStoreReq[Submit claim or request]
   end
 
   subgraph AuthZ["Authorization (NOT IMPLEMENTED)"]
@@ -201,7 +201,7 @@ flowchart TD
   Link -->|No| Onboarding
   Onboarding --> Profile
   Onboarding --> TenantSelect
-  Onboarding --> MerchantReq
+  Onboarding --> ServiceStoreReq
   Profile -.->|Does not touch| RBAC
 ```
 
@@ -211,11 +211,11 @@ flowchart TD
 
 2. **Authorization answers "what can you do?"** — RBAC (`Role`, `UserRole`) is defined in the schema but not assigned or enforced. No permissions are granted during onboarding.
 
-3. **Route guards use identity, not roles** — `proxy.ts` checks session and identity link status. Merchant route guards check merchant access state (`approved` / `pending` / `none`), not roles.
+3. **Route guards use identity, not roles** — `proxy.ts` checks session and identity link status. ServiceStore route guards check serviceStore access state (`approved` / `pending` / `none`), not roles.
 
-4. **Approval is a business workflow, not auth** — Merchant claim/request approval links `User` to `Merchant` and `Tenant`. It does not assign `UserRole` records.
+4. **Approval is a business workflow, not auth** — ServiceStore claim/request approval links `User` to `ServiceStore` and `Tenant`. It does not assign `UserRole` records.
 
-5. **Admin request management has no RBAC gate** — `/admin/merchant-requests` requires a linked identity only. Formal admin access control is planned for the future.
+5. **Admin request management has no RBAC gate** — `/admin/service-store-requests` requires a linked identity only. Formal admin access control is planned for the future.
 
 ## File reference
 
@@ -223,7 +223,7 @@ flowchart TD
 |------|---------|
 | `lib/onboarding/context.ts` | `requireOnboardingContext()`, LINE user ID lookup |
 | `lib/onboarding/schemas.ts` | Zod validation |
-| `lib/onboarding/queries.ts` | Tenant list, merchant search |
+| `lib/onboarding/queries.ts` | Tenant list, serviceStore search |
 | `lib/onboarding/actions.ts` | Server actions |
 | `components/onboarding/*` | Form UI components |
 | `app/onboarding/*` | Onboarding pages |
@@ -235,4 +235,4 @@ flowchart TD
 - `Customer` record creation during customer onboarding
 - Email verification
 - Onboarding progress persistence (multi-session resume)
-- Re-submission flow after rejected merchant requests
+- Re-submission flow after rejected serviceStore requests

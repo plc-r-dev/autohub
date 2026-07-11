@@ -24,7 +24,7 @@ type BookingTemplateInput = {
   title: string;
   subtitle: string;
   bookingNumber: string;
-  merchantName: string;
+  serviceStoreName: string;
   bookingDate: Date;
   status: string;
   deepLinkPath: string;
@@ -39,7 +39,7 @@ export function buildBookingMessages(input: BookingTemplateInput) {
       title: input.title,
       subtitle: input.subtitle,
       bookingNumber: input.bookingNumber,
-      merchantName: input.merchantName,
+      serviceStoreName: input.serviceStoreName,
       dateLabel,
       timeLabel,
       status: input.status,
@@ -52,7 +52,7 @@ export function buildBookingMessages(input: BookingTemplateInput) {
         input.subtitle,
         "",
         `Booking: ${input.bookingNumber}`,
-        `Service shop: ${input.merchantName}`,
+        `Service shop: ${input.serviceStoreName}`,
         `Date: ${dateLabel}`,
         `Time: ${timeLabel}`,
         `Status: ${input.status}`,
@@ -66,7 +66,7 @@ type BillingTemplateInput = {
   title: string;
   subtitle: string;
   billingNumber: string;
-  merchantName: string;
+  serviceStoreName: string;
   status: string;
   deepLinkPath: string;
 };
@@ -78,7 +78,7 @@ export function buildBillingMessages(input: BillingTemplateInput) {
       title: input.title,
       subtitle: input.subtitle,
       billingNumber: input.billingNumber,
-      merchantName: input.merchantName,
+      serviceStoreName: input.serviceStoreName,
       status: input.status,
       deepLink,
     }),
@@ -89,7 +89,7 @@ export function buildBillingMessages(input: BillingTemplateInput) {
         input.subtitle,
         "",
         `Billing: ${input.billingNumber}`,
-        `Merchant: ${input.merchantName}`,
+        `ServiceStore: ${input.serviceStoreName}`,
         `Status: ${input.status}`,
         deepLink,
       ].join("\n"),
@@ -97,18 +97,18 @@ export function buildBillingMessages(input: BillingTemplateInput) {
   } as const;
 }
 
-type MerchantTemplateInput = {
+type ServiceStoreTemplateInput = {
   subtitle: string;
-  merchantName: string;
+  serviceStoreName: string;
   deepLinkPath: string;
 };
 
-export function buildMerchantApprovedMessages(input: MerchantTemplateInput) {
+export function buildServiceStoreApprovedMessages(input: ServiceStoreTemplateInput) {
   const deepLink = toAbsoluteDeepLink(input.deepLinkPath);
   return {
     flex: {
       type: "flex",
-      altText: "AutoHub: Merchant approved",
+      altText: "AutoHub: ServiceStore approved",
       contents: {
         type: "bubble",
         body: {
@@ -118,7 +118,7 @@ export function buildMerchantApprovedMessages(input: MerchantTemplateInput) {
           contents: [
             { type: "text", text: "AutoHub", weight: "bold", size: "xl" },
             { type: "text", text: input.subtitle, wrap: true, size: "sm" },
-            { type: "text", text: `Merchant: ${input.merchantName}`, size: "sm" },
+            { type: "text", text: `ServiceStore: ${input.serviceStoreName}`, size: "sm" },
           ],
         },
         footer: {
@@ -136,7 +136,7 @@ export function buildMerchantApprovedMessages(input: MerchantTemplateInput) {
     },
     text: {
       type: "text",
-      text: `🚗 AutoHub\n${input.subtitle}\nMerchant: ${input.merchantName}\n${deepLink}`,
+      text: `🚗 AutoHub\n${input.subtitle}\nServiceStore: ${input.serviceStoreName}\n${deepLink}`,
     },
   } as const;
 }

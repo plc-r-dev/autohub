@@ -2,11 +2,29 @@ import { redirect } from "next/navigation";
 import { isIdentityLinked, resolveIdentityLink } from "@/lib/auth/identity";
 import { getServerSession } from "@/lib/auth/session";
 import {
-  getMerchantAccessState,
-  isApprovedMerchant,
-  isPendingMerchant,
-} from "@/lib/merchant/access";
+  getServiceStoreAccessState,
+  isApprovedServiceStore,
+  isPendingServiceStore,
+} from "@/lib/service-store/access";
 import { prisma } from "@/lib/prisma";
+
+async function resolveApprovedRedirect(domainUserId: string) {
+  const access = await getServiceStoreAccessState(domainUserId);
+  if (!isApprovedServiceStore(access) || !access.serviceStoreId) {
+    return null;
+  }
+
+  const store = await prisma.serviceStore.findUnique({
+    where: { id: access.serviceStoreId },
+    select: { status: true },
+  });
+
+  if (store?.status === "ONBOARDING") {
+    return "/service-store/setup";
+  }
+
+  return "/service-store/dashboard";
+}
 
 export type OnboardingContext = {
   authUserId: string;
@@ -50,23 +68,26 @@ export async function requireOnboardingContext(): Promise<OnboardingContext> {
   };
 }
 
-/** Merchant portal onboarding — uses the same domain user as the customer profile when present. */
-export async function requireMerchantOnboardingContext(): Promise<OnboardingContext> {
+/** ServiceStore portal onboarding — uses the same domain user as the customer profile when present. */
+export async function requireServiceStoreOnboardingContext(): Promise<OnboardingContext> {
   const session = await getServerSession();
   if (!session) {
-    redirect("/merchant/login?callbackUrl=/merchant/onboarding");
+    redirect("/service-store/login?callbackUrl=/service-store/onboarding");
   }
 
   const identity = await resolveIdentityLink(session.user.id);
   if (isIdentityLinked(identity) && identity.domainUserId) {
-    const merchantAccess = await getMerchantAccessState(identity.domainUserId);
-    if (isApprovedMerchant(merchantAccess)) {
-      redirect("/merchant/dashboard");
+    const serviceStoreAccess = await getServiceStoreAccessState(identity.domainUserId);
+    if (isApprovedServiceStore(serviceStoreAccess)) {
+      const target = await resolveApprovedRedirect(identity.domainUserId);
+      if (target) {
+        redirect(target);
+      }
     }
-    if (isPendingMerchant(merchantAccess)) {
-      redirect("/merchant/waiting");
+    if (isPendingServiceStore(serviceStoreAccess)) {
+      redirect("/service-store/waiting");
     }
-    // Linked customer without merchant profile — continue onboarding on same identity.
+    // Linked customer without serviceStore profile — continue onboarding on same identity.
   }
 
   const lineUserId = await getLineUserId(session.user.id);

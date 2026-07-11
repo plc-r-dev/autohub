@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
-  requireApprovedMerchantUser,
+  requireApprovedServiceStoreUser,
   requireDomainUser,
 } from "@/lib/auth/domain-user";
 import type { BookingStatus } from "@/lib/generated/prisma/client";
@@ -46,20 +46,20 @@ function parseVehicleYear(value?: string): number | null {
 }
 
 function revalidateBookingPaths(bookingNumber: string) {
-  revalidatePath("/merchant/bookings");
-  revalidatePath(`/merchant/bookings/${bookingNumber}`);
+  revalidatePath("/service-store/bookings");
+  revalidatePath(`/service-store/bookings/${bookingNumber}`);
   revalidatePath(`/bookings/${bookingNumber}`);
   revalidatePath("/bookings");
-  revalidatePath("/merchant/dashboard");
+  revalidatePath("/service-store/dashboard");
 }
 
-async function transitionMerchantBooking(
+async function transitionServiceStoreBooking(
   bookingNumber: string,
-  merchantId: string,
+  serviceStoreId: string,
   toStatus: BookingStatus,
 ) {
   const booking = await prisma.booking.findFirst({
-    where: { bookingNumber, branch: { merchantId } },
+    where: { bookingNumber, branch: { serviceStoreId } },
     select: {
       bookingNumber: true,
       status: true,
@@ -71,7 +71,7 @@ async function transitionMerchantBooking(
       },
       branch: {
         select: {
-          merchant: {
+          serviceStore: {
             select: {
               name: true,
             },
@@ -103,7 +103,7 @@ async function transitionMerchantBooking(
   const commonPayload = {
     recipientLineUserId: booking.customer.lineUserId,
     bookingNumber: booking.bookingNumber,
-    merchantName: booking.branch.merchant.name,
+    serviceStoreName: booking.branch.serviceStore.name,
     bookingDate: booking.bookingDate,
     status: toStatus.replaceAll("_", " "),
   };
@@ -282,7 +282,7 @@ export async function createBooking(
       bookingNumber: true,
       bookingDate: true,
       customer: { select: { lineUserId: true } },
-      branch: { select: { merchant: { select: { name: true } } } },
+      branch: { select: { serviceStore: { select: { name: true } } } },
       status: true,
     },
   });
@@ -290,7 +290,7 @@ export async function createBooking(
     await sendBookingCreated({
       recipientLineUserId: bookingNotification.customer.lineUserId,
       bookingNumber: bookingNotification.bookingNumber,
-      merchantName: bookingNotification.branch.merchant.name,
+      serviceStoreName: bookingNotification.branch.serviceStore.name,
       bookingDate: bookingNotification.bookingDate,
       status: bookingNotification.status.replaceAll("_", " "),
     });
@@ -302,7 +302,7 @@ export async function createWalkInBooking(
   _prev: BookingActionState,
   formData: FormData,
 ): Promise<BookingActionState> {
-  const { merchant } = await requireApprovedMerchantUser();
+  const { serviceStore } = await requireApprovedServiceStoreUser();
   const parsed = walkInBookingSchema.safeParse(formDataToObject(formData));
 
   if (!parsed.success) {
@@ -338,7 +338,7 @@ export async function createWalkInBooking(
   }
 
   const branch = await prisma.branch.findFirst({
-    where: { id: input.branchId, merchantId: merchant.id },
+    where: { id: input.branchId, serviceStoreId: serviceStore.id },
     select: { id: true },
   });
 
@@ -483,7 +483,7 @@ export async function createWalkInBooking(
       bookingNumber: true,
       bookingDate: true,
       customer: { select: { lineUserId: true } },
-      branch: { select: { merchant: { select: { name: true } } } },
+      branch: { select: { serviceStore: { select: { name: true } } } },
       status: true,
     },
   });
@@ -491,35 +491,35 @@ export async function createWalkInBooking(
     await sendBookingConfirmed({
       recipientLineUserId: bookingNotification.customer.lineUserId,
       bookingNumber: bookingNotification.bookingNumber,
-      merchantName: bookingNotification.branch.merchant.name,
+      serviceStoreName: bookingNotification.branch.serviceStore.name,
       bookingDate: bookingNotification.bookingDate,
       status: bookingNotification.status.replaceAll("_", " "),
     });
   }
-  redirect(`/merchant/bookings/${booking.bookingNumber}`);
+  redirect(`/service-store/bookings/${booking.bookingNumber}`);
 }
 
 export async function confirmBooking(bookingNumber: string) {
-  const { merchant } = await requireApprovedMerchantUser();
-  return transitionMerchantBooking(bookingNumber, merchant.id, "CONFIRMED");
+  const { serviceStore } = await requireApprovedServiceStoreUser();
+  return transitionServiceStoreBooking(bookingNumber, serviceStore.id, "CONFIRMED");
 }
 
 export async function startBooking(bookingNumber: string) {
-  const { merchant } = await requireApprovedMerchantUser();
-  return transitionMerchantBooking(bookingNumber, merchant.id, "IN_PROGRESS");
+  const { serviceStore } = await requireApprovedServiceStoreUser();
+  return transitionServiceStoreBooking(bookingNumber, serviceStore.id, "IN_PROGRESS");
 }
 
-export async function cancelBookingAsMerchant(bookingNumber: string) {
-  const { merchant } = await requireApprovedMerchantUser();
-  return transitionMerchantBooking(bookingNumber, merchant.id, "CANCELLED");
+export async function cancelBookingAsServiceStore(bookingNumber: string) {
+  const { serviceStore } = await requireApprovedServiceStoreUser();
+  return transitionServiceStoreBooking(bookingNumber, serviceStore.id, "CANCELLED");
 }
 
 export async function completeBooking(bookingNumber: string) {
-  const { merchant } = await requireApprovedMerchantUser();
-  return transitionMerchantBooking(bookingNumber, merchant.id, "COMPLETED");
+  const { serviceStore } = await requireApprovedServiceStoreUser();
+  return transitionServiceStoreBooking(bookingNumber, serviceStore.id, "COMPLETED");
 }
 
 export async function markBookingNoShow(bookingNumber: string) {
-  const { merchant } = await requireApprovedMerchantUser();
-  return transitionMerchantBooking(bookingNumber, merchant.id, "NO_SHOW");
+  const { serviceStore } = await requireApprovedServiceStoreUser();
+  return transitionServiceStoreBooking(bookingNumber, serviceStore.id, "NO_SHOW");
 }

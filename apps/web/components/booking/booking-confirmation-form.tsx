@@ -48,8 +48,8 @@ type ServiceOption = {
 };
 
 type BookingConfirmationFormProps = {
-  merchantId: string;
-  merchantName: string;
+  serviceStoreId: string;
+  serviceStoreName: string;
   branchName: string;
   branchAddress: string | null;
   branchId: string;
@@ -137,8 +137,8 @@ function buildAddVehicleHref(branchId: string, serviceId: string): string {
 }
 
 export function BookingConfirmationForm({
-  merchantId,
-  merchantName,
+  serviceStoreId,
+  serviceStoreName,
   branchName,
   branchAddress,
   branchId,
@@ -240,7 +240,7 @@ export function BookingConfirmationForm({
     : null;
 
   const summaryProps = {
-    merchantName,
+    serviceStoreName,
     branchName,
     vehicleLabel,
     serviceName: service.name,
@@ -269,14 +269,14 @@ export function BookingConfirmationForm({
       <div className="flex flex-col gap-6">
         <Card padding={false} className="overflow-hidden">
           <ServiceShopImage
-            merchantId={merchantId}
-            merchantName={merchantName}
+            serviceStoreId={serviceStoreId}
+            serviceStoreName={serviceStoreName}
             className="h-44 md:h-52"
             sizes="100vw"
           />
           <div className="p-6">
             <SectionTitle title="Service shop" />
-            <p className="text-[22px] font-semibold tracking-tight text-[#0A0A0A]">{merchantName}</p>
+            <p className="text-[22px] font-semibold tracking-tight text-[#0A0A0A]">{serviceStoreName}</p>
             <p className="mt-1 text-[15px] font-medium text-[#0F9B76]">{branchName}</p>
             {branchAddress ? (
               <p className="mt-3 flex items-start gap-2 text-[14px] leading-relaxed text-[#64748B]">

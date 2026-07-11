@@ -222,19 +222,19 @@ flowchart LR
   subgraph DomainLayer["Domain Layer"]
     DU[User]
     T[Tenant]
-    M[Merchant]
+    M[ServiceStore]
   end
 
   AU -.->|authUserId| DU
   DU --> T
-  DU -.->|merchantId| M
+  DU -.->|serviceStoreId| M
 ```
 
 **Reasons for separation:**
 
 1. **Different lifecycles** — Authentication can succeed before a domain profile exists. LINE login creates `AuthUser` immediately; domain `User` is created only during onboarding.
 
-2. **Different responsibilities** — `AuthUser` answers *who signed in*. Domain `User` answers *who they are in AutoHub* (tenant member, merchant operator, profile data).
+2. **Different responsibilities** — `AuthUser` answers *who signed in*. Domain `User` answers *who they are in AutoHub* (tenant member, serviceStore operator, profile data).
 
 3. **Provider independence** — Auth provider details (tokens, provider IDs) stay in `AuthAccount`. Domain logic never depends on OAuth token structure.
 
@@ -252,7 +252,7 @@ flowchart LR
 |-----------|----------|
 | No session | Redirect to `/login` (except `/login`, `/api/auth`) |
 | Session, unlinked identity | Redirect to `/onboarding` (except onboarding paths) |
-| Session, linked identity | Allow application routes; merchant-specific redirects apply |
+| Session, linked identity | Allow application routes; serviceStore-specific redirects apply |
 
 `/api/auth/*` is always allowed through.
 

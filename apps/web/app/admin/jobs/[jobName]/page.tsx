@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminLayout } from "@/components/admin/admin-layout";
-import { requireLinkedIdentity } from "@/lib/auth/require-identity";
+import { requireAdminSession } from "@/lib/auth/require-admin";
 import { ensureJobDefinitionsRegistered } from "@/lib/jobs/definitions";
 import { getJobExecutionLogs, getJobsOverview } from "@/lib/jobs/queries";
 import { getRegisteredJob } from "@/lib/jobs/registry";
@@ -21,7 +21,7 @@ function formatDateTime(value?: Date | null): string {
 }
 
 export default async function AdminJobLogsPage({ params }: PageProps) {
-  await requireLinkedIdentity();
+  await requireAdminSession();
   ensureJobDefinitionsRegistered();
   const { jobName } = await params;
 

@@ -7,8 +7,8 @@ import {
   isSlotCapacityAvailable,
 } from "@/lib/booking/engine/occupancy";
 import { getAvailableSlots } from "@/lib/booking/engine/available-slots";
-import { getMerchantBookingFactsByBranchId } from "@/lib/booking/discovery-queries";
-import { isMerchantBookable } from "@/lib/marketplace/booking-availability";
+import { getServiceStoreBookingFactsByBranchId } from "@/lib/booking/discovery-queries";
+import { isServiceStoreBookable } from "@/lib/marketplace/booking-availability";
 
 export type BookingCreateInput = {
   branchId: string;
@@ -19,8 +19,8 @@ export type BookingCreateInput = {
 
 export type BookingCreateContext = {
   tenantId: string;
-  merchantId: string;
-  merchantName: string;
+  serviceStoreId: string;
+  serviceStoreName: string;
   branchId: string;
   branchName: string;
   serviceId: string;
@@ -52,7 +52,7 @@ async function loadBookingCatalog(
       id: true,
       name: true,
       concurrentCapacity: true,
-      merchant: {
+      serviceStore: {
         select: {
           id: true,
           name: true,
@@ -80,13 +80,13 @@ async function loadBookingCatalog(
   }
 
   if (requireMarketplaceBookable) {
-    const marketplaceFacts = await getMerchantBookingFactsByBranchId(branchId);
-    if (!marketplaceFacts || !isMerchantBookable(marketplaceFacts)) {
+    const marketplaceFacts = await getServiceStoreBookingFactsByBranchId(branchId);
+    if (!marketplaceFacts || !isServiceStoreBookable(marketplaceFacts)) {
       errors.push(MERCHANT_NOT_JOINED_MESSAGE);
     }
   }
 
-  if (branch.merchant.status !== "ACTIVE") {
+  if (branch.serviceStore.status !== "ACTIVE") {
     errors.push("Service shop is not active.");
   }
 
@@ -104,9 +104,9 @@ async function loadBookingCatalog(
   return {
     errors,
     context: {
-      tenantId: branch.merchant.tenantId,
-      merchantId: branch.merchant.id,
-      merchantName: branch.merchant.name,
+      tenantId: branch.serviceStore.tenantId,
+      serviceStoreId: branch.serviceStore.id,
+      serviceStoreName: branch.serviceStore.name,
       branchId: branch.id,
       branchName: branch.name,
       serviceId: service.id,

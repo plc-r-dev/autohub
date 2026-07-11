@@ -3,7 +3,7 @@ import { cn } from "@workspace/ui/lib/utils";
 type ImagePlaceholderProps = {
   label?: string;
   className?: string;
-  variant?: "merchant" | "vehicle" | "hero";
+  variant?: "serviceStore" | "vehicle" | "hero";
 };
 
 function initials(label: string): string {
@@ -16,7 +16,7 @@ function initials(label: string): string {
 export function ImagePlaceholder({
   label = "AutoHub",
   className,
-  variant = "merchant",
+  variant = "serviceStore",
 }: ImagePlaceholderProps) {
   return (
     <div

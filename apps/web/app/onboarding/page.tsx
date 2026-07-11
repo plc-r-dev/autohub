@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
+import { PORTALS } from "@/lib/auth/portals";
 
-/** Legacy customer/merchant hub — merchant portal owns onboarding now. */
 export default function OnboardingHubPage() {
-  redirect("/merchant/onboarding");
+  redirect(PORTALS.serviceStore.onboarding);
 }

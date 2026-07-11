@@ -82,7 +82,7 @@ export function getTimelineUpdateForStatus(
   }
 }
 
-export function getAllowedMerchantActions(
+export function getAllowedServiceStoreActions(
   status: BookingStatus,
 ): BookingStatus[] {
   return ALLOWED_TRANSITIONS[status] ?? [];

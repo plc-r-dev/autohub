@@ -3,8 +3,8 @@
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@/lib/generated/prisma/client";
-import { requireApprovedMerchantUser } from "@/lib/auth/domain-user";
-import { requireLinkedIdentity } from "@/lib/auth/require-identity";
+import { requireApprovedServiceStoreUser } from "@/lib/auth/domain-user";
+import { requireAdminSession } from "@/lib/auth/require-admin";
 import { generateInvoiceNumber, generateReceiptNumber } from "@/lib/billing/numbering";
 import {
   billingGenerationSchema,
@@ -32,15 +32,15 @@ function formDataToObject(formData: FormData): Record<string, FormDataEntryValue
 }
 
 function revalidateBillingPaths(billingId: string) {
-  revalidatePath("/merchant/billings");
-  revalidatePath(`/merchant/billings/${billingId}`);
-  revalidatePath("/merchant/dashboard");
+  revalidatePath("/service-store/billings");
+  revalidatePath(`/service-store/billings/${billingId}`);
+  revalidatePath("/service-store/dashboard");
   revalidatePath("/admin/billings");
   revalidatePath(`/admin/billings/${billingId}`);
 }
 
 async function assertAdminReviewer() {
-  await requireLinkedIdentity();
+  await requireAdminSession();
 }
 
 export async function generateMonthlyBilling(
@@ -75,18 +75,18 @@ export async function generateMonthlyBilling(
   });
 
   revalidatePath("/admin/billings");
-  revalidatePath("/merchant/billings");
+  revalidatePath("/service-store/billings");
 
   if (result.createdBillings.length > 0) {
-    const merchantIds = [...new Set(result.createdBillings.map((row) => row.merchantId))];
+    const serviceStoreIds = [...new Set(result.createdBillings.map((row) => row.serviceStoreId))];
     const [users, billings] = await Promise.all([
       prisma.user.findMany({
         where: {
-          merchantId: { in: merchantIds },
+          serviceStoreId: { in: serviceStoreIds },
           lineUserId: { not: null },
         },
         select: {
-          merchantId: true,
+          serviceStoreId: true,
           lineUserId: true,
         },
       }),
@@ -96,29 +96,29 @@ export async function generateMonthlyBilling(
           id: true,
           invoiceNumber: true,
           status: true,
-          merchant: { select: { id: true, name: true } },
+          serviceStore: { select: { id: true, name: true } },
         },
       }),
     ]);
 
-    const usersByMerchant = new Map<string, string[]>();
+    const usersByServiceStore = new Map<string, string[]>();
     for (const user of users) {
-      if (!user.merchantId || !user.lineUserId) {
+      if (!user.serviceStoreId || !user.lineUserId) {
         continue;
       }
-      const rows = usersByMerchant.get(user.merchantId) ?? [];
+      const rows = usersByServiceStore.get(user.serviceStoreId) ?? [];
       rows.push(user.lineUserId);
-      usersByMerchant.set(user.merchantId, rows);
+      usersByServiceStore.set(user.serviceStoreId, rows);
     }
 
     for (const billing of billings) {
-      const recipients = usersByMerchant.get(billing.merchant.id) ?? [];
+      const recipients = usersByServiceStore.get(billing.serviceStore.id) ?? [];
       for (const recipientLineUserId of recipients) {
         await sendBillingGenerated({
           recipientLineUserId,
           billingId: billing.id,
           billingNumber: billing.invoiceNumber ?? billing.id,
-          merchantName: billing.merchant.name,
+          serviceStoreName: billing.serviceStore.name,
           status: billing.status.replaceAll("_", " "),
         });
       }
@@ -130,13 +130,13 @@ export async function generateMonthlyBilling(
   };
 }
 
-export async function submitBillingAsMerchant(
+export async function submitBillingAsServiceStore(
   billingId: string,
 ): Promise<BillingActionState> {
-  const { merchant } = await requireApprovedMerchantUser();
+  const { serviceStore } = await requireApprovedServiceStoreUser();
 
   const billing = await prisma.billing.findFirst({
-    where: { id: billingId, merchantId: merchant.id },
+    where: { id: billingId, serviceStoreId: serviceStore.id },
     select: { id: true, status: true },
   });
 
@@ -166,10 +166,10 @@ export async function uploadBillingPaymentSlip(
   _prev: BillingActionState,
   formData: FormData,
 ): Promise<BillingActionState> {
-  const { merchant } = await requireApprovedMerchantUser();
+  const { serviceStore } = await requireApprovedServiceStoreUser();
 
   const billing = await prisma.billing.findFirst({
-    where: { id: billingId, merchantId: merchant.id },
+    where: { id: billingId, serviceStoreId: serviceStore.id },
     select: { id: true, status: true },
   });
 
@@ -284,13 +284,13 @@ export async function approveBillingAsAdmin(
     });
   });
 
-  const billingWithMerchant = await prisma.billing.findUnique({
+  const billingWithServiceStore = await prisma.billing.findUnique({
     where: { id: billing.id },
     select: {
       id: true,
       status: true,
       invoiceNumber: true,
-      merchant: {
+      serviceStore: {
         select: {
           id: true,
           name: true,
@@ -300,10 +300,10 @@ export async function approveBillingAsAdmin(
   });
 
   revalidateBillingPaths(billing.id);
-  if (billingWithMerchant) {
+  if (billingWithServiceStore) {
     const users = await prisma.user.findMany({
       where: {
-        merchantId: billingWithMerchant.merchant.id,
+        serviceStoreId: billingWithServiceStore.serviceStore.id,
         lineUserId: { not: null },
       },
       select: { lineUserId: true },
@@ -314,10 +314,10 @@ export async function approveBillingAsAdmin(
       }
       await sendBillingApproved({
         recipientLineUserId: user.lineUserId,
-        billingId: billingWithMerchant.id,
-        billingNumber: billingWithMerchant.invoiceNumber ?? billingWithMerchant.id,
-        merchantName: billingWithMerchant.merchant.name,
-        status: billingWithMerchant.status.replaceAll("_", " "),
+        billingId: billingWithServiceStore.id,
+        billingNumber: billingWithServiceStore.invoiceNumber ?? billingWithServiceStore.id,
+        serviceStoreName: billingWithServiceStore.serviceStore.name,
+        status: billingWithServiceStore.status.replaceAll("_", " "),
       });
     }
   }
@@ -418,13 +418,13 @@ export async function approveBillingPaymentAsAdmin(
     });
   });
 
-  const billingWithMerchant = await prisma.billing.findUnique({
+  const billingWithServiceStore = await prisma.billing.findUnique({
     where: { id: billing.id },
     select: {
       id: true,
       status: true,
       receiptNumber: true,
-      merchant: {
+      serviceStore: {
         select: {
           id: true,
           name: true,
@@ -434,10 +434,10 @@ export async function approveBillingPaymentAsAdmin(
   });
 
   revalidateBillingPaths(billing.id);
-  if (billingWithMerchant) {
+  if (billingWithServiceStore) {
     const users = await prisma.user.findMany({
       where: {
-        merchantId: billingWithMerchant.merchant.id,
+        serviceStoreId: billingWithServiceStore.serviceStore.id,
         lineUserId: { not: null },
       },
       select: { lineUserId: true },
@@ -448,10 +448,10 @@ export async function approveBillingPaymentAsAdmin(
       }
       await sendPaymentApproved({
         recipientLineUserId: user.lineUserId,
-        billingId: billingWithMerchant.id,
-        billingNumber: billingWithMerchant.receiptNumber ?? billingWithMerchant.id,
-        merchantName: billingWithMerchant.merchant.name,
-        status: billingWithMerchant.status.replaceAll("_", " "),
+        billingId: billingWithServiceStore.id,
+        billingNumber: billingWithServiceStore.receiptNumber ?? billingWithServiceStore.id,
+        serviceStoreName: billingWithServiceStore.serviceStore.name,
+        status: billingWithServiceStore.status.replaceAll("_", " "),
       });
     }
   }

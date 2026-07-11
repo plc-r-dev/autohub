@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@/lib/generated/prisma/client";
-import { requireLinkedIdentity } from "@/lib/auth/require-identity";
+import { requireAdminSession } from "@/lib/auth/require-admin";
 import { PLATFORM_SETTINGS_ID } from "@/lib/platform-settings/queries";
 import { platformSettingsSchema } from "@/lib/platform-settings/schemas";
 import { prisma } from "@/lib/prisma";
@@ -22,7 +22,7 @@ export async function updatePlatformSettings(
   formData: FormData,
 ): Promise<PlatformSettingsActionState> {
   try {
-    await requireLinkedIdentity();
+    await requireAdminSession();
   } catch {
     return { error: "Unauthorized." };
   }

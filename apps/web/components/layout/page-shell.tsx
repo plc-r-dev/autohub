@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { LogoutButton } from "@/components/logout-button";
+import { ServiceStorePortalShell } from "@/components/service-store/service-store-portal-shell";
+import { serviceStoreNav } from "@/components/service-store/service-store-nav";
 import { cn } from "@workspace/ui/lib/utils";
 
 type NavItem = {
@@ -12,18 +14,41 @@ type PageShellProps = {
   description?: string;
   nav?: NavItem[];
   backHref?: string;
+  backLabel?: string;
+  actions?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 };
+
+function isServiceStoreNav(nav?: NavItem[]) {
+  return Boolean(nav?.length && nav.every((item) => item.href.startsWith("/service-store")));
+}
 
 export function PageShell({
   title,
   description,
   nav,
   backHref,
+  backLabel,
+  actions,
   children,
   className,
 }: PageShellProps) {
+  if (isServiceStoreNav(nav)) {
+    return (
+      <ServiceStorePortalShell
+        title={title}
+        description={description}
+        backHref={backHref}
+        backLabel={backLabel}
+        actions={actions}
+        className={className}
+      >
+        {children}
+      </ServiceStorePortalShell>
+    );
+  }
+
   return (
     <div className="flex min-h-svh flex-col p-6">
       <div className={cn("mx-auto flex w-full max-w-4xl flex-col gap-6", className)}>
@@ -65,14 +90,7 @@ export function PageShell({
   );
 }
 
-export const merchantNav: NavItem[] = [
-  { href: "/merchant/dashboard", label: "Dashboard" },
-  { href: "/merchant/profile", label: "Profile" },
-  { href: "/merchant/branches", label: "Branches" },
-  { href: "/merchant/bookings", label: "Bookings" },
-  { href: "/merchant/customers", label: "Customers" },
-  { href: "/merchant/billings", label: "Billings" },
-];
+export { serviceStoreNav };
 
 export const customerNav: NavItem[] = [
   { href: "/browse", label: "Home" },

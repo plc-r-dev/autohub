@@ -6,7 +6,7 @@ AutoHub's `apps/web` application does **not** expose a traditional REST API for 
 2. **Next.js App Router pages** — Server-rendered UI
 3. **Server Actions** — Mutations from forms (`"use server"`)
 
-There are no `/api/booking`, `/api/merchant`, or `/api/customer` REST endpoints.
+There are no `/api/booking`, `/api/serviceStore`, or `/api/customer` REST endpoints.
 
 ## Route map (current)
 
@@ -24,18 +24,18 @@ flowchart TD
   subgraph Onboarding
     OB[/onboarding]
     OBC[/onboarding/customer]
-    OBM[/onboarding/merchant]
+    OBM[/onboarding/serviceStore]
   end
 
   subgraph App
     Dash[/dashboard]
-    Mer[/merchant]
-    MerD[/merchant/dashboard]
-    MerW[/merchant/waiting]
+    Mer[/serviceStore]
+    MerD[/service-store/dashboard]
+    MerW[/service-store/waiting]
   end
 
   subgraph Admin
-    Admin[/admin/merchant-requests]
+    Admin[/admin/service-store-requests]
   end
 
   Login --> Auth
@@ -96,55 +96,55 @@ All onboarding routes are **App Router pages** backed by **server actions**. No 
 |-------|------|---------------|-------------------|
 | `/onboarding` | Page | Yes | No (unlinked) |
 | `/onboarding/customer` | Page | Yes | No (unlinked) |
-| `/onboarding/merchant` | Page | Yes | No (unlinked) |
+| `/onboarding/serviceStore` | Page | Yes | No (unlinked) |
 
 ### Server actions
 
 | Action | File | Purpose |
 |--------|------|---------|
 | `completeCustomerOnboarding` | `lib/onboarding/actions.ts` | Create domain `User`, redirect `/dashboard` |
-| `completeMerchantOnboarding` | `lib/onboarding/actions.ts` | Create `User` + claim/request, redirect `/merchant/waiting` |
-| `searchMerchantsAction` | `lib/onboarding/actions.ts` | Search merchants for claim mode |
+| `completeServiceStoreOnboarding` | `lib/onboarding/actions.ts` | Create `User` + claim/request, redirect `/service-store/waiting` |
+| `searchServiceStoresAction` | `lib/onboarding/actions.ts` | Search serviceStores for claim mode |
 
 ### Server queries (not exposed as HTTP)
 
 | Function | File | Purpose |
 |----------|------|---------|
 | `listActiveTenants()` | `lib/onboarding/queries.ts` | Tenant dropdown |
-| `searchMerchants()` | `lib/onboarding/queries.ts` | Merchant search |
+| `searchServiceStores()` | `lib/onboarding/queries.ts` | ServiceStore search |
 
-## Merchant routes
+## ServiceStore routes
 
 | Route | Type | Guard | Purpose |
 |-------|------|-------|---------|
-| `/merchant` | Page | Linked identity | Redirect hub |
-| `/merchant/dashboard` | Page | Approved merchant | Merchant dashboard |
-| `/merchant/waiting` | Page | Pending merchant | Waiting for approval |
+| `/service-store` | Page | Linked identity | Redirect hub |
+| `/service-store/dashboard` | Page | Approved serviceStore | ServiceStore dashboard |
+| `/service-store/waiting` | Page | Pending serviceStore | Waiting for approval |
 
-No `/api/merchant` endpoints exist.
+No `/api/serviceStore` endpoints exist.
 
-### Merchant server actions
+### ServiceStore server actions
 
 | Action | File | Purpose |
 |--------|------|---------|
-| `approveMerchantClaim` | `lib/merchant/actions.ts` | Approve claim |
-| `rejectMerchantClaim` | `lib/merchant/actions.ts` | Reject claim |
-| `approveMerchantOnboardingRequest` | `lib/merchant/actions.ts` | Approve request, create merchant |
-| `rejectMerchantOnboardingRequest` | `lib/merchant/actions.ts` | Reject request |
+| `approveServiceStoreClaim` | `lib/service-store/actions.ts` | Approve claim |
+| `rejectServiceStoreClaim` | `lib/service-store/actions.ts` | Reject claim |
+| `approveServiceStoreOnboardingRequest` | `lib/service-store/actions.ts` | Approve request, create serviceStore |
+| `rejectServiceStoreOnboardingRequest` | `lib/service-store/actions.ts` | Reject request |
 
-### Merchant server queries
+### ServiceStore server queries
 
 | Function | File | Purpose |
 |----------|------|---------|
-| `getMerchantAccessState()` | `lib/merchant/access.ts` | Routing state |
-| `listPendingMerchantClaims()` | `lib/merchant/queries.ts` | Admin list |
-| `listPendingMerchantOnboardingRequests()` | `lib/merchant/queries.ts` | Admin list |
+| `getServiceStoreAccessState()` | `lib/service-store/access.ts` | Routing state |
+| `listPendingServiceStoreClaims()` | `lib/service-store/queries.ts` | Admin list |
+| `listPendingServiceStoreOnboardingRequests()` | `lib/service-store/queries.ts` | Admin list |
 
 ## Admin routes
 
 | Route | Type | Guard | Purpose |
 |-------|------|-------|---------|
-| `/admin/merchant-requests` | Page | Linked identity | List and approve/reject merchant requests |
+| `/admin/service-store-requests` | Page | Linked identity | List and approve/reject serviceStore requests |
 
 > **Note:** No RBAC check. Any linked user can access this page. See [rbac.md](./rbac.md).
 
@@ -155,7 +155,7 @@ Admin actions are invoked via client components calling server actions directly 
 | Route | Type | Guard | Purpose |
 |-------|------|-------|---------|
 | `/` | Page | None | Placeholder home |
-| `/dashboard` | Page | Linked identity, non-merchant | Customer dashboard |
+| `/dashboard` | Page | Linked identity, non-serviceStore | Customer dashboard |
 
 ## Route protection
 
@@ -169,8 +169,8 @@ flowchart TD
   Session -->|No| Login[Redirect /login]
   Session -->|Yes| Identity{Linked?}
   Identity -->|No| Onboard[Redirect /onboarding]
-  Identity -->|Yes| Merchant{Merchant route?}
-  Merchant --> Allow
+  Identity -->|Yes| ServiceStore{ServiceStore route?}
+  ServiceStore --> Allow
 ```
 
 Proxy does not protect server actions directly — actions perform their own session checks.
@@ -198,7 +198,7 @@ The following are **planned** and do not exist:
 | `POST /api/bookings` | Create booking |
 | `GET /api/bookings` | List bookings |
 | `PATCH /api/bookings/:id` | Update booking status |
-| `GET /api/merchants/:id/branches` | Branch catalog |
+| `GET /api/serviceStores/:id/branches` | Branch catalog |
 | `GET /api/branches/:id/services` | Service catalog |
 | `GET /api/availability` | Booking slot availability |
 | `POST /api/customers` | Customer management |
@@ -224,5 +224,5 @@ No payment, notification, or analytics integrations exist.
 
 - [authentication.md](./authentication.md) — Better Auth details
 - [onboarding.md](./onboarding.md) — Onboarding server actions
-- [merchant.md](./merchant.md) — Merchant approval actions
+- [serviceStore.md](./serviceStore.md) — ServiceStore approval actions
 - [roadmap.md](./roadmap.md) — Future API phases

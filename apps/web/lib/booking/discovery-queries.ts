@@ -7,8 +7,10 @@ import {
 import {
   toMarketplaceBookingPresentation,
   type MarketplaceBookingPresentation,
-  type MarketplaceMerchantFacts,
+  type MarketplaceServiceStoreFacts,
 } from "@/lib/marketplace/booking-availability";
+import { evaluateServiceStoreReadiness } from "@/lib/service-store/domain";
+import { buildBookingWizardHref } from "@/lib/booking/wizard";
 
 const marketplaceListSelect = {
   id: true,
@@ -24,11 +26,18 @@ const marketplaceListSelect = {
   claims: {
     select: { status: true },
   },
+  members: {
+    where: { role: "OWNER" },
+    select: { id: true },
+  },
   branches: {
     select: {
       id: true,
       latitude: true,
       longitude: true,
+      operatingHours: {
+        select: { isClosed: true },
+      },
       services: {
         where: { isActive: true },
         select: { id: true },
@@ -37,48 +46,63 @@ const marketplaceListSelect = {
   },
 } as const;
 
-/** Customer browse: all active merchants (claimed and unclaimed). */
-const browseMerchantWhere = {
-  status: "ACTIVE" as const,
+/** Customer browse: all active serviceStores (claimed and unclaimed). */
+const browseServiceStoreWhere = {
+  status: { in: ["ACTIVE", "READY_FOR_BOOKING"] as Array<"ACTIVE" | "READY_FOR_BOOKING"> },
 };
 
-type MarketplaceMerchantRow = {
+type MarketplaceServiceStoreRow = {
   id: string;
   name: string;
   code: string;
   description: string | null;
   phone: string | null;
   email: string | null;
-  status: MarketplaceMerchantFacts["status"];
+  status: MarketplaceServiceStoreFacts["status"];
   tenant: { name: string; code?: string };
   claims: Array<{ status: "PENDING" | "APPROVED" | "REJECTED" }>;
+  members: Array<{ id: string }>;
   branches: Array<{
     id: string;
     latitude: { toString(): string } | null;
     longitude: { toString(): string } | null;
+    operatingHours: Array<{ isClosed: boolean }>;
     services: Array<{ id: string }>;
   }>;
 };
 
-function toFacts(row: MarketplaceMerchantRow): MarketplaceMerchantFacts {
-  const activeBranchCount = row.branches.filter(
-    (branch) => branch.services.length > 0,
-  ).length;
-  const activeServiceCount = row.branches.reduce(
+function toFacts(row: MarketplaceServiceStoreRow): MarketplaceServiceStoreFacts {
+  const branchesWithServices = row.branches.filter((branch) => branch.services.length > 0);
+  const activeBranchCount = branchesWithServices.length;
+  const activeServiceCount = branchesWithServices.reduce(
     (total, branch) => total + branch.services.length,
     0,
   );
+  const branchesWithOpenHoursCount = branchesWithServices.filter((branch) =>
+    branch.operatingHours.some((hour) => !hour.isClosed),
+  ).length;
+
+  const readiness = evaluateServiceStoreReadiness({
+    status: row.status,
+    ownerCount: row.members.length,
+    branchCount: row.branches.length,
+    activeServiceCount,
+    branchesWithOpenHoursCount,
+    hasContactInfo: Boolean(row.phone?.trim() || row.email?.trim()),
+  });
 
   return {
     status: row.status,
     hasApprovedClaim: row.claims.some((claim) => claim.status === "APPROVED"),
     hasPendingClaim: row.claims.some((claim) => claim.status === "PENDING"),
+    hasOwnerMember: row.members.length > 0,
     activeBranchCount,
     activeServiceCount,
+    readinessStatus: readiness.status,
   };
 }
 
-function resolveBookHref(row: MarketplaceMerchantRow): string {
+function resolveBookHref(row: MarketplaceServiceStoreRow): string {
   const firstBranch = row.branches.find((branch) => branch.services.length > 0);
   const firstService = firstBranch?.services[0];
 
@@ -86,10 +110,15 @@ function resolveBookHref(row: MarketplaceMerchantRow): string {
     return `/browse/${row.id}`;
   }
 
-  return `/bookings/new?branchId=${firstBranch.id}&serviceId=${firstService.id}`;
+  return buildBookingWizardHref({
+    serviceStoreId: row.id,
+    branchId: firstBranch.id,
+    serviceId: firstService.id,
+    step: "vehicle",
+  });
 }
 
-export type MarketplaceMerchantListItem = {
+export type MarketplaceServiceStoreListItem = {
   id: string;
   name: string;
   code: string;
@@ -105,7 +134,7 @@ export type MarketplaceMerchantListItem = {
 };
 
 function computeMinBranchDistanceKm(
-  row: MarketplaceMerchantRow,
+  row: MarketplaceServiceStoreRow,
   refLat: number,
   refLng: number,
 ): number | null {
@@ -131,10 +160,10 @@ function computeMinBranchDistanceKm(
 }
 
 function toListItem(
-  row: MarketplaceMerchantRow,
+  row: MarketplaceServiceStoreRow,
   refLat: number,
   refLng: number,
-): MarketplaceMerchantListItem {
+): MarketplaceServiceStoreListItem {
   const facts = toFacts(row);
   return {
     id: row.id,
@@ -152,7 +181,7 @@ function toListItem(
   };
 }
 
-type BrowseMerchantListParams = {
+type BrowseServiceStoreListParams = {
   q?: string;
   page: number;
   pageSize: number;
@@ -163,11 +192,11 @@ type BrowseMerchantListParams = {
   nearbyRadiusKm?: number;
 };
 
-function sortBrowseMerchants(
-  items: MarketplaceMerchantListItem[],
+function sortBrowseServiceStores(
+  items: MarketplaceServiceStoreListItem[],
   sort: "asc" | "desc",
   nearby: boolean,
-): MarketplaceMerchantListItem[] {
+): MarketplaceServiceStoreListItem[] {
   return [...items].sort((a, b) => {
     if (a.hasApprovedClaim !== b.hasApprovedClaim) {
       return a.hasApprovedClaim ? -1 : 1;
@@ -198,24 +227,24 @@ function buildSearchWhere(keyword?: string) {
   };
 }
 
-/** Customer browse: all active merchants. */
-export async function listBrowseMerchants() {
-  const rows = await prisma.merchant.findMany({
-    where: browseMerchantWhere,
+/** Customer browse: all active serviceStores. */
+export async function listBrowseServiceStores() {
+  const rows = await prisma.serviceStore.findMany({
+    where: browseServiceStoreWhere,
     select: marketplaceListSelect,
     orderBy: { name: "asc" },
   });
 
   const items = rows.map((row) =>
-    toListItem(row as MarketplaceMerchantRow, BANGKOK_CENTER.lat, BANGKOK_CENTER.lng),
+    toListItem(row as MarketplaceServiceStoreRow, BANGKOK_CENTER.lat, BANGKOK_CENTER.lng),
   );
 
-  return sortBrowseMerchants(items, "asc", false);
+  return sortBrowseServiceStores(items, "asc", false);
 }
 
-export async function listBrowseMerchantsPaginated(params: BrowseMerchantListParams) {
+export async function listBrowseServiceStoresPaginated(params: BrowseServiceStoreListParams) {
   const where = {
-    ...browseMerchantWhere,
+    ...browseServiceStoreWhere,
     ...buildSearchWhere(params.q),
   };
 
@@ -224,13 +253,13 @@ export async function listBrowseMerchantsPaginated(params: BrowseMerchantListPar
   const nearbyRadiusKm = params.nearbyRadiusKm ?? DEFAULT_NEARBY_RADIUS_KM;
   const nearby = params.nearby ?? false;
 
-  const rows = await prisma.merchant.findMany({
+  const rows = await prisma.serviceStore.findMany({
     where,
     select: marketplaceListSelect,
     orderBy: { name: params.sort },
   });
 
-  let items = rows.map((row) => toListItem(row as MarketplaceMerchantRow, refLat, refLng));
+  let items = rows.map((row) => toListItem(row as MarketplaceServiceStoreRow, refLat, refLng));
 
   if (nearby) {
     items = items.filter(
@@ -238,7 +267,7 @@ export async function listBrowseMerchantsPaginated(params: BrowseMerchantListPar
     );
   }
 
-  items = sortBrowseMerchants(items, params.sort, nearby);
+  items = sortBrowseServiceStores(items, params.sort, nearby);
 
   const totalCount = items.length;
   const start = (params.page - 1) * params.pageSize;
@@ -250,7 +279,7 @@ export async function listBrowseMerchantsPaginated(params: BrowseMerchantListPar
   };
 }
 
-export type MarketplaceMerchantDetail = MarketplaceMerchantListItem & {
+export type MarketplaceServiceStoreDetail = MarketplaceServiceStoreListItem & {
   website: string | null;
   branches: Array<{
     id: string;
@@ -262,11 +291,11 @@ export type MarketplaceMerchantDetail = MarketplaceMerchantListItem & {
   }>;
 };
 
-export async function getBrowseMerchant(
-  merchantId: string,
-): Promise<MarketplaceMerchantDetail | null> {
-  const row = await prisma.merchant.findFirst({
-    where: { id: merchantId },
+export async function getBrowseServiceStore(
+  serviceStoreId: string,
+): Promise<MarketplaceServiceStoreDetail | null> {
+  const row = await prisma.serviceStore.findFirst({
+    where: { id: serviceStoreId },
     select: {
       ...marketplaceListSelect,
       website: true,
@@ -279,6 +308,9 @@ export async function getBrowseMerchant(
           address: true,
           latitude: true,
           longitude: true,
+          operatingHours: {
+            select: { isClosed: true },
+          },
           services: {
             where: { isActive: true },
             select: { id: true },
@@ -294,7 +326,7 @@ export async function getBrowseMerchant(
   }
 
   const listItem = toListItem(
-    row as MarketplaceMerchantRow,
+    row as MarketplaceServiceStoreRow,
     BANGKOK_CENTER.lat,
     BANGKOK_CENTER.lng,
   );
@@ -311,7 +343,7 @@ export type MarketplaceBranchDetail = {
   name: string;
   phone: string | null;
   address: string | null;
-  merchant: {
+  serviceStore: {
     id: string;
     name: string;
     code: string;
@@ -329,13 +361,13 @@ export type MarketplaceBranchDetail = {
 };
 
 export async function getBrowseBranch(
-  merchantId: string,
+  serviceStoreId: string,
   branchId: string,
 ): Promise<MarketplaceBranchDetail | null> {
   const branch = await prisma.branch.findFirst({
     where: {
       id: branchId,
-      merchantId,
+      serviceStoreId,
     },
     select: {
       id: true,
@@ -343,7 +375,7 @@ export async function getBrowseBranch(
       name: true,
       phone: true,
       address: true,
-      merchant: {
+      serviceStore: {
         select: marketplaceListSelect,
       },
       services: {
@@ -365,8 +397,8 @@ export async function getBrowseBranch(
     return null;
   }
 
-  const merchantItem = toListItem(
-    branch.merchant as MarketplaceMerchantRow,
+  const serviceStoreItem = toListItem(
+    branch.serviceStore as MarketplaceServiceStoreRow,
     BANGKOK_CENTER.lat,
     BANGKOK_CENTER.lng,
   );
@@ -377,22 +409,22 @@ export async function getBrowseBranch(
     name: branch.name,
     phone: branch.phone,
     address: branch.address,
-    merchant: {
-      id: merchantItem.id,
-      name: merchantItem.name,
-      code: merchantItem.code,
-      hasApprovedClaim: merchantItem.hasApprovedClaim,
-      booking: merchantItem.booking,
+    serviceStore: {
+      id: serviceStoreItem.id,
+      name: serviceStoreItem.name,
+      code: serviceStoreItem.code,
+      hasApprovedClaim: serviceStoreItem.hasApprovedClaim,
+      booking: serviceStoreItem.booking,
     },
     services: branch.services,
   };
 }
 
-export async function getMerchantBookingFactsByBranchId(branchId: string) {
+export async function getServiceStoreBookingFactsByBranchId(branchId: string) {
   const branch = await prisma.branch.findUnique({
     where: { id: branchId },
     select: {
-      merchant: {
+      serviceStore: {
         select: marketplaceListSelect,
       },
     },
@@ -402,5 +434,5 @@ export async function getMerchantBookingFactsByBranchId(branchId: string) {
     return null;
   }
 
-  return toFacts(branch.merchant as MarketplaceMerchantRow);
+  return toFacts(branch.serviceStore as MarketplaceServiceStoreRow);
 }

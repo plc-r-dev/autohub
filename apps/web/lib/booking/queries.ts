@@ -35,7 +35,7 @@ export async function getCustomerBookings(customerId: string) {
       branch: {
         select: {
           name: true,
-          merchant: { select: { name: true } },
+          serviceStore: { select: { name: true } },
         },
       },
     },
@@ -66,7 +66,7 @@ export async function getCustomerBookingsPaginated(
             { branch: { name: { contains: keyword, mode: "insensitive" as const } } },
             {
               branch: {
-                merchant: { name: { contains: keyword, mode: "insensitive" as const } },
+                serviceStore: { name: { contains: keyword, mode: "insensitive" as const } },
               },
             },
             { vehicle: { licensePlate: { contains: keyword, mode: "insensitive" as const } } },
@@ -84,7 +84,7 @@ export async function getCustomerBookingsPaginated(
         branch: {
           select: {
             name: true,
-            merchant: { select: { name: true } },
+            serviceStore: { select: { name: true } },
           },
         },
       },
@@ -108,7 +108,7 @@ export async function getCustomerBooking(
         select: {
           name: true,
           address: true,
-          merchant: { select: { name: true, phone: true } },
+          serviceStore: { select: { name: true, phone: true } },
         },
       },
       vehicle: true,
@@ -121,17 +121,17 @@ export async function getCustomerBooking(
   });
 }
 
-export async function getMerchantBookings(merchantId: string) {
+export async function getServiceStoreBookings(serviceStoreId: string) {
   return prisma.booking.findMany({
     where: {
-      branch: { merchantId },
+      branch: { serviceStoreId },
     },
     select: bookingListSelect,
     orderBy: { bookingDate: "desc" },
   });
 }
 
-type MerchantBookingListParams = {
+type ServiceStoreBookingListParams = {
   q?: string;
   status?: BookingStatus;
   branchId?: string;
@@ -142,14 +142,14 @@ type MerchantBookingListParams = {
   sort: "asc" | "desc";
 };
 
-export async function getMerchantBookingsPaginated(
-  merchantId: string,
-  params: MerchantBookingListParams,
+export async function getServiceStoreBookingsPaginated(
+  serviceStoreId: string,
+  params: ServiceStoreBookingListParams,
 ) {
   const keyword = params.q?.trim();
   const where = {
     branch: {
-      merchantId,
+      serviceStoreId,
       ...(params.branchId ? { id: params.branchId } : {}),
     },
     ...(params.status ? { status: params.status } : {}),
@@ -187,14 +187,14 @@ export async function getMerchantBookingsPaginated(
   return { totalCount, rows };
 }
 
-export async function getMerchantBooking(
+export async function getServiceStoreBooking(
   bookingNumber: string,
-  merchantId: string,
+  serviceStoreId: string,
 ) {
   return prisma.booking.findFirst({
     where: {
       bookingNumber,
-      branch: { merchantId },
+      branch: { serviceStoreId },
     },
     include: {
       customer: true,
@@ -219,12 +219,12 @@ export function getTodayBounds() {
   return { start, end };
 }
 
-export async function getMerchantTodaysBookings(merchantId: string) {
+export async function getServiceStoreTodaysBookings(serviceStoreId: string) {
   const { start, end } = getTodayBounds();
 
   return prisma.booking.findMany({
     where: {
-      branch: { merchantId },
+      branch: { serviceStoreId },
       bookingDate: {
         gte: start,
         lte: end,

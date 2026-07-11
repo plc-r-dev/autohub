@@ -4,21 +4,21 @@ import { prisma } from "@/lib/prisma";
 export type ReportFilters = {
   from?: Date;
   to?: Date;
-  merchantId?: string;
+  serviceStoreId?: string;
   branchId?: string;
   bookingStatus?: string;
 };
 
 export type DashboardCardMetrics = {
-  totalMerchants: number;
-  activeMerchants: number;
+  totalServiceStores: number;
+  activeServiceStores: number;
   totalCustomers: number;
   totalVehicles: number;
   totalBookings: number;
   todaysBookings: number;
   todaysRevenue: number;
   outstandingBilling: number;
-  pendingMerchantApproval: number;
+  pendingServiceStoreApproval: number;
   pendingBillingApproval: number;
   pendingPaymentReview: number;
 };
@@ -47,8 +47,8 @@ function buildBookingFilterSql(filters: ReportFilters): Prisma.Sql {
   if (filters.to) {
     conditions.push(Prisma.sql`b."bookingDate" <= ${filters.to}`);
   }
-  if (filters.merchantId) {
-    conditions.push(Prisma.sql`br."merchantId" = ${filters.merchantId}`);
+  if (filters.serviceStoreId) {
+    conditions.push(Prisma.sql`br."serviceStoreId" = ${filters.serviceStoreId}`);
   }
   if (filters.branchId) {
     conditions.push(Prisma.sql`b."branchId" = ${filters.branchId}`);
@@ -68,10 +68,10 @@ function buildBookingFilterSql(filters: ReportFilters): Prisma.Sql {
 }
 
 export async function getPlatformDashboardCardMetrics(): Promise<DashboardCardMetrics> {
-  const [totalMerchants, activeMerchants, totalCustomers, totalVehicles, totalBookings] =
+  const [totalServiceStores, activeServiceStores, totalCustomers, totalVehicles, totalBookings] =
     await Promise.all([
-      prisma.merchant.count(),
-      prisma.merchant.count({ where: { status: "ACTIVE" } }),
+      prisma.serviceStore.count(),
+      prisma.serviceStore.count({ where: { status: "ACTIVE" } }),
       prisma.customer.count(),
       prisma.vehicle.count(),
       prisma.booking.count(),
@@ -100,8 +100,8 @@ export async function getPlatformDashboardCardMetrics(): Promise<DashboardCardMe
         where: { status: { not: "PAID" } },
         _sum: { total: true },
       }),
-      prisma.merchantClaim.count({ where: { status: "PENDING" } }),
-      prisma.merchantOnboardingRequest.count({ where: { status: "PENDING" } }),
+      prisma.serviceStoreClaim.count({ where: { status: "PENDING" } }),
+      prisma.serviceStoreOnboardingRequest.count({ where: { status: "PENDING" } }),
       prisma.billing.count({ where: { status: "SUBMITTED" } }),
       prisma.billingPayment.count({
         where: {
@@ -112,15 +112,15 @@ export async function getPlatformDashboardCardMetrics(): Promise<DashboardCardMe
     ]);
 
   return {
-    totalMerchants,
-    activeMerchants,
+    totalServiceStores,
+    activeServiceStores,
     totalCustomers,
     totalVehicles,
     totalBookings,
     todaysBookings,
     todaysRevenue: Number(todaysRevenueRaw._sum.unitPrice ?? 0),
     outstandingBilling: Number(outstandingBillingRaw._sum.total ?? 0),
-    pendingMerchantApproval: pendingClaims + pendingRequests,
+    pendingServiceStoreApproval: pendingClaims + pendingRequests,
     pendingBillingApproval,
     pendingPaymentReview,
   };
@@ -165,11 +165,11 @@ export async function getBillingPaidVsOutstanding(): Promise<{ paid: number; out
   };
 }
 
-export async function getMerchantGrowthMonthly(): Promise<Array<{ bucket: string; count: number }>> {
+export async function getServiceStoreGrowthMonthly(): Promise<Array<{ bucket: string; count: number }>> {
   const rows = await prisma.$queryRaw<CountRow[]>(Prisma.sql`
     SELECT to_char(date_trunc('month', m."createdAt"), 'YYYY-MM') AS bucket,
            COUNT(*)::bigint AS count
-    FROM "Merchant" m
+    FROM "ServiceStore" m
     GROUP BY 1
     ORDER BY 1 ASC
   `);
@@ -177,7 +177,7 @@ export async function getMerchantGrowthMonthly(): Promise<Array<{ bucket: string
   return rows.map((row) => ({ bucket: row.bucket, count: Number(row.count) }));
 }
 
-export async function getMerchantDashboardMetrics(merchantId: string) {
+export async function getServiceStoreDashboardMetrics(serviceStoreId: string) {
   const todayStart = startOfToday();
   const todayEnd = endOfToday();
 
@@ -186,7 +186,7 @@ export async function getMerchantDashboardMetrics(merchantId: string) {
       prisma.booking.groupBy({
         by: ["status"],
         where: {
-          branch: { merchantId },
+          branch: { serviceStoreId },
           bookingDate: { gte: todayStart, lte: todayEnd },
         },
         _count: { _all: true },
@@ -194,7 +194,7 @@ export async function getMerchantDashboardMetrics(merchantId: string) {
       prisma.bookingItem.aggregate({
         where: {
           booking: {
-            branch: { merchantId },
+            branch: { serviceStoreId },
             status: "COMPLETED",
             completedAt: { gte: todayStart, lte: todayEnd },
           },
@@ -202,11 +202,11 @@ export async function getMerchantDashboardMetrics(merchantId: string) {
         _sum: { unitPrice: true },
       }),
       prisma.billing.aggregate({
-        where: { merchantId, status: { not: "PAID" } },
+        where: { serviceStoreId, status: { not: "PAID" } },
         _sum: { total: true },
       }),
       prisma.booking.findMany({
-        where: { branch: { merchantId } },
+        where: { branch: { serviceStoreId } },
         select: {
           bookingNumber: true,
           bookingDate: true,
@@ -219,7 +219,7 @@ export async function getMerchantDashboardMetrics(merchantId: string) {
       }),
       prisma.booking.findMany({
         where: {
-          branch: { merchantId },
+          branch: { serviceStoreId },
           bookingDate: { gte: new Date() },
           status: { in: ["PENDING", "CONFIRMED", "IN_PROGRESS"] },
         },
@@ -240,7 +240,7 @@ export async function getMerchantDashboardMetrics(merchantId: string) {
         JOIN "Booking" b ON b."id" = bi."bookingId"
         JOIN "Service" s ON s."id" = bi."serviceId"
         JOIN "Branch" br ON br."id" = b."branchId"
-        WHERE br."merchantId" = ${merchantId}
+        WHERE br."serviceStoreId" = ${serviceStoreId}
           AND b."status" = 'COMPLETED'
           AND b."bookingDate" >= now() - interval '30 days'
         GROUP BY s."name"
@@ -255,7 +255,7 @@ export async function getMerchantDashboardMetrics(merchantId: string) {
         FROM "Booking" b
         JOIN "Customer" c ON c."id" = b."customerId"
         JOIN "Branch" br ON br."id" = b."branchId"
-        WHERE br."merchantId" = ${merchantId}
+        WHERE br."serviceStoreId" = ${serviceStoreId}
         GROUP BY c."id", c."firstName", c."lastName"
         ORDER BY "lastBookingDate" DESC
         LIMIT 8
@@ -316,7 +316,7 @@ export async function getCustomerDashboardMetrics(customerId: string) {
         bookingNumber: true,
         bookingDate: true,
         status: true,
-        branch: { select: { name: true, merchant: { select: { name: true } } } },
+        branch: { select: { name: true, serviceStore: { select: { name: true } } } },
         vehicle: { select: { licensePlate: true } },
       },
       orderBy: { bookingDate: "asc" },
@@ -328,7 +328,7 @@ export async function getCustomerDashboardMetrics(customerId: string) {
         bookingNumber: true,
         bookingDate: true,
         status: true,
-        branch: { select: { name: true, merchant: { select: { name: true } } } },
+        branch: { select: { name: true, serviceStore: { select: { name: true } } } },
         vehicle: { select: { licensePlate: true } },
       },
       orderBy: { bookingDate: "desc" },
@@ -364,7 +364,7 @@ export async function getReportData(filters: ReportFilters) {
       bookingNumber: string;
       bookingDate: Date;
       status: string;
-      merchantName: string;
+      serviceStoreName: string;
       branchName: string;
       customerName: string;
       licensePlate: string;
@@ -373,14 +373,14 @@ export async function getReportData(filters: ReportFilters) {
       SELECT b."bookingNumber",
              b."bookingDate",
              b."status"::text AS status,
-             m."name" AS "merchantName",
+             m."name" AS "serviceStoreName",
              br."name" AS "branchName",
              c."firstName" || ' ' || c."lastName" AS "customerName",
              v."licensePlate" AS "licensePlate",
              COALESCE(SUM(bi."unitPrice" * bi."quantity"), 0)::numeric AS "totalAmount"
       FROM "Booking" b
       JOIN "Branch" br ON br."id" = b."branchId"
-      JOIN "Merchant" m ON m."id" = br."merchantId"
+      JOIN "ServiceStore" m ON m."id" = br."serviceStoreId"
       JOIN "Customer" c ON c."id" = b."customerId"
       JOIN "Vehicle" v ON v."id" = b."vehicleId"
       LEFT JOIN "BookingItem" bi ON bi."bookingId" = b."id"
@@ -391,22 +391,22 @@ export async function getReportData(filters: ReportFilters) {
     `),
     prisma.$queryRaw<Array<{
       billingId: string;
-      merchantName: string;
+      serviceStoreName: string;
       periodStart: Date;
       periodEnd: Date;
       status: string;
       total: Prisma.Decimal;
     }>>(Prisma.sql`
       SELECT bl."id" AS "billingId",
-             m."name" AS "merchantName",
+             m."name" AS "serviceStoreName",
              bl."periodStart",
              bl."periodEnd",
              bl."status"::text AS status,
              bl."total"
       FROM "Billing" bl
-      JOIN "Merchant" m ON m."id" = bl."merchantId"
+      JOIN "ServiceStore" m ON m."id" = bl."serviceStoreId"
       WHERE
-        (${filters.merchantId ?? null}::text IS NULL OR bl."merchantId" = ${filters.merchantId ?? null})
+        (${filters.serviceStoreId ?? null}::text IS NULL OR bl."serviceStoreId" = ${filters.serviceStoreId ?? null})
         AND (${filters.from ?? null}::timestamp IS NULL OR bl."periodStart" >= ${filters.from ?? null})
         AND (${filters.to ?? null}::timestamp IS NULL OR bl."periodEnd" <= ${filters.to ?? null})
       ORDER BY bl."periodStart" DESC
@@ -414,21 +414,21 @@ export async function getReportData(filters: ReportFilters) {
     `),
     prisma.$queryRaw<Array<{
       billingId: string;
-      merchantName: string;
+      serviceStoreName: string;
       paymentDate: Date;
       amount: Prisma.Decimal;
       reviewStatus: string;
     }>>(Prisma.sql`
       SELECT bl."id" AS "billingId",
-             m."name" AS "merchantName",
+             m."name" AS "serviceStoreName",
              bp."paymentDate",
              bp."amount",
              bp."reviewStatus"::text AS "reviewStatus"
       FROM "BillingPayment" bp
       JOIN "Billing" bl ON bl."id" = bp."billingId"
-      JOIN "Merchant" m ON m."id" = bl."merchantId"
+      JOIN "ServiceStore" m ON m."id" = bl."serviceStoreId"
       WHERE
-        (${filters.merchantId ?? null}::text IS NULL OR bl."merchantId" = ${filters.merchantId ?? null})
+        (${filters.serviceStoreId ?? null}::text IS NULL OR bl."serviceStoreId" = ${filters.serviceStoreId ?? null})
         AND (${filters.from ?? null}::timestamp IS NULL OR bp."paymentDate" >= ${filters.from ?? null})
         AND (${filters.to ?? null}::timestamp IS NULL OR bp."paymentDate" <= ${filters.to ?? null})
       ORDER BY bp."paymentDate" DESC

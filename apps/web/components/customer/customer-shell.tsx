@@ -1,26 +1,32 @@
 import Link from "next/link";
-import { CustomerTopNav } from "@/components/customer/customer-top-nav";
 import { cn } from "@workspace/ui/lib/utils";
 
 type CustomerShellProps = {
   children: React.ReactNode;
-  showNav?: boolean;
   backHref?: string;
   backLabel?: string;
+  title?: string;
+  subtitle?: string;
   className?: string;
 };
 
+/**
+ * Single shared shell for every customer page.
+ * Navigation (top nav on desktop, bottom tab bar on mobile) lives in
+ * CustomerRouteChrome (the (customer) route-group layout) — not here — so
+ * every page under /(customer) gets responsive nav automatically without
+ * opting in per page.
+ */
 export function CustomerShell({
   children,
-  showNav = true,
   backHref,
   backLabel = "Back",
+  title,
+  subtitle,
   className,
 }: CustomerShellProps) {
   return (
     <div className="min-h-svh bg-[#F8F8F8]">
-      {showNav ? <CustomerTopNav /> : null}
-
       {backHref ? (
         <div className="mx-auto max-w-[1280px] px-5 pt-6 md:px-8">
           <Link
@@ -40,6 +46,14 @@ export function CustomerShell({
           className,
         )}
       >
+        {title ? (
+          <header className="mb-6">
+            <h1 className="text-[24px] font-semibold tracking-tight text-[#0A0A0A]">{title}</h1>
+            {subtitle ? (
+              <p className="mt-1 text-[14px] leading-relaxed text-[#64748B]">{subtitle}</p>
+            ) : null}
+          </header>
+        ) : null}
         {children}
       </main>
     </div>

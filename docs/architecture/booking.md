@@ -10,7 +10,7 @@ erDiagram
   Tenant ||--o{ Booking : scopes
   Customer ||--o{ Vehicle : owns
   Customer ||--o{ Booking : makes
-  Merchant ||--o{ Branch : has
+  ServiceStore ||--o{ Branch : has
   Branch ||--o{ Service : offers
   Branch ||--o{ Booking : receives
   Booking ||--o{ BookingItem : contains
@@ -48,11 +48,11 @@ A vehicle belonging to a customer.
 
 ## Branch
 
-See [merchant.md](./merchant.md). Bookings are associated with a branch (service location).
+See [serviceStore.md](./serviceStore.md). Bookings are associated with a branch (service location).
 
 | Relationship | Notes |
 |--------------|-------|
-| `Branch` → `Merchant` | Branch belongs to merchant |
+| `Branch` → `ServiceStore` | Branch belongs to serviceStore |
 | `Branch` → `Booking` | Booking is at a branch |
 
 **Current implementation:** Schema only.
@@ -159,7 +159,7 @@ sequenceDiagram
   App->>DB: Create Booking + BookingItems
   Note over DB: status = PENDING
   App->>DB: status = CONFIRMED
-  Note over App: Merchant checks in customer
+  Note over App: ServiceStore checks in customer
   App->>DB: status = CHECKED_IN → IN_PROGRESS → COMPLETED
 ```
 
@@ -175,7 +175,7 @@ The booking engine is **not implemented**. Planned capabilities include:
 | Status transition workflows | Not implemented |
 | Conflict detection | Not implemented |
 | Customer vehicle selection | Not implemented |
-| Merchant booking management | Not implemented |
+| ServiceStore booking management | Not implemented |
 | Notifications (confirmation, reminder) | Not implemented |
 
 ### Anticipated components (future)
@@ -184,10 +184,10 @@ The booking engine is **not implemented**. Planned capabilities include:
 lib/booking/
   availability.ts    # Slot calculation
   actions.ts         # Create/update/cancel bookings
-  queries.ts         # List bookings by customer/merchant
+  queries.ts         # List bookings by customer/serviceStore
 
 app/booking/         # Customer booking UI
-app/merchant/bookings/  # Merchant booking management
+app/service-store/bookings/  # ServiceStore booking management
 ```
 
 ### Design considerations (future)

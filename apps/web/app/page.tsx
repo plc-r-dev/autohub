@@ -1,6 +1,25 @@
-import { redirect } from "next/navigation";
+import { MarketingHeader } from "@/components/marketing/marketing-header";
+import { Hero } from "@/components/marketing/hero";
+import { Problem } from "@/components/marketing/problem";
+import { KeyFeatures } from "@/components/marketing/key-features";
+import { LineJourney } from "@/components/marketing/line-journey";
+import { DashboardScreenshot } from "@/components/marketing/dashboard-screenshot";
+import { FinalCta } from "@/components/marketing/final-cta";
+import { SiteFooter } from "@/components/marketing/site-footer";
 
-/** Customer app entry — marketplace home. */
-export default function RootPage() {
-  redirect("/browse");
+export default function MarketingLandingPage() {
+  return (
+    <div className="flex min-h-svh flex-col bg-background">
+      <MarketingHeader />
+      <main className="flex-1">
+        <Hero />
+        <Problem />
+        <KeyFeatures />
+        <LineJourney />
+        <DashboardScreenshot />
+        <FinalCta />
+      </main>
+      <SiteFooter />
+    </div>
+  );
 }

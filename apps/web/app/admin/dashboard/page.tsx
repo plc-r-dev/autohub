@@ -1,38 +1,38 @@
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { SimpleBarChart } from "@/components/reporting/simple-bar-chart";
-import { requireLinkedIdentity } from "@/lib/auth/require-identity";
+import { requireAdminSession } from "@/lib/auth/require-admin";
 import { formatBillingCurrency } from "@/lib/billing/format";
 import {
   getBillingPaidVsOutstanding,
   getBookingTrend,
-  getMerchantGrowthMonthly,
+  getServiceStoreGrowthMonthly,
   getMonthlyRevenueTrend,
   getPlatformDashboardCardMetrics,
 } from "@/lib/reporting/queries";
 
 export default async function AdminDashboardPage() {
-  await requireLinkedIdentity();
+  await requireAdminSession();
 
-  const [cards, booking7, booking30, monthlyRevenue, billingBalance, merchantGrowth] =
+  const [cards, booking7, booking30, monthlyRevenue, billingBalance, serviceStoreGrowth] =
     await Promise.all([
       getPlatformDashboardCardMetrics(),
       getBookingTrend(7),
       getBookingTrend(30),
       getMonthlyRevenueTrend(),
       getBillingPaidVsOutstanding(),
-      getMerchantGrowthMonthly(),
+      getServiceStoreGrowthMonthly(),
     ]);
 
   const overviewCards = [
-    { label: "Total Merchants", value: cards.totalMerchants },
-    { label: "Active Merchants", value: cards.activeMerchants },
+    { label: "Total Service Stores", value: cards.totalServiceStores },
+    { label: "Active Service Stores", value: cards.activeServiceStores },
     { label: "Total Customers", value: cards.totalCustomers },
     { label: "Total Vehicles", value: cards.totalVehicles },
     { label: "Total Bookings", value: cards.totalBookings },
     { label: "Today's Bookings", value: cards.todaysBookings },
     { label: "Today's Revenue", value: formatBillingCurrency(cards.todaysRevenue) },
     { label: "Outstanding Billing", value: formatBillingCurrency(cards.outstandingBilling) },
-    { label: "Pending Merchant Approval", value: cards.pendingMerchantApproval },
+    { label: "Pending Service Store Approval", value: cards.pendingServiceStoreApproval },
     { label: "Pending Billing Approval", value: cards.pendingBillingApproval },
     { label: "Pending Payment Review", value: cards.pendingPaymentReview },
   ];
@@ -69,8 +69,8 @@ export default async function AdminDashboardPage() {
           valueFormatter={(value) => formatBillingCurrency(value)}
         />
         <SimpleBarChart
-          title="Merchant Growth"
-          points={merchantGrowth.map((point) => ({ label: point.bucket, value: point.count }))}
+          title="Service Store Growth"
+          points={serviceStoreGrowth.map((point) => ({ label: point.bucket, value: point.count }))}
         />
         <SimpleBarChart
           title="Billing - Paid vs Outstanding"

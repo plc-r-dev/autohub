@@ -1,24 +1,24 @@
-# Merchant
+# ServiceStore
 
-This document covers the merchant domain as **currently implemented** in AutoHub. Booking-related merchant features (branch management UI, service catalog management) are schema-only.
+This document covers the serviceStore domain as **currently implemented** in AutoHub. Booking-related serviceStore features (branch management UI, service catalog management) are schema-only.
 
 ## Domain model overview
 
 ```mermaid
 erDiagram
-  Tenant ||--o{ Merchant : has
-  Merchant ||--o{ Branch : has
+  Tenant ||--o{ ServiceStore : has
+  ServiceStore ||--o{ Branch : has
   Branch ||--o{ Service : offers
-  Merchant ||--o{ MerchantClaim : receives
-  User ||--o{ MerchantClaim : submits
-  User }o--o| Merchant : "merchantId (approved)"
-  User ||--o{ MerchantOnboardingRequest : submits
-  Tenant ||--o{ MerchantOnboardingRequest : scopes
+  ServiceStore ||--o{ ServiceStoreClaim : receives
+  User ||--o{ ServiceStoreClaim : submits
+  User }o--o| ServiceStore : "serviceStoreId (approved)"
+  User ||--o{ ServiceStoreOnboardingRequest : submits
+  Tenant ||--o{ ServiceStoreOnboardingRequest : scopes
 ```
 
-## Merchant
+## ServiceStore
 
-A `Merchant` represents a business operating within a tenant.
+A `ServiceStore` represents a business operating within a tenant.
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -28,7 +28,7 @@ A `Merchant` represents a business operating within a tenant.
 | `name` | String | Display name |
 | `description` | String? | Optional |
 | `phone`, `email`, `website` | String? | Contact info |
-| `status` | `MerchantStatus` | Default `DRAFT` |
+| `status` | `ServiceStoreStatus` | Default `DRAFT` |
 
 **Status enum:** `DRAFT`, `PENDING_VERIFICATION`, `ACTIVE`, `SUSPENDED`
 
@@ -36,20 +36,20 @@ A `Merchant` represents a business operating within a tenant.
 
 | Action | When |
 |--------|------|
-| Merchant exists in DB | Seeded or created on onboarding request **approval** |
-| Status set to `ACTIVE` | On merchant claim **approval** |
-| Merchant created from request | On onboarding request **approval** with status `ACTIVE` |
-| Merchant search | During merchant onboarding (claim mode) |
-| Merchant management UI | **Not implemented** |
+| ServiceStore exists in DB | Seeded or created on onboarding request **approval** |
+| Status set to `ACTIVE` | On serviceStore claim **approval** |
+| ServiceStore created from request | On onboarding request **approval** with status `ACTIVE` |
+| ServiceStore search | During serviceStore onboarding (claim mode) |
+| ServiceStore management UI | **Not implemented** |
 
 ## Branch
 
-A `Branch` is a physical or logical location belonging to a merchant.
+A `Branch` is a physical or logical location belonging to a serviceStore.
 
 | Field | Notes |
 |-------|-------|
-| `merchantId` | FK → `Merchant` |
-| `code` | Unique per merchant |
+| `serviceStoreId` | FK → `ServiceStore` |
+| `code` | Unique per serviceStore |
 | `name` | Branch name |
 | `phone`, `address` | Optional |
 | `latitude`, `longitude` | Optional (`Decimal`) |
@@ -71,13 +71,13 @@ A `Service` is a bookable offering at a branch.
 
 **Current implementation:** Schema and migrations only. No application logic or UI.
 
-## Merchant claim
+## ServiceStore claim
 
-A `MerchantClaim` links a domain `User` to an existing `Merchant` pending approval.
+A `ServiceStoreClaim` links a domain `User` to an existing `ServiceStore` pending approval.
 
 | Field | Notes |
 |-------|-------|
-| `merchantId` | Target merchant |
+| `serviceStoreId` | Target serviceStore |
 | `userId` | Claiming user |
 | `status` | `PENDING` (default), `APPROVED`, `REJECTED` |
 | `submittedAt` | Auto-set on creation |
@@ -87,170 +87,170 @@ A `MerchantClaim` links a domain `User` to an existing `Merchant` pending approv
 
 ```mermaid
 stateDiagram-v2
-  [*] --> PENDING: Created during merchant onboarding
-  PENDING --> APPROVED: approveMerchantClaim()
-  PENDING --> REJECTED: rejectMerchantClaim()
+  [*] --> PENDING: Created during serviceStore onboarding
+  PENDING --> APPROVED: approveServiceStoreClaim()
+  PENDING --> REJECTED: rejectServiceStoreClaim()
   APPROVED --> [*]
   REJECTED --> [*]
 ```
 
-### On approval (`lib/merchant/actions.ts`)
+### On approval (`lib/service-store/actions.ts`)
 
-1. `MerchantClaim.status` → `APPROVED`, `reviewedAt` set
-2. `User.merchantId` → claim's merchant ID
-3. `User.tenantId` → merchant's tenant ID
-4. `Merchant.status` → `ACTIVE`
+1. `ServiceStoreClaim.status` → `APPROVED`, `reviewedAt` set
+2. `User.serviceStoreId` → claim's serviceStore ID
+3. `User.tenantId` → serviceStore's tenant ID
+4. `ServiceStore.status` → `ACTIVE`
 
 No roles or permissions are assigned.
 
-## Merchant onboarding request
+## ServiceStore onboarding request
 
-A `MerchantOnboardingRequest` requests creation of a new merchant.
+A `ServiceStoreOnboardingRequest` requests creation of a new serviceStore.
 
 | Field | Notes |
 |-------|-------|
 | `userId` | Requesting user |
 | `tenantId` | Target tenant |
-| `businessName`, `businessCode` | Proposed merchant identity |
+| `businessName`, `businessCode` | Proposed serviceStore identity |
 | `description`, `phone`, `email`, `website` | Optional |
 | `status` | `PENDING` (default), `APPROVED`, `REJECTED` |
 
-### On approval (`lib/merchant/actions.ts`)
+### On approval (`lib/service-store/actions.ts`)
 
 1. Validate business code is not already taken in tenant
-2. Create `Merchant` from request fields (status `ACTIVE`)
-3. `MerchantOnboardingRequest.status` → `APPROVED`, `reviewedAt` set
-4. `User.merchantId` → new merchant ID
+2. Create `ServiceStore` from request fields (status `ACTIVE`)
+3. `ServiceStoreOnboardingRequest.status` → `APPROVED`, `reviewedAt` set
+4. `User.serviceStoreId` → new serviceStore ID
 5. `User.tenantId` → request tenant ID
 
 ### On rejection
 
-- `MerchantOnboardingRequest.status` → `REJECTED`, `reviewedAt` set
-- No `Merchant` created
-- `User.merchantId` remains `null`
+- `ServiceStoreOnboardingRequest.status` → `REJECTED`, `reviewedAt` set
+- No `ServiceStore` created
+- `User.serviceStoreId` remains `null`
 
-## Merchant approval (admin)
+## ServiceStore approval (admin)
 
-**Route:** `/admin/merchant-requests`
+**Route:** `/admin/service-store-requests`
 
-**Components:** `components/admin/merchant-request-management.tsx`
+**Components:** `components/admin/serviceStore-request-management.tsx`
 
 Lists all pending:
 
-- `MerchantClaim` (pending)
-- `MerchantOnboardingRequest` (pending)
+- `ServiceStoreClaim` (pending)
+- `ServiceStoreOnboardingRequest` (pending)
 
-Each item has **Approve** and **Reject** actions via server actions in `lib/merchant/actions.ts`:
+Each item has **Approve** and **Reject** actions via server actions in `lib/service-store/actions.ts`:
 
 | Action | Function |
 |--------|----------|
-| Approve claim | `approveMerchantClaim(claimId)` |
-| Reject claim | `rejectMerchantClaim(claimId)` |
-| Approve request | `approveMerchantOnboardingRequest(requestId)` |
-| Reject request | `rejectMerchantOnboardingRequest(requestId)` |
+| Approve claim | `approveServiceStoreClaim(claimId)` |
+| Reject claim | `rejectServiceStoreClaim(claimId)` |
+| Approve request | `approveServiceStoreOnboardingRequest(requestId)` |
+| Reject request | `rejectServiceStoreOnboardingRequest(requestId)` |
 
 **Access control:** Requires a linked domain identity (`requireLinkedIdentity`). No RBAC enforcement — any linked user can access this page in the current implementation.
 
-## Merchant access state
+## ServiceStore access state
 
-`lib/merchant/access.ts` determines merchant user routing:
+`lib/service-store/access.ts` determines serviceStore user routing:
 
 | State | Condition | Route |
 |-------|-----------|-------|
-| `approved` | `User.merchantId` is set | `/merchant/dashboard` |
-| `pending` | `PENDING` claim or request exists, no `merchantId` | `/merchant/waiting` |
-| `none` | No merchant activity | `/dashboard` (customer) |
+| `approved` | `User.serviceStoreId` is set | `/service-store/dashboard` |
+| `pending` | `PENDING` claim or request exists, no `serviceStoreId` | `/service-store/waiting` |
+| `none` | No serviceStore activity | `/dashboard` (customer) |
 
 ```mermaid
 flowchart TD
-  U[Linked domain User] --> C{merchantId set?}
-  C -->|Yes| D[/merchant/dashboard]
+  U[Linked domain User] --> C{serviceStoreId set?}
+  C -->|Yes| D[/service-store/dashboard]
   C -->|No| P{Pending claim or request?}
-  P -->|Yes| W[/merchant/waiting]
+  P -->|Yes| W[/service-store/waiting]
   P -->|No| CD[/dashboard]
 ```
 
-## Merchant dashboard
+## ServiceStore dashboard
 
-**Route:** `/merchant/dashboard`
+**Route:** `/service-store/dashboard`
 
-**Guard:** `requireLinkedIdentity()` + `isApprovedMerchant()`
+**Guard:** `requireLinkedIdentity()` + `isApprovedServiceStore()`
 
 Displays:
 
 - User profile name
-- Linked merchant name, code, status
+- Linked serviceStore name, code, status
 - Tenant name and code
 - Logout button
 
 No operational features (booking management, branch editing, analytics) are implemented.
 
-## Merchant waiting
+## ServiceStore waiting
 
-**Route:** `/merchant/waiting`
+**Route:** `/service-store/waiting`
 
-**Guard:** `requireLinkedIdentity()` + `isPendingMerchant()`
+**Guard:** `requireLinkedIdentity()` + `isPendingServiceStore()`
 
 Displays:
 
 - Waiting for approval message
-- Pending claim merchant name (if claim pending)
+- Pending claim serviceStore name (if claim pending)
 - Pending onboarding request business name (if request pending)
 - Logout button
 
-Redirects to `/merchant/dashboard` if approved. Redirects to `/dashboard` if user has no merchant activity.
+Redirects to `/service-store/dashboard` if approved. Redirects to `/dashboard` if user has no serviceStore activity.
 
-## Merchant route hub
+## ServiceStore route hub
 
-**Route:** `/merchant`
+**Route:** `/service-store`
 
-Redirects based on merchant access state:
+Redirects based on serviceStore access state:
 
-- `approved` → `/merchant/dashboard`
-- `pending` → `/merchant/waiting`
+- `approved` → `/service-store/dashboard`
+- `pending` → `/service-store/waiting`
 - `none` → `/dashboard`
 
 ## Proxy routing
 
-`proxy.ts` enforces merchant route guards:
+`proxy.ts` enforces serviceStore route guards:
 
 | Scenario | Redirect |
 |----------|----------|
-| Merchant user visits `/dashboard` | `/merchant/dashboard` or `/merchant/waiting` |
-| Customer visits `/merchant/*` | `/dashboard` |
-| Approved merchant visits `/merchant/waiting` | `/merchant/dashboard` |
-| Pending merchant visits `/merchant/dashboard` | `/merchant/waiting` |
+| ServiceStore user visits `/dashboard` | `/service-store/dashboard` or `/service-store/waiting` |
+| Customer visits `/service-store/*` | `/dashboard` |
+| Approved serviceStore visits `/service-store/waiting` | `/service-store/dashboard` |
+| Pending serviceStore visits `/service-store/dashboard` | `/service-store/waiting` |
 
-## User ↔ Merchant link
+## User ↔ ServiceStore link
 
-After approval, the domain `User` is linked to the merchant:
+After approval, the domain `User` is linked to the serviceStore:
 
 ```
-User.merchantId → Merchant.id
-User.tenantId   → Merchant.tenantId (or request tenantId)
+User.serviceStoreId → ServiceStore.id
+User.tenantId   → ServiceStore.tenantId (or request tenantId)
 ```
 
-This is the **current** mechanism for associating an operator with a merchant. It is not RBAC — no `UserRole` records are created.
+This is the **current** mechanism for associating an operator with a serviceStore. It is not RBAC — no `UserRole` records are created.
 
 ## File reference
 
 | File | Purpose |
 |------|---------|
-| `lib/merchant/access.ts` | Merchant access state |
-| `lib/merchant/queries.ts` | List pending claims and requests |
-| `lib/merchant/actions.ts` | Approve/reject server actions |
-| `app/merchant/dashboard/page.tsx` | Approved merchant dashboard |
-| `app/merchant/waiting/page.tsx` | Waiting for approval page |
-| `app/merchant/page.tsx` | Route hub |
-| `app/admin/merchant-requests/page.tsx` | Admin approval UI |
+| `lib/service-store/access.ts` | ServiceStore access state |
+| `lib/service-store/queries.ts` | List pending claims and requests |
+| `lib/service-store/actions.ts` | Approve/reject server actions |
+| `app/service-store/dashboard/page.tsx` | Approved serviceStore dashboard |
+| `app/service-store/waiting/page.tsx` | Waiting for approval page |
+| `app/service-store/page.tsx` | Route hub |
+| `app/admin/service-store-requests/page.tsx` | Admin approval UI |
 | `components/admin/*` | Admin UI components |
 
 ## What is NOT implemented
 
-- Merchant management CRUD UI
+- ServiceStore management CRUD UI
 - Branch management
 - Service catalog management
 - RBAC-gated admin access
 - Notifications on approval/rejection
 - Re-submission after rejection
-- Merchant operator role assignment
+- ServiceStore operator role assignment

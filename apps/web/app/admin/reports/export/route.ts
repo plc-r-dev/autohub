@@ -63,7 +63,7 @@ export async function GET(request: Request) {
   const filters: ReportFilters = {
     from: parseDate(searchParams.get("from")),
     to: parseDate(searchParams.get("to")),
-    merchantId: searchParams.get("merchantId") ?? undefined,
+    serviceStoreId: searchParams.get("serviceStoreId") ?? undefined,
     branchId: searchParams.get("branchId") ?? undefined,
     bookingStatus: searchParams.get("bookingStatus") ?? undefined,
   };

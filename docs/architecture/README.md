@@ -2,7 +2,7 @@
 
 AutoHub is a multi-tenant automotive service platform built as a **pnpm + Turborepo** monorepo. The primary application lives in `apps/web` (Next.js 16 App Router, React 19, TypeScript strict). Shared UI components live in `packages/ui`.
 
-This documentation describes the **current implementation** as of the completed phases through Merchant Approval. It does not describe planned features as if they already exist.
+This documentation describes the **current implementation** as of the completed phases through ServiceStore Approval. It does not describe planned features as if they already exist.
 
 ## System overview
 
@@ -28,8 +28,8 @@ flowchart TB
   subgraph Domain["Domain Layer"]
   Identity[Identity Linking]
   Onboarding[Onboarding]
-  Merchant[Merchant Approval]
-  BusinessModels[Tenant / User / Merchant / Booking schema]
+  ServiceStore[ServiceStore Approval]
+  BusinessModels[Tenant / User / ServiceStore / Booking schema]
   end
 
   subgraph Data
@@ -46,7 +46,7 @@ flowchart TB
   BetterAuth --> AuthModels
   BetterAuth --> Identity
   Identity --> Onboarding
-  Onboarding --> Merchant
+  Onboarding --> ServiceStore
   Actions --> Prisma
   BetterAuth --> Prisma
   Prisma --> PostgreSQL
@@ -59,8 +59,8 @@ flowchart TB
 |------|--------|---------------|
 | [Authentication](./authentication.md) | Implemented | Better Auth, LINE-only login, auth models |
 | [Identity](./authentication.md#identity-linking) | Implemented | `AuthUser` ↔ domain `User` via `authUserId` |
-| [Onboarding](./onboarding.md) | Implemented | Customer and merchant paths |
-| [Merchant](./merchant.md) | Implemented | Claims, onboarding requests, approval, dashboards |
+| [Onboarding](./onboarding.md) | Implemented | Customer and serviceStore paths |
+| [ServiceStore](./serviceStore.md) | Implemented | Claims, onboarding requests, approval, dashboards |
 | [Booking](./booking.md) | Schema only | Models defined; no application logic |
 | [RBAC](./rbac.md) | Schema only | `Role` / `UserRole` defined; not enforced |
 | [Tenant](./tenant.md) | Partial | Model and selection during onboarding; no auto-provisioning |
@@ -95,7 +95,7 @@ autohub/
 │       ├── app/             # App Router pages and API routes
 │       ├── auth.ts          # Better Auth configuration
 │       ├── proxy.ts         # Route protection (Next.js 16)
-│       ├── lib/             # Auth, onboarding, merchant, Prisma
+│       ├── lib/             # Auth, onboarding, serviceStore, Prisma
 │       └── prisma/          # Schema and migrations
 ├── packages/
 │   └── ui/                  # Shared shadcn UI components
@@ -141,8 +141,8 @@ sequenceDiagram
 ## Related documents
 
 - [authentication.md](./authentication.md) — Better Auth, LINE, auth models, identity linking
-- [onboarding.md](./onboarding.md) — Customer and merchant onboarding flows
-- [merchant.md](./merchant.md) — Merchant domain, approval, dashboards
+- [onboarding.md](./onboarding.md) — Customer and serviceStore onboarding flows
+- [serviceStore.md](./serviceStore.md) — ServiceStore domain, approval, dashboards
 - [booking.md](./booking.md) — Booking domain (schema; not yet implemented)
 - [rbac.md](./rbac.md) — Planned access control (not implemented)
 - [tenant.md](./tenant.md) — Tenant model and resolution

@@ -11,7 +11,7 @@ import {
   billingStatusLabel,
   getAdminBillingsForReviewPaginated,
 } from "@/lib/billing/queries";
-import { requireLinkedIdentity } from "@/lib/auth/require-identity";
+import { requireAdminSession } from "@/lib/auth/require-admin";
 import { getPlatformSettings } from "@/lib/platform-settings/queries";
 import type { BillingStatus } from "@/lib/generated/prisma/client";
 import { parseListPaging, parseSortOrder } from "@/lib/listing/search-params";
@@ -36,7 +36,7 @@ type PageProps = {
   searchParams: Promise<{
     q?: string;
     status?: string;
-    merchantId?: string;
+    serviceStoreId?: string;
     sort?: string;
     page?: string;
     pageSize?: string;
@@ -44,21 +44,21 @@ type PageProps = {
 };
 
 export default async function AdminBillingsPage({ searchParams }: PageProps) {
-  await requireLinkedIdentity();
+  await requireAdminSession();
   const params = await searchParams;
   const { page, pageSize } = parseListPaging(params);
   const sort = parseSortOrder(params.sort);
-  const [listResult, platformSettings, merchants] = await Promise.all([
+  const [listResult, platformSettings, serviceStores] = await Promise.all([
     getAdminBillingsForReviewPaginated({
       q: params.q,
       status: params.status as BillingStatus | undefined,
-      merchantId: params.merchantId,
+      serviceStoreId: params.serviceStoreId,
       page,
       pageSize,
       sort,
     }),
     getPlatformSettings(),
-    prisma.merchant.findMany({
+    prisma.serviceStore.findMany({
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
@@ -81,7 +81,7 @@ export default async function AdminBillingsPage({ searchParams }: PageProps) {
       <section className="flex flex-col gap-4">
         <h2 className="font-medium">Needs review</h2>
         <ListToolbar
-          searchPlaceholder="Search merchant code or invoice"
+          searchPlaceholder="Search Service Store code or invoice"
           filters={[
             {
               key: "status",
@@ -98,11 +98,11 @@ export default async function AdminBillingsPage({ searchParams }: PageProps) {
               })),
             },
             {
-              key: "merchantId",
-              label: "Merchant",
-              options: merchants.map((merchant) => ({
-                value: merchant.id,
-                label: merchant.name,
+              key: "serviceStoreId",
+              label: "Service Store",
+              options: serviceStores.map((serviceStore) => ({
+                value: serviceStore.id,
+                label: serviceStore.name,
               })),
             },
           ]}
@@ -111,12 +111,12 @@ export default async function AdminBillingsPage({ searchParams }: PageProps) {
           rows={listResult.rows}
           getRowKey={(billing) => billing.id}
           emptyLabel="No billings pending review."
-          hasFilters={Boolean(params.q || params.status || params.merchantId)}
+          hasFilters={Boolean(params.q || params.status || params.serviceStoreId)}
           columns={[
             {
-              key: "merchant",
-              header: "Merchant",
-              render: (billing) => billing.merchant.name,
+              key: "serviceStore",
+              header: "Service Store",
+              render: (billing) => billing.serviceStore.name,
             },
             {
               key: "period",

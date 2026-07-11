@@ -16,13 +16,13 @@ export async function listActiveTenants() {
   });
 }
 
-export async function searchMerchants(tenantId: string, query: string) {
+export async function searchServiceStores(tenantId: string, query: string) {
   const trimmedQuery = query.trim();
   if (!trimmedQuery) {
     return [];
   }
 
-  return prisma.merchant.findMany({
+  return prisma.serviceStore.findMany({
     where: {
       tenantId,
       OR: [
