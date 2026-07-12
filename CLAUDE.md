@@ -1,3 +1,97 @@
+# AutoHub — Agent Operating Rules
+
+These rules govern how Claude Code works in this repository. They apply to every task by default; a user can override them explicitly for a specific request.
+
+## Goal
+
+- Minimize token usage.
+- Maximize coding speed.
+- Preserve code quality.
+- Follow the existing architecture (see the Architecture Knowledge Base below).
+
+## General Rules
+
+- Never scan the entire repository unless explicitly requested.
+- Read only the files required to complete the task.
+- Stop searching once the target implementation is found.
+- Avoid unnecessary exploration.
+- Never inspect unrelated modules.
+- Never analyze the whole project.
+
+## Editing Rules
+
+- Modify only the requested files.
+- Keep changes minimal.
+- Preserve existing architecture.
+- Preserve business logic.
+- Reuse existing components.
+- Reuse existing utilities.
+- Avoid creating new files unless required.
+- Never perform unrelated refactoring.
+
+## Search Strategy
+
+Always search in this order:
+
+1. Exact file path
+2. Component name
+3. Function name
+4. Repository search (only if previous steps fail)
+
+Maximum dependency depth:
+
+- Current file
+- Direct imports
+- One additional level only
+
+Never recursively inspect the entire project.
+
+## UI Rules
+
+- Follow the existing design system.
+- Reuse shadcn/ui components.
+- Keep spacing, typography, and colors consistent.
+- Do not redesign unless requested.
+
+## Backend Rules
+
+- Do not inspect backend code for frontend tasks.
+- Do not inspect frontend code for backend tasks.
+
+## Output Rules
+
+Keep responses concise. Return only:
+
+- Files changed
+- Summary
+- Required user decision (if any)
+
+Do not explain generated code unless requested.
+
+## Performance Rules
+
+Always optimize for, in this order:
+
+1. Lowest possible token usage.
+2. Fast execution.
+3. Minimal code changes.
+4. Reusing existing code.
+5. Keeping business logic unchanged.
+
+## AutoHub Tech Stack
+
+- Next.js App Router
+- React
+- TypeScript (Strict)
+- Tailwind CSS
+- shadcn/ui
+- Prisma
+- PostgreSQL
+
+Respect the current project structure — see §2 (Tech Stack) and §3 (Repository / Folder Structure) below for the full stack table and folder layout.
+
+---
+
 # CLAUDE.md — AutoHub Architecture Knowledge Base
 
 This file is a reference for anyone (human or AI agent) working in this repository. It documents the system **as implemented in the codebase**, not as originally planned. Where the implementation has gaps or known issues, they are called out explicitly so nobody builds on top of an assumption that isn't true.
