@@ -15,9 +15,6 @@ const SECTION_LINKS = [
   { href: "#service-stores", label: "For Service Stores" },
 ] as const;
 
-const CLAIM_STORE_HREF = `${PORTALS.serviceStore.onboarding}?mode=claim`;
-const CREATE_STORE_HREF = `${PORTALS.serviceStore.onboarding}?mode=create`;
-
 export function MarketingHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -73,12 +70,6 @@ export function MarketingHeader() {
           >
             Sign In
           </Link>
-          <Link href={CLAIM_STORE_HREF} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
-            Claim Store
-          </Link>
-          <Link href={CREATE_STORE_HREF} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
-            Create Store
-          </Link>
           <Link href={PORTALS.marketing.openInLine} className={cn(buttonVariants({ size: "sm" }))}>
             Open LINE
           </Link>
@@ -122,20 +113,6 @@ export function MarketingHeader() {
             </div>
           </nav>
           <div className="mt-4 flex flex-col gap-2">
-            <Link
-              href={CLAIM_STORE_HREF}
-              onClick={() => setMenuOpen(false)}
-              className={cn(buttonVariants({ variant: "outline" }), "w-full")}
-            >
-              Claim Store
-            </Link>
-            <Link
-              href={CREATE_STORE_HREF}
-              onClick={() => setMenuOpen(false)}
-              className={cn(buttonVariants({ variant: "outline" }), "w-full")}
-            >
-              Create Store
-            </Link>
             <Link
               href={PORTALS.marketing.openInLine}
               onClick={() => setMenuOpen(false)}

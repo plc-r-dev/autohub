@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Store, Building2 } from "lucide-react";
+import { LogIn, Store, Building2 } from "lucide-react";
 import { buttonVariants } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 import { MarketingSection } from "@/components/marketing/section-container";
@@ -15,22 +15,29 @@ export function ForServiceStores() {
         Grow your Service Business
       </h2>
       <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
-        Manage bookings, customers, staff, and operations with AutoHub.
+        Manage bookings, customers, staff, payments and daily operations with AutoHub.
       </p>
       <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
         <Link
-          href={`${PORTALS.serviceStore.onboarding}?mode=claim`}
+          href={PORTALS.marketing.signIn}
           className={cn(buttonVariants({ size: "lg" }), "h-12 gap-2 px-10 text-base")}
         >
-          <Store className="size-5" />
-          Claim Existing Store
+          <LogIn className="size-5" />
+          Sign In
         </Link>
         <Link
-          href={`${PORTALS.serviceStore.onboarding}?mode=create`}
+          href="/claim"
+          className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-12 gap-2 px-10 text-base")}
+        >
+          <Store className="size-5" />
+          Claim Store
+        </Link>
+        <Link
+          href="/create-store"
           className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-12 gap-2 px-10 text-base")}
         >
           <Building2 className="size-5" />
-          Create New Store
+          Create Store
         </Link>
       </div>
     </MarketingSection>

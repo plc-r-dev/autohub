@@ -14,7 +14,7 @@ export function ServiceStorePublicLayout({
   title,
   description,
   backHref = "/",
-  backLabel = "Back to AutoHub",
+  backLabel = "Back to Home",
   children,
   maxWidth = "lg",
 }: ServiceStorePublicLayoutProps) {

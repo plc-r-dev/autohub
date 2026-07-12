@@ -34,6 +34,16 @@ const nextConfig: NextConfig = {
         destination: "/app/:path*",
         permanent: false,
       },
+      {
+        source: "/claim",
+        destination: "/app/onboarding?mode=claim",
+        permanent: false,
+      },
+      {
+        source: "/create-store",
+        destination: "/app/onboarding?mode=create",
+        permanent: false,
+      },
     ];
   },
   images: {
