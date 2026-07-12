@@ -3,6 +3,7 @@ import { LogoutButton } from "@/components/logout-button";
 import { CustomerShell } from "@/components/customer/customer-shell";
 import { Card } from "@/components/customer/ui";
 import { requireDomainUser } from "@/lib/auth/domain-user";
+import { PORTALS } from "@/lib/auth/portals";
 import { getServerSession } from "@/lib/auth/session";
 import { requireCustomerForUser } from "@/lib/customer/context";
 
@@ -69,7 +70,7 @@ export default async function ProfilePage() {
           <p className="mb-4 text-[13px] font-medium tracking-wide text-[#94A3B8] uppercase">
             Account
           </p>
-          <LogoutButton />
+          <LogoutButton redirectTo={PORTALS.customer.openInLine} />
         </Card>
       </div>
     </CustomerShell>

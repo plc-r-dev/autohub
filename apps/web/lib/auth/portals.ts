@@ -3,13 +3,13 @@ export const PORTALS = {
   marketing: {
     home: "/",
     openInLine: "/open-in-line",
-    loginFallback: "/login",
-    signIn: "/sign-in",
+    // Sign In goes straight to LINE login — the intermediate portal-picker page was removed.
+    signIn: "/app/login",
   },
   customer: {
     home: "/browse",
     liffEntry: "/browse",
-    loginFallback: "/login",
+    // Customers have no web login page — LINE OA / LIFF is the only entry point.
     openInLine: "/open-in-line",
   },
   serviceStore: {

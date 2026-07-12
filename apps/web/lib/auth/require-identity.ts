@@ -57,12 +57,12 @@ export async function requireCustomerIdentity(): Promise<AuthenticatedIdentity> 
         imageUrl: session.user.image,
       });
     } catch {
-      redirect(`${PORTALS.customer.loginFallback}?error=auth`);
+      redirect(`${PORTALS.customer.openInLine}?error=auth`);
     }
 
     identity = await resolveIdentityLink(session.user.id);
     if (!isIdentityLinked(identity)) {
-      redirect(`${PORTALS.customer.loginFallback}?error=auth`);
+      redirect(`${PORTALS.customer.openInLine}?error=auth`);
     }
   }
 

@@ -40,6 +40,11 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
+        source: "/sign-in",
+        destination: "/app/login",
+        permanent: false,
+      },
+      {
         source: "/claim",
         destination: "/app/onboarding?mode=claim",
         permanent: false,

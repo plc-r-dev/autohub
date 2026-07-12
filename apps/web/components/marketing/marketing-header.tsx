@@ -21,7 +21,7 @@ export function MarketingHeader() {
   const pathname = usePathname();
 
   // Only the landing page has a hero to sit transparently over; every
-  // other page (e.g. /sign-in) must render a solid header from the start.
+  // other page (e.g. /app/login) must render a solid header from the start.
   const canBeTransparent = pathname === "/";
 
   useEffect(() => {

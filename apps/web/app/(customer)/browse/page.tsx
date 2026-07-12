@@ -17,8 +17,8 @@ import { listBrowseServiceStoresPaginated } from "@/lib/booking/discovery-querie
 import type { MarketplaceServiceStoreListItem } from "@/lib/booking/discovery-queries";
 import { formatDistanceKm } from "@/lib/geo/distance";
 import { getCustomerBookingsPaginated } from "@/lib/booking/queries";
-import { requireDomainUser } from "@/lib/auth/domain-user";
-import { requireCustomerForUser } from "@/lib/customer/context";
+import { resolveIdentityLink } from "@/lib/auth/identity";
+import { getCustomerForUser } from "@/lib/customer/context";
 import { getServerSession } from "@/lib/auth/session";
 import { parseListPaging, parseSortOrder } from "@/lib/listing/search-params";
 
@@ -50,9 +50,14 @@ function toServiceStoreCard(row: MarketplaceServiceStoreListItem): ServiceStoreC
 }
 
 export default async function BrowsePage({ searchParams }: PageProps) {
-  const { user } = await requireDomainUser();
+  // Browsing is public — no customer login page exists. Personalized sections
+  // (upcoming/recent bookings) only appear when a LINE-authenticated session
+  // already exists; anonymous visitors just see the public listing.
   const session = await getServerSession();
-  const customer = await requireCustomerForUser(user.id);
+  const identity = session ? await resolveIdentityLink(session.user.id) : null;
+  const customer = identity?.domainUserId
+    ? await getCustomerForUser(identity.domainUserId)
+    : null;
   const params = await searchParams;
 
   const { page, pageSize } = parseListPaging({

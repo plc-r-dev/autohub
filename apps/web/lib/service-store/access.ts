@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { PORTALS } from "@/lib/auth/portals";
 
 export const SERVICE_STORE_ACCESS_STATUS = {
   APPROVED: "approved",
@@ -94,4 +95,20 @@ export function isPendingServiceStore(state: ServiceStoreAccessState): boolean {
 /** Where an approved user should land: a chooser if they manage more than one Service Store, else the dashboard. */
 export function resolveApprovedServiceStoreDestination(state: ServiceStoreAccessState): string {
   return state.membershipCount > 1 ? "/choose-store" : "/app/dashboard";
+}
+
+/**
+ * Single source of truth for the post-authentication ServiceStore routing decision.
+ * `state` is null when the auth identity isn't linked to a domain user yet — treated as NONE.
+ */
+export function resolvePostAuthServiceStoreDestination(
+  state: ServiceStoreAccessState | null,
+): string {
+  if (state && isApprovedServiceStore(state)) {
+    return resolveApprovedServiceStoreDestination(state);
+  }
+  if (state && isPendingServiceStore(state)) {
+    return PORTALS.serviceStore.waiting;
+  }
+  return PORTALS.serviceStore.onboarding;
 }

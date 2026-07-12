@@ -8,7 +8,7 @@ type LogoutButtonProps = {
   redirectTo?: string;
 };
 
-export function LogoutButton({ redirectTo = "/login" }: LogoutButtonProps) {
+export function LogoutButton({ redirectTo = "/" }: LogoutButtonProps) {
   const router = useRouter();
 
   return (

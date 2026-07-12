@@ -73,10 +73,12 @@ export async function requireOnboardingContext(): Promise<OnboardingContext> {
 }
 
 /** ServiceStore portal onboarding — uses the same domain user as the customer profile when present. */
-export async function requireServiceStoreOnboardingContext(): Promise<OnboardingContext> {
+export async function requireServiceStoreOnboardingContext(
+  callbackPath: string = "/app/onboarding",
+): Promise<OnboardingContext> {
   const session = await getServerSession();
   if (!session) {
-    redirect("/app/login?callbackUrl=/app/onboarding");
+    redirect(`/app/login?callbackUrl=${encodeURIComponent(callbackPath)}`);
   }
 
   const identity = await resolveIdentityLink(session.user.id);

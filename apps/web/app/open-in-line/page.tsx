@@ -1,14 +1,7 @@
 import Link from "next/link";
 import { PORTALS } from "@/lib/auth/portals";
 
-type PageProps = {
-  searchParams: Promise<{ callbackUrl?: string }>;
-};
-
-export default async function OpenInLinePage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const callbackUrl = params.callbackUrl ?? PORTALS.customer.home;
-
+export default function OpenInLinePage() {
   return (
     <div className="min-h-svh bg-[#f0f2f5]">
       <div
@@ -54,12 +47,6 @@ export default async function OpenInLinePage({ searchParams }: PageProps) {
             className="inline-flex h-12 items-center justify-center rounded-2xl bg-[#06C755] text-[15px] font-semibold text-white"
           >
             Back to AutoHub
-          </Link>
-          <Link
-            href={`${PORTALS.customer.loginFallback}?callbackUrl=${encodeURIComponent(callbackUrl)}`}
-            className="inline-flex h-12 items-center justify-center rounded-2xl border border-[#dce5ee] bg-white text-[14px] font-semibold text-[#64748B]"
-          >
-            Developer login (fallback)
           </Link>
         </div>
       </div>

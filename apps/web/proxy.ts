@@ -4,11 +4,11 @@ import { auth } from "@/auth";
 import { PORTALS } from "@/lib/auth/portals";
 import { isIdentityLinked, resolveIdentityLink } from "@/lib/auth/identity";
 import { ensureCustomerProfile } from "@/lib/customer/ensure-customer-profile";
+import { ensureServiceStoreUser } from "@/lib/service-store/ensure-service-store-user";
 import {
   getServiceStoreAccessState,
-  isApprovedServiceStore,
-  isPendingServiceStore,
-  resolveApprovedServiceStoreDestination,
+  resolvePostAuthServiceStoreDestination,
+  type ServiceStoreAccessState,
 } from "@/lib/service-store/access";
 
 const CUSTOMER_HOME = PORTALS.customer.home;
@@ -25,10 +25,6 @@ function isAuthApiPath(pathname: string): boolean {
 
 function isMarketingPath(pathname: string): boolean {
   return pathname === MARKETING_HOME || pathname === OPEN_IN_LINE;
-}
-
-function isCustomerLoginPath(pathname: string): boolean {
-  return pathname === PORTALS.customer.loginFallback;
 }
 
 function isServiceStorePublicPath(pathname: string): boolean {
@@ -52,10 +48,15 @@ function isAdminAppPath(pathname: string): boolean {
   return pathname === "/admin" || pathname.startsWith("/admin/");
 }
 
-function isCustomerAppPath(pathname: string): boolean {
+// Browsing requires no customer identity — anyone can view Service Stores
+// and Services. Only actions that need to know "who" (booking, my bookings,
+// vehicles, profile/loyalty) require a LINE-authenticated session.
+function isPublicCustomerPath(pathname: string): boolean {
+  return pathname === CUSTOMER_HOME || pathname.startsWith("/browse/");
+}
+
+function isProtectedCustomerPath(pathname: string): boolean {
   return (
-    pathname === CUSTOMER_HOME ||
-    pathname.startsWith("/browse/") ||
     pathname === "/bookings" ||
     pathname.startsWith("/bookings/") ||
     pathname === "/profile" ||
@@ -68,17 +69,12 @@ function isCustomerAppPath(pathname: string): boolean {
   );
 }
 
-function isLegacyOnboardingPath(pathname: string): boolean {
-  return pathname === "/onboarding" || pathname.startsWith("/onboarding/");
+function isCustomerAppPath(pathname: string): boolean {
+  return isPublicCustomerPath(pathname) || isProtectedCustomerPath(pathname);
 }
 
-async function getLinkedServiceStoreAccess(authUserId: string) {
-  const identity = await resolveIdentityLink(authUserId);
-  if (!isIdentityLinked(identity) || !identity.domainUserId) {
-    return null;
-  }
-
-  return getServiceStoreAccessState(identity.domainUserId);
+function isLegacyOnboardingPath(pathname: string): boolean {
+  return pathname === "/onboarding" || pathname.startsWith("/onboarding/");
 }
 
 export async function proxy(request: NextRequest) {
@@ -109,9 +105,9 @@ export async function proxy(request: NextRequest) {
   if (!session) {
     if (
       isMarketingPath(pathname) ||
-      isCustomerLoginPath(pathname) ||
       isServiceStorePublicPath(pathname) ||
-      isAdminPublicPath(pathname)
+      isAdminPublicPath(pathname) ||
+      isPublicCustomerPath(pathname)
     ) {
       return NextResponse.next();
     }
@@ -131,7 +127,7 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    if (isCustomerAppPath(pathname) || isLegacyOnboardingPath(pathname)) {
+    if (isProtectedCustomerPath(pathname) || isLegacyOnboardingPath(pathname)) {
       const entryUrl = new URL(OPEN_IN_LINE, request.url);
       entryUrl.searchParams.set(
         "callbackUrl",
@@ -144,16 +140,18 @@ export async function proxy(request: NextRequest) {
   }
 
   // ---- Authenticated ----
+  // Authentication stops here: `session` only proves who the user is, not
+  // what they can access in any given portal.
   let identity = await resolveIdentityLink(session.user.id);
   const onServiceStoreSurface =
     isServiceStoreAppPath(pathname) ||
     isServiceStorePublicPath(pathname) ||
     isLegacyOnboardingPath(pathname);
   const onAdminSurface = isAdminAppPath(pathname) || isAdminPublicPath(pathname);
-  const onCustomerSurface =
-    isCustomerAppPath(pathname) || isCustomerLoginPath(pathname);
+  const onCustomerSurface = isCustomerAppPath(pathname);
 
-  // Auto-create customer profile on the customer LIFF surface only.
+  // Customer Portal authorization: auto-create the Customer profile on the
+  // customer LIFF surface only.
   if (!isIdentityLinked(identity) && onCustomerSurface && !onServiceStoreSurface && !onAdminSurface) {
     try {
       await ensureCustomerProfile({
@@ -163,23 +161,36 @@ export async function proxy(request: NextRequest) {
       });
     } catch {
       return NextResponse.redirect(
-        new URL(`${PORTALS.customer.loginFallback}?error=auth`, request.url),
+        new URL(`${PORTALS.customer.openInLine}?error=auth`, request.url),
       );
     }
 
     identity = await resolveIdentityLink(session.user.id);
     if (!isIdentityLinked(identity)) {
       return NextResponse.redirect(
-        new URL(`${PORTALS.customer.loginFallback}?error=auth`, request.url),
+        new URL(`${PORTALS.customer.openInLine}?error=auth`, request.url),
       );
     }
   }
 
-  const serviceStoreAccess = await getLinkedServiceStoreAccess(session.user.id);
-
-  // Customer fallback login → LIFF home.
-  if (isCustomerLoginPath(pathname)) {
-    return NextResponse.redirect(new URL(CUSTOMER_HOME, request.url));
+  // Service Store Portal authorization — independent of the Customer flow
+  // above and never inferred from the session's mere existence. Entering the
+  // Service Store surface always (re)loads the domain user, then resolves
+  // membership, pending applications, and onboarding state fresh from
+  // Service Store data.
+  let serviceStoreAccess: ServiceStoreAccessState | null = null;
+  if (onServiceStoreSurface && !onCustomerSurface && !onAdminSurface) {
+    try {
+      const { domainUserId } = await ensureServiceStoreUser({
+        authUserId: session.user.id,
+        displayName: session.user.name,
+      });
+      serviceStoreAccess = await getServiceStoreAccessState(domainUserId);
+    } catch {
+      return NextResponse.redirect(
+        new URL(`${PORTALS.serviceStore.login}?error=auth`, request.url),
+      );
+    }
   }
 
   // ServiceStore login / landing / legacy onboarding hub.
@@ -188,37 +199,28 @@ export async function proxy(request: NextRequest) {
     pathname === SERVICE_STORE_LANDING ||
     isLegacyOnboardingPath(pathname)
   ) {
-    if (serviceStoreAccess && isApprovedServiceStore(serviceStoreAccess)) {
-      return NextResponse.redirect(
-        new URL(resolveApprovedServiceStoreDestination(serviceStoreAccess), request.url),
-      );
-    }
-    if (serviceStoreAccess && isPendingServiceStore(serviceStoreAccess)) {
-      return NextResponse.redirect(new URL(SERVICE_STORE_WAITING, request.url));
+    const destination = resolvePostAuthServiceStoreDestination(serviceStoreAccess);
+
+    if (destination !== SERVICE_STORE_ONBOARDING) {
+      return NextResponse.redirect(new URL(destination, request.url));
     }
     if (pathname === PORTALS.serviceStore.login) {
       const callbackUrl = request.nextUrl.searchParams.get("callbackUrl");
-      const destination =
-        callbackUrl && callbackUrl.startsWith("/app")
-          ? callbackUrl
-          : SERVICE_STORE_ONBOARDING;
-      return NextResponse.redirect(new URL(destination, request.url));
+      const loginDestination =
+        callbackUrl && callbackUrl.startsWith("/app") ? callbackUrl : destination;
+      return NextResponse.redirect(new URL(loginDestination, request.url));
     }
     if (pathname === SERVICE_STORE_LANDING) {
       return NextResponse.next();
     }
-    return NextResponse.redirect(new URL(SERVICE_STORE_ONBOARDING, request.url));
+    return NextResponse.redirect(new URL(destination, request.url));
   }
 
   // ServiceStore onboarding page.
   if (pathname === SERVICE_STORE_ONBOARDING || pathname.startsWith(`${SERVICE_STORE_ONBOARDING}/`)) {
-    if (serviceStoreAccess && isApprovedServiceStore(serviceStoreAccess)) {
-      return NextResponse.redirect(
-        new URL(resolveApprovedServiceStoreDestination(serviceStoreAccess), request.url),
-      );
-    }
-    if (serviceStoreAccess && isPendingServiceStore(serviceStoreAccess)) {
-      return NextResponse.redirect(new URL(SERVICE_STORE_WAITING, request.url));
+    const destination = resolvePostAuthServiceStoreDestination(serviceStoreAccess);
+    if (destination !== SERVICE_STORE_ONBOARDING) {
+      return NextResponse.redirect(new URL(destination, request.url));
     }
     return NextResponse.next();
   }
@@ -230,31 +232,22 @@ export async function proxy(request: NextRequest) {
 
   // ServiceStore app routes require serviceStore profile (or onboarding / waiting).
   if (isServiceStoreAppPath(pathname)) {
-    if (!isIdentityLinked(identity)) {
-      return NextResponse.redirect(new URL(SERVICE_STORE_ONBOARDING, request.url));
+    const destination = resolvePostAuthServiceStoreDestination(serviceStoreAccess);
+
+    if (destination === SERVICE_STORE_ONBOARDING) {
+      return NextResponse.redirect(new URL(destination, request.url));
     }
 
-    if (
-      !serviceStoreAccess ||
-      (!isApprovedServiceStore(serviceStoreAccess) && !isPendingServiceStore(serviceStoreAccess))
-    ) {
-      if (pathname === SERVICE_STORE_ONBOARDING) {
-        return NextResponse.next();
+    if (destination === SERVICE_STORE_WAITING) {
+      if (pathname !== SERVICE_STORE_WAITING) {
+        return NextResponse.redirect(new URL(destination, request.url));
       }
-      return NextResponse.redirect(new URL(SERVICE_STORE_ONBOARDING, request.url));
+      return NextResponse.next();
     }
 
-    if (isPendingServiceStore(serviceStoreAccess) && pathname !== SERVICE_STORE_WAITING) {
-      return NextResponse.redirect(new URL(SERVICE_STORE_WAITING, request.url));
-    }
-
-    if (
-      isApprovedServiceStore(serviceStoreAccess) &&
-      (pathname === SERVICE_STORE_WAITING || pathname === SERVICE_STORE_LANDING)
-    ) {
-      return NextResponse.redirect(
-        new URL(resolveApprovedServiceStoreDestination(serviceStoreAccess), request.url),
-      );
+    // Approved: only steer away from the waiting/landing pages; other app pages pass through.
+    if (pathname === SERVICE_STORE_WAITING || pathname === SERVICE_STORE_LANDING) {
+      return NextResponse.redirect(new URL(destination, request.url));
     }
 
     return NextResponse.next();

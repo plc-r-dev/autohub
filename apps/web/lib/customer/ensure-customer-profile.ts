@@ -13,7 +13,7 @@ export type EnsureCustomerProfileResult = {
   created: boolean;
 };
 
-function splitDisplayName(name: string | null | undefined): {
+export function splitDisplayName(name: string | null | undefined): {
   firstName: string;
   lastName: string;
 } {
@@ -28,7 +28,7 @@ function splitDisplayName(name: string | null | undefined): {
   return { firstName, lastName };
 }
 
-async function resolveDefaultTenantId(): Promise<string> {
+export async function resolveDefaultTenantId(): Promise<string> {
   const preferred = await prisma.tenant.findFirst({
     where: { code: "AUTOHUB", status: "ACTIVE" },
     select: { id: true },
