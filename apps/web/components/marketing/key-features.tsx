@@ -27,7 +27,7 @@ export function KeyFeatures() {
         {FEATURES.map((feature) => (
           <div
             key={feature.label}
-            className="flex flex-col items-center gap-3 rounded-3xl border border-border bg-card px-4 py-8 text-center"
+            className="flex flex-col items-center gap-3 rounded-3xl border border-border bg-card px-4 py-8 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg"
           >
             <div className="flex size-12 items-center justify-center rounded-2xl bg-muted">
               <feature.icon className="size-6 text-foreground" />

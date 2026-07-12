@@ -7,7 +7,11 @@ import { PORTALS } from "@/lib/auth/portals";
 
 export function FinalCta() {
   return (
-    <MarketingSection tone="muted" className="text-center">
+    <MarketingSection tone="muted" className="relative overflow-hidden text-center">
+      <div
+        aria-hidden
+        className="absolute top-1/2 left-1/2 -z-10 size-[36rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-3xl"
+      />
       <h2 className="mx-auto max-w-xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
         Ready to get started?
       </h2>

@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { buttonVariants } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 import { PORTALS } from "@/lib/auth/portals";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const SECTION_LINKS = [
   { href: "#features", label: "Features" },
@@ -18,9 +20,35 @@ const CREATE_STORE_HREF = `${PORTALS.serviceStore.onboarding}?mode=create`;
 
 export function MarketingHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const pathname = usePathname();
+
+  // Only the landing page has a hero to sit transparently over; every
+  // other page (e.g. /sign-in) must render a solid header from the start.
+  const canBeTransparent = pathname === "/";
+
+  useEffect(() => {
+    if (!canBeTransparent) return;
+
+    function onScroll() {
+      setScrolled(window.scrollY > 40);
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [canBeTransparent]);
+
+  const transparent = canBeTransparent && !scrolled && !menuOpen;
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur-sm">
+    <header
+      className={cn(
+        "fixed inset-x-0 top-0 z-40 border-b transition-colors duration-300",
+        transparent
+          ? "border-transparent bg-transparent"
+          : "border-border bg-background/95 backdrop-blur-sm",
+      )}
+    >
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5 md:px-10">
         <Link href="/" className="font-serif text-2xl font-semibold tracking-tight text-foreground">
           AutoHub
@@ -54,6 +82,7 @@ export function MarketingHeader() {
           <Link href={PORTALS.marketing.openInLine} className={cn(buttonVariants({ size: "sm" }))}>
             Open LINE
           </Link>
+          <ThemeToggle />
         </div>
 
         <button
@@ -87,6 +116,10 @@ export function MarketingHeader() {
             >
               Sign In
             </Link>
+            <div className="flex items-center justify-between rounded-lg px-3 py-2.5">
+              <span className="text-sm font-medium text-foreground">Theme</span>
+              <ThemeToggle />
+            </div>
           </nav>
           <div className="mt-4 flex flex-col gap-2">
             <Link

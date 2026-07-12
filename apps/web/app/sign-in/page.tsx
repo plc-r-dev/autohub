@@ -18,7 +18,7 @@ export default function SignInPage() {
   return (
     <div className="flex min-h-svh flex-col bg-background">
       <MarketingHeader />
-      <main className="flex-1">
+      <main className="flex-1 pt-20">
         <MarketingSection>
           <MarketingSectionHeading title="Sign in to your Service Store" />
           <div className="mx-auto mt-12 grid max-w-sm gap-4">
