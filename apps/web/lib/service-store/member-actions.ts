@@ -4,10 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireServiceStoreContext } from "@/lib/service-store/context";
-import {
-  ASSIGNABLE_MEMBER_ROLES,
-  SERVICE_STORE_PERMISSION,
-} from "@/lib/service-store/domain";
+import { SERVICE_STORE_PERMISSION } from "@/lib/service-store/domain";
 import { countServiceStoreOwners } from "@/lib/service-store/application/member-queries";
 import type { ServiceStoreMemberRole } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -277,5 +274,3 @@ export async function switchActiveServiceStore(serviceStoreId: string) {
   revalidatePath("/app");
   redirect("/app/dashboard");
 }
-
-export { ASSIGNABLE_MEMBER_ROLES };

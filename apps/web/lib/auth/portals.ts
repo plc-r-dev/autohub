@@ -17,7 +17,8 @@ export const PORTALS = {
     login: "/app/login",
     onboarding: "/app/onboarding",
     dashboard: "/app/dashboard",
-    waiting: "/app/waiting",
+    waiting: "/pending-approval",
+    chooseStore: "/choose-store",
   },
   admin: {
     home: "/admin",

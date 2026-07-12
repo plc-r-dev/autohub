@@ -35,6 +35,11 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
+        source: "/app/waiting",
+        destination: "/pending-approval",
+        permanent: false,
+      },
+      {
         source: "/claim",
         destination: "/app/onboarding?mode=claim",
         permanent: false,

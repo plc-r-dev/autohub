@@ -3,7 +3,6 @@
 import { useActionState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ASSIGNABLE_MEMBER_ROLES,
   inviteServiceStoreMember,
   removeServiceStoreMember,
   transferServiceStoreOwnership,
@@ -16,7 +15,7 @@ import {
   serviceStoreInputClassName,
   serviceStoreSelectClassName,
 } from "@/components/service-store/ui";
-import { roleLabel } from "@/lib/service-store/domain";
+import { ASSIGNABLE_MEMBER_ROLES, roleLabel } from "@/lib/service-store/domain";
 import type { ServiceStoreMemberRole } from "@/lib/generated/prisma/client";
 
 type MemberRow = {

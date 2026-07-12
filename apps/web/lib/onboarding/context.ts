@@ -14,6 +14,10 @@ async function resolveApprovedRedirect(domainUserId: string) {
     return null;
   }
 
+  if (access.membershipCount > 1) {
+    return "/choose-store";
+  }
+
   const store = await prisma.serviceStore.findUnique({
     where: { id: access.serviceStoreId },
     select: { status: true },
@@ -85,7 +89,7 @@ export async function requireServiceStoreOnboardingContext(): Promise<Onboarding
       }
     }
     if (isPendingServiceStore(serviceStoreAccess)) {
-      redirect("/app/waiting");
+      redirect("/pending-approval");
     }
     // Linked customer without serviceStore profile — continue onboarding on same identity.
   }

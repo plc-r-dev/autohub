@@ -8,10 +8,10 @@ import {
   getServiceStoreAccessState,
   isApprovedServiceStore,
   isPendingServiceStore,
+  resolveApprovedServiceStoreDestination,
 } from "@/lib/service-store/access";
 
 const CUSTOMER_HOME = PORTALS.customer.home;
-const SERVICE_STORE_HOME = PORTALS.serviceStore.dashboard;
 const SERVICE_STORE_WAITING = PORTALS.serviceStore.waiting;
 const SERVICE_STORE_ONBOARDING = PORTALS.serviceStore.onboarding;
 const SERVICE_STORE_LANDING = PORTALS.serviceStore.home;
@@ -189,7 +189,9 @@ export async function proxy(request: NextRequest) {
     isLegacyOnboardingPath(pathname)
   ) {
     if (serviceStoreAccess && isApprovedServiceStore(serviceStoreAccess)) {
-      return NextResponse.redirect(new URL(SERVICE_STORE_HOME, request.url));
+      return NextResponse.redirect(
+        new URL(resolveApprovedServiceStoreDestination(serviceStoreAccess), request.url),
+      );
     }
     if (serviceStoreAccess && isPendingServiceStore(serviceStoreAccess)) {
       return NextResponse.redirect(new URL(SERVICE_STORE_WAITING, request.url));
@@ -211,7 +213,9 @@ export async function proxy(request: NextRequest) {
   // ServiceStore onboarding page.
   if (pathname === SERVICE_STORE_ONBOARDING || pathname.startsWith(`${SERVICE_STORE_ONBOARDING}/`)) {
     if (serviceStoreAccess && isApprovedServiceStore(serviceStoreAccess)) {
-      return NextResponse.redirect(new URL(SERVICE_STORE_HOME, request.url));
+      return NextResponse.redirect(
+        new URL(resolveApprovedServiceStoreDestination(serviceStoreAccess), request.url),
+      );
     }
     if (serviceStoreAccess && isPendingServiceStore(serviceStoreAccess)) {
       return NextResponse.redirect(new URL(SERVICE_STORE_WAITING, request.url));
@@ -248,7 +252,9 @@ export async function proxy(request: NextRequest) {
       isApprovedServiceStore(serviceStoreAccess) &&
       (pathname === SERVICE_STORE_WAITING || pathname === SERVICE_STORE_LANDING)
     ) {
-      return NextResponse.redirect(new URL(SERVICE_STORE_HOME, request.url));
+      return NextResponse.redirect(
+        new URL(resolveApprovedServiceStoreDestination(serviceStoreAccess), request.url),
+      );
     }
 
     return NextResponse.next();
