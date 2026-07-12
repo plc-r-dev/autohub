@@ -5,7 +5,6 @@ import { ButtonLink, Card } from "@/components/customer/ui";
 import { requireDomainUser } from "@/lib/auth/domain-user";
 import { getServiceStoreBookingFactsByBranchId } from "@/lib/booking/discovery-queries";
 import { resolveBookingCatalog } from "@/lib/booking/engine/validate-create";
-import { resolveBookingWizardStep } from "@/lib/booking/wizard";
 import { requireCustomerForUser } from "@/lib/customer/context";
 import {
   isServiceStoreBookable,
@@ -19,7 +18,6 @@ type PageProps = {
     branchId?: string;
     serviceId?: string;
     vehicleId?: string;
-    step?: string;
   }>;
 };
 
@@ -143,19 +141,6 @@ export default async function BookingWizardPage({ searchParams }: PageProps) {
         ? lastBooking.vehicleId
         : vehicles[0]?.id;
 
-  const branchesForService = resolvedServiceId
-    ? branches.filter((branch) =>
-        services.some((service) => service.id === resolvedServiceId && service.branchId === branch.id),
-      ).length
-    : branches.length;
-
-  const initialStep = resolveBookingWizardStep({
-    requestedStep: params.step,
-    serviceId: resolvedServiceId,
-    branchId: resolvedBranchId,
-    branchesForService,
-  });
-
   return (
     <CustomerShell
       backHref={`/browse/${serviceStoreId}`}
@@ -165,12 +150,11 @@ export default async function BookingWizardPage({ searchParams }: PageProps) {
     >
       <BookingWizard
         serviceStoreId={store.id}
-        serviceStoreName={store.name}
         storeDescription={store.description}
-        initialStep={initialStep}
         services={services}
         branches={branches}
         vehicles={vehicles}
+        customerPhone={customer.phone}
         initialServiceId={resolvedServiceId}
         initialBranchId={resolvedBranchId}
         initialVehicleId={defaultVehicleId}

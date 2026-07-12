@@ -48,7 +48,6 @@ export default async function BrowseBranchPage({ params }: PageProps) {
                   serviceStoreId,
                   branchId: branch.id,
                   serviceId: service.id,
-                  step: "vehicle",
                 })}
                 canBook={canBook}
                 serviceStoreId={serviceStoreId}

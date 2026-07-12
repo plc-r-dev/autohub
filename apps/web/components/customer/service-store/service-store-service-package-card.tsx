@@ -34,7 +34,6 @@ export function ServiceStoreServicePackageCard({
     serviceStoreId,
     serviceId: service.id,
     branchId: service.branchId,
-    step: "vehicle",
   });
 
   if (compact) {

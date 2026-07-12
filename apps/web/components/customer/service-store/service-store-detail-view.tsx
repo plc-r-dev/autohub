@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-  Clock,
   MapPin,
   MessageCircle,
   Navigation,
@@ -68,9 +67,8 @@ export function ServiceStoreDetailView({
         serviceStoreId,
         serviceId: firstService.id,
         branchId: firstService.branchId,
-        step: "vehicle",
       })
-    : buildBookingWizardHref({ serviceStoreId, step: "service" });
+    : buildBookingWizardHref({ serviceStoreId });
 
   const grouped = categories.map((category) => ({
     category,
@@ -204,7 +202,6 @@ export function ServiceStoreDetailView({
                       serviceStoreId,
                       serviceId: service.id,
                       branchId: service.branchId,
-                      step: "vehicle",
                     })}
                     canBook={canBook}
                     serviceStoreId={serviceStoreId}

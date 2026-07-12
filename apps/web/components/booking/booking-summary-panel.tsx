@@ -3,15 +3,15 @@ import { formatBookingDate, formatBookingTime, formatPrice } from "@/lib/booking
 import { cn } from "@workspace/ui/lib/utils";
 
 type BookingSummaryPanelProps = {
-  serviceStoreName: string;
-  branchName: string;
   vehicleLabel: string | null;
+  licensePlate?: string | null;
   serviceName: string | null;
   servicePrice: string | null;
   durationMinutes: number | null;
   dateLabel: string | null;
   timeLabel: string | null;
   estimatedFinishLabel?: string | null;
+  promotionLabel?: string | null;
   className?: string;
   compact?: boolean;
 };
@@ -42,15 +42,15 @@ function SummaryRow({
 }
 
 export function BookingSummaryPanel({
-  serviceStoreName,
-  branchName,
   vehicleLabel,
+  licensePlate,
   serviceName,
   servicePrice,
   durationMinutes,
   dateLabel,
   timeLabel,
   estimatedFinishLabel,
+  promotionLabel,
   className,
   compact = false,
 }: BookingSummaryPanelProps) {
@@ -64,13 +64,14 @@ export function BookingSummaryPanel({
         Booking summary
       </h2>
       <dl className={cn("space-y-4", compact ? "mt-4" : "mt-6")}>
-        <SummaryRow label="Service shop" value={`${serviceStoreName} · ${branchName}`} />
         <SummaryRow label="Vehicle" value={vehicleLabel} />
+        <SummaryRow label="License plate" value={licensePlate ?? null} />
         <SummaryRow label="Service" value={serviceName} />
         <SummaryRow label="Date" value={dateLabel} />
         <SummaryRow label="Time" value={timeLabel} />
         <SummaryRow label="Est. finish" value={estimatedFinishLabel ?? null} />
         <SummaryRow label="Duration" value={durationLabel} />
+        <SummaryRow label="Promotion" value={promotionLabel ?? "No promotion applied"} />
         <div className="border-t border-[#F1F5F9] pt-4">
           <SummaryRow label="Total" value={priceLabel} highlight />
         </div>

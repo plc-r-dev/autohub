@@ -125,7 +125,6 @@ function resolveBookHref(row: MarketplaceServiceStoreRow): string {
     serviceStoreId: row.id,
     branchId: firstBranch.id,
     serviceId: firstService.id,
-    step: "vehicle",
   });
 }
 
