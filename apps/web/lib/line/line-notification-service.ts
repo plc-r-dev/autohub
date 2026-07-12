@@ -260,7 +260,7 @@ export async function sendPendingBookingAutoCancelled(input: ServiceStoreBooking
       serviceStoreName: input.serviceStoreName,
       bookingDate: input.bookingDate,
       status: input.status,
-      deepLinkPath: `/service-store/bookings/${input.bookingNumber}`,
+      deepLinkPath: `/app/bookings/${input.bookingNumber}`,
     }),
   );
 }
@@ -276,7 +276,7 @@ export async function sendServiceStoreApproved(input: ServiceStoreApprovedInput)
     buildServiceStoreApprovedMessages({
       subtitle: "Your serviceStore account has been approved.",
       serviceStoreName: input.serviceStoreName,
-      deepLinkPath: "/service-store/dashboard",
+      deepLinkPath: "/app/dashboard",
     }),
   );
 }
@@ -298,7 +298,7 @@ export async function sendBillingGenerated(input: BillingEventInput) {
       billingNumber: input.billingNumber,
       serviceStoreName: input.serviceStoreName,
       status: input.status,
-      deepLinkPath: `/service-store/billings/${input.billingId}`,
+      deepLinkPath: `/app/billings/${input.billingId}`,
     }),
   );
 }
@@ -312,7 +312,7 @@ export async function sendBillingApproved(input: BillingEventInput) {
       billingNumber: input.billingNumber,
       serviceStoreName: input.serviceStoreName,
       status: input.status,
-      deepLinkPath: `/service-store/billings/${input.billingId}`,
+      deepLinkPath: `/app/billings/${input.billingId}`,
     }),
   );
 }
@@ -326,7 +326,7 @@ export async function sendPaymentApproved(input: BillingEventInput) {
       billingNumber: input.billingNumber,
       serviceStoreName: input.serviceStoreName,
       status: input.status,
-      deepLinkPath: `/service-store/billings/${input.billingId}`,
+      deepLinkPath: `/app/billings/${input.billingId}`,
     }),
   );
 }

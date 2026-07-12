@@ -13,11 +13,11 @@ export const PORTALS = {
     openInLine: "/open-in-line",
   },
   serviceStore: {
-    home: "/service-store",
-    login: "/service-store/login",
-    onboarding: "/service-store/onboarding",
-    dashboard: "/service-store/dashboard",
-    waiting: "/service-store/waiting",
+    home: "/app",
+    login: "/app/login",
+    onboarding: "/app/onboarding",
+    dashboard: "/app/dashboard",
+    waiting: "/app/waiting",
   },
   admin: {
     home: "/admin",

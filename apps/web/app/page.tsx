@@ -1,5 +1,7 @@
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { Hero } from "@/components/marketing/hero";
+import { ForCustomers } from "@/components/marketing/for-customers";
+import { ForServiceStores } from "@/components/marketing/for-service-stores";
 import { Problem } from "@/components/marketing/problem";
 import { KeyFeatures } from "@/components/marketing/key-features";
 import { LineJourney } from "@/components/marketing/line-journey";
@@ -13,6 +15,8 @@ export default function MarketingLandingPage() {
       <MarketingHeader />
       <main className="flex-1">
         <Hero />
+        <ForCustomers />
+        <ForServiceStores />
         <Problem />
         <KeyFeatures />
         <LineJourney />

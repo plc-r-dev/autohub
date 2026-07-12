@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MessageCircle, Store } from "lucide-react";
 import { buttonVariants } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 import { MarketingSection } from "@/components/marketing/section-container";
@@ -8,20 +9,25 @@ export function FinalCta() {
   return (
     <MarketingSection tone="muted" className="text-center">
       <h2 className="mx-auto max-w-xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-        Bring your service business onto AutoHub
+        Ready to get started?
       </h2>
+      <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
+        Customers book through LINE. Service Stores manage their business through AutoHub.
+      </p>
       <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
         <Link
-          href={PORTALS.serviceStore.onboarding}
-          className={cn(buttonVariants({ size: "lg" }), "h-12 px-10 text-base")}
+          href={PORTALS.marketing.openInLine}
+          className={cn(buttonVariants({ size: "lg" }), "h-12 gap-2 px-10 text-base")}
         >
-          Get Started
+          <MessageCircle className="size-5" />
+          Open LINE
         </Link>
         <Link
-          href={PORTALS.marketing.signIn}
-          className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-12 px-10 text-base")}
+          href={`${PORTALS.serviceStore.onboarding}?mode=claim`}
+          className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-12 gap-2 px-10 text-base")}
         >
-          Sign In
+          <Store className="size-5" />
+          Claim or Create a Store
         </Link>
       </div>
     </MarketingSection>

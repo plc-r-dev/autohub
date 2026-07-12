@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Store, ShieldCheck } from "lucide-react";
+import { Store } from "lucide-react";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { MarketingSection, MarketingSectionHeading } from "@/components/marketing/section-container";
@@ -12,12 +12,6 @@ const PORTAL_OPTIONS = [
     label: "Service Store",
     description: "Manage bookings, branches, staff, and billing.",
   },
-  {
-    href: PORTALS.admin.login,
-    icon: ShieldCheck,
-    label: "Platform Admin",
-    description: "Manage the AutoHub platform.",
-  },
 ] as const;
 
 export default function SignInPage() {
@@ -26,8 +20,8 @@ export default function SignInPage() {
       <MarketingHeader />
       <main className="flex-1">
         <MarketingSection>
-          <MarketingSectionHeading title="Choose your portal" />
-          <div className="mx-auto mt-12 grid max-w-2xl gap-4 sm:grid-cols-2">
+          <MarketingSectionHeading title="Sign in to your Service Store" />
+          <div className="mx-auto mt-12 grid max-w-sm gap-4">
             {PORTAL_OPTIONS.map((option) => (
               <Link
                 key={option.href}

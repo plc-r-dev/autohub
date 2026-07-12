@@ -28,7 +28,7 @@ export function ServiceStorePortalShell({
       <div className="mx-auto flex w-full max-w-7xl gap-6 p-4 md:p-6 lg:p-8">
         <aside className="hidden w-56 shrink-0 lg:block">
           <div className="sticky top-6 flex flex-col gap-6">
-            <Link href="/service-store/dashboard" className="px-3">
+            <Link href="/app/dashboard" className="px-3">
               <p className="text-xs font-semibold tracking-wide text-[#0b7a3a] uppercase">
                 AutoHub
               </p>
@@ -60,7 +60,7 @@ export function ServiceStorePortalShell({
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {actions}
-                <LogoutButton redirectTo="/service-store/login" />
+                <LogoutButton redirectTo="/app/login" />
               </div>
             </div>
             <ServiceStoreMobileNav />

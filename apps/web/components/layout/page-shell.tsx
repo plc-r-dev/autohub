@@ -21,7 +21,7 @@ type PageShellProps = {
 };
 
 function isServiceStoreNav(nav?: NavItem[]) {
-  return Boolean(nav?.length && nav.every((item) => item.href.startsWith("/service-store")));
+  return Boolean(nav?.length && nav.every((item) => item.href.startsWith("/app")));
 }
 
 export function PageShell({

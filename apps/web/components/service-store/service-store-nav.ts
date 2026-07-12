@@ -6,44 +6,44 @@ export type ServiceStoreNavItem = {
 
 export const serviceStoreNavItems: ServiceStoreNavItem[] = [
   {
-    href: "/service-store/dashboard",
+    href: "/app/dashboard",
     label: "Dashboard",
-    match: (path) => path === "/service-store/dashboard",
+    match: (path) => path === "/app/dashboard",
   },
   {
-    href: "/service-store/bookings",
+    href: "/app/bookings",
     label: "Bookings",
-    match: (path) => path.startsWith("/service-store/bookings"),
+    match: (path) => path.startsWith("/app/bookings"),
   },
   {
-    href: "/service-store/branches",
+    href: "/app/branches",
     label: "Branches",
-    match: (path) => path.startsWith("/service-store/branches"),
+    match: (path) => path.startsWith("/app/branches"),
   },
   {
-    href: "/service-store/customers",
+    href: "/app/customers",
     label: "CRM",
-    match: (path) => path.startsWith("/service-store/customers"),
+    match: (path) => path.startsWith("/app/customers"),
   },
   {
-    href: "/service-store/billings",
+    href: "/app/billings",
     label: "Billing",
-    match: (path) => path.startsWith("/service-store/billings"),
+    match: (path) => path.startsWith("/app/billings"),
   },
   {
-    href: "/service-store/members",
+    href: "/app/members",
     label: "Members",
-    match: (path) => path.startsWith("/service-store/members"),
+    match: (path) => path.startsWith("/app/members"),
   },
   {
-    href: "/service-store/readiness",
+    href: "/app/readiness",
     label: "Readiness",
-    match: (path) => path.startsWith("/service-store/readiness"),
+    match: (path) => path.startsWith("/app/readiness"),
   },
   {
-    href: "/service-store/profile",
+    href: "/app/profile",
     label: "Settings",
-    match: (path) => path === "/service-store/profile",
+    match: (path) => path === "/app/profile",
   },
 ];
 

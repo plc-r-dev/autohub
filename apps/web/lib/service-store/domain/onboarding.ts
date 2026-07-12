@@ -92,7 +92,7 @@ export function evaluateOnboardingSetup(input: OnboardingSetupInput): Onboarding
       description: "Confirm your store name, contact details, and business category.",
       required: true,
       met: hasBusinessInfo && input.branchCount > 0,
-      href: "/service-store/setup/verify-business",
+      href: "/app/setup/verify-business",
     },
     {
       id: ONBOARDING_SETUP_STEP.SERVICES,
@@ -100,7 +100,7 @@ export function evaluateOnboardingSetup(input: OnboardingSetupInput): Onboarding
       description: "Add at least one active service customers can book.",
       required: true,
       met: hasServices,
-      href: "/service-store/setup/services",
+      href: "/app/setup/services",
     },
     {
       id: ONBOARDING_SETUP_STEP.HOURS,
@@ -108,7 +108,7 @@ export function evaluateOnboardingSetup(input: OnboardingSetupInput): Onboarding
       description: "Set opening hours for your branch.",
       required: true,
       met: hasHours,
-      href: "/service-store/setup/hours",
+      href: "/app/setup/hours",
     },
     {
       id: ONBOARDING_SETUP_STEP.PAYMENT,
@@ -116,7 +116,7 @@ export function evaluateOnboardingSetup(input: OnboardingSetupInput): Onboarding
       description: "Add the bank account for AutoHub payouts.",
       required: true,
       met: hasPayment,
-      href: "/service-store/setup/payment",
+      href: "/app/setup/payment",
     },
     {
       id: ONBOARDING_SETUP_STEP.TEAM,
@@ -124,7 +124,7 @@ export function evaluateOnboardingSetup(input: OnboardingSetupInput): Onboarding
       description: "Optional — invite managers, staff, or finance users.",
       required: false,
       met: input.teamInvited,
-      href: "/service-store/setup/team",
+      href: "/app/setup/team",
     },
   ];
 

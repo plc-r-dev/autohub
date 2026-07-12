@@ -32,9 +32,9 @@ function formDataToObject(formData: FormData): Record<string, FormDataEntryValue
 }
 
 function revalidateBillingPaths(billingId: string) {
-  revalidatePath("/service-store/billings");
-  revalidatePath(`/service-store/billings/${billingId}`);
-  revalidatePath("/service-store/dashboard");
+  revalidatePath("/app/billings");
+  revalidatePath(`/app/billings/${billingId}`);
+  revalidatePath("/app/dashboard");
   revalidatePath("/admin/billings");
   revalidatePath(`/admin/billings/${billingId}`);
 }
@@ -75,7 +75,7 @@ export async function generateMonthlyBilling(
   });
 
   revalidatePath("/admin/billings");
-  revalidatePath("/service-store/billings");
+  revalidatePath("/app/billings");
 
   if (result.createdBillings.length > 0) {
     const serviceStoreIds = [...new Set(result.createdBillings.map((row) => row.serviceStoreId))];

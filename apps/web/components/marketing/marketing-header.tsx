@@ -1,11 +1,118 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { Menu, X } from "lucide-react";
+import { buttonVariants } from "@workspace/ui/components/button";
+import { cn } from "@workspace/ui/lib/utils";
+import { PORTALS } from "@/lib/auth/portals";
+
+const SECTION_LINKS = [
+  { href: "#features", label: "Features" },
+  { href: "#customers", label: "For Customers" },
+  { href: "#service-stores", label: "For Service Stores" },
+] as const;
+
+const CLAIM_STORE_HREF = `${PORTALS.serviceStore.onboarding}?mode=claim`;
+const CREATE_STORE_HREF = `${PORTALS.serviceStore.onboarding}?mode=create`;
+
 export function MarketingHeader() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
-    <header className="w-full bg-background">
-      <div className="mx-auto flex w-full max-w-6xl items-center px-6 py-6 md:px-10">
-        <p className="font-serif text-2xl font-semibold tracking-tight text-foreground">
+    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur-sm">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5 md:px-10">
+        <Link href="/" className="font-serif text-2xl font-semibold tracking-tight text-foreground">
           AutoHub
-        </p>
+        </Link>
+
+        <nav className="hidden items-center gap-8 lg:flex">
+          {SECTION_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {link.label}
+            </a>
+          ))}
+        </nav>
+
+        <div className="hidden items-center gap-3 lg:flex">
+          <Link
+            href={PORTALS.marketing.signIn}
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Sign In
+          </Link>
+          <Link href={CLAIM_STORE_HREF} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+            Claim Store
+          </Link>
+          <Link href={CREATE_STORE_HREF} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+            Create Store
+          </Link>
+          <Link href={PORTALS.marketing.openInLine} className={cn(buttonVariants({ size: "sm" }))}>
+            Open LINE
+          </Link>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setMenuOpen((open) => !open)}
+          className="flex size-10 items-center justify-center rounded-full border border-border text-foreground lg:hidden"
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={menuOpen}
+        >
+          {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+        </button>
       </div>
+
+      {menuOpen ? (
+        <div className="border-t border-border bg-background px-6 py-4 lg:hidden">
+          <nav className="flex flex-col gap-1">
+            {SECTION_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={() => setMenuOpen(false)}
+                className="rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
+              >
+                {link.label}
+              </a>
+            ))}
+            <Link
+              href={PORTALS.marketing.signIn}
+              onClick={() => setMenuOpen(false)}
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
+            >
+              Sign In
+            </Link>
+          </nav>
+          <div className="mt-4 flex flex-col gap-2">
+            <Link
+              href={CLAIM_STORE_HREF}
+              onClick={() => setMenuOpen(false)}
+              className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+            >
+              Claim Store
+            </Link>
+            <Link
+              href={CREATE_STORE_HREF}
+              onClick={() => setMenuOpen(false)}
+              className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+            >
+              Create Store
+            </Link>
+            <Link
+              href={PORTALS.marketing.openInLine}
+              onClick={() => setMenuOpen(false)}
+              className={cn(buttonVariants(), "w-full")}
+            >
+              Open LINE
+            </Link>
+          </div>
+        </div>
+      ) : null}
     </header>
   );
 }

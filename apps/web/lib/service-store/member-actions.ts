@@ -37,10 +37,10 @@ const transferSchema = z.object({
 });
 
 function revalidateServiceStorePaths() {
-  revalidatePath("/service-store/members");
-  revalidatePath("/service-store/readiness");
-  revalidatePath("/service-store/dashboard");
-  revalidatePath("/service-store");
+  revalidatePath("/app/members");
+  revalidatePath("/app/readiness");
+  revalidatePath("/app/dashboard");
+  revalidatePath("/app");
   revalidatePath("/browse");
 }
 
@@ -274,8 +274,8 @@ export async function switchActiveServiceStore(serviceStoreId: string) {
     data: { serviceStoreId },
   });
 
-  revalidatePath("/service-store");
-  redirect("/service-store/dashboard");
+  revalidatePath("/app");
+  redirect("/app/dashboard");
 }
 
 export { ASSIGNABLE_MEMBER_ROLES };

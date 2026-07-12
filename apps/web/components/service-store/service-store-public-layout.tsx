@@ -13,8 +13,8 @@ type ServiceStorePublicLayoutProps = {
 export function ServiceStorePublicLayout({
   title,
   description,
-  backHref = "/service-store",
-  backLabel = "Back to Service Store",
+  backHref = "/",
+  backLabel = "Back to AutoHub",
   children,
   maxWidth = "lg",
 }: ServiceStorePublicLayoutProps) {
@@ -43,7 +43,7 @@ export function ServiceStorePublicLayout({
               <p className="mt-3 text-base leading-relaxed text-[#5b6b7a]">{description}</p>
             ) : null}
           </div>
-          <LogoutButton redirectTo="/service-store/login" />
+          <LogoutButton redirectTo="/app/login" />
         </header>
         <main className="flex-1">{children}</main>
       </div>

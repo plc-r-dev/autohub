@@ -37,9 +37,9 @@ export async function updateServiceStoreProfile(
     data: parsed.data,
   });
 
-  revalidatePath("/service-store/profile");
-  revalidatePath("/service-store/dashboard");
-  redirect("/service-store/profile");
+  revalidatePath("/app/profile");
+  revalidatePath("/app/dashboard");
+  redirect("/app/profile");
 }
 
 export async function createBranch(
@@ -87,8 +87,8 @@ export async function createBranch(
     });
   });
 
-  revalidatePath("/service-store/branches");
-  redirect("/service-store/branches");
+  revalidatePath("/app/branches");
+  redirect("/app/branches");
 }
 
 export async function updateBranch(
@@ -130,9 +130,9 @@ export async function updateBranch(
     data: parsed.data,
   });
 
-  revalidatePath("/service-store/branches");
-  revalidatePath(`/service-store/branches/${branchId}`);
-  redirect(`/service-store/branches/${branchId}`);
+  revalidatePath("/app/branches");
+  revalidatePath(`/app/branches/${branchId}`);
+  redirect(`/app/branches/${branchId}`);
 }
 
 export async function updateBranchOperatingHours(
@@ -209,9 +209,9 @@ export async function updateBranchOperatingHours(
     ),
   );
 
-  revalidatePath(`/service-store/branches/${branchId}`);
-  revalidatePath(`/service-store/branches/${branchId}/hours`);
-  redirect(`/service-store/branches/${branchId}/hours`);
+  revalidatePath(`/app/branches/${branchId}`);
+  revalidatePath(`/app/branches/${branchId}/hours`);
+  redirect(`/app/branches/${branchId}/hours`);
 }
 
 export async function deleteBranch(branchId: string) {
@@ -227,8 +227,8 @@ export async function deleteBranch(branchId: string) {
 
   await prisma.branch.delete({ where: { id: branchId } });
 
-  revalidatePath("/service-store/branches");
-  redirect("/service-store/branches");
+  revalidatePath("/app/branches");
+  redirect("/app/branches");
 }
 
 export async function createService(
@@ -276,8 +276,8 @@ export async function createService(
     },
   });
 
-  revalidatePath(`/service-store/branches/${branchId}/services`);
-  redirect(`/service-store/branches/${branchId}/services`);
+  revalidatePath(`/app/branches/${branchId}/services`);
+  redirect(`/app/branches/${branchId}/services`);
 }
 
 export async function updateService(
@@ -335,9 +335,9 @@ export async function updateService(
     },
   });
 
-  revalidatePath(`/service-store/branches/${branchId}/services`);
-  revalidatePath(`/service-store/branches/${branchId}/services/${serviceId}`);
-  redirect(`/service-store/branches/${branchId}/services/${serviceId}`);
+  revalidatePath(`/app/branches/${branchId}/services`);
+  revalidatePath(`/app/branches/${branchId}/services/${serviceId}`);
+  redirect(`/app/branches/${branchId}/services/${serviceId}`);
 }
 
 export async function deleteService(branchId: string, serviceId: string) {
@@ -361,6 +361,6 @@ export async function deleteService(branchId: string, serviceId: string) {
 
   await prisma.service.delete({ where: { id: serviceId } });
 
-  revalidatePath(`/service-store/branches/${branchId}/services`);
-  redirect(`/service-store/branches/${branchId}/services`);
+  revalidatePath(`/app/branches/${branchId}/services`);
+  redirect(`/app/branches/${branchId}/services`);
 }

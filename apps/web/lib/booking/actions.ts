@@ -46,11 +46,11 @@ function parseVehicleYear(value?: string): number | null {
 }
 
 function revalidateBookingPaths(bookingNumber: string) {
-  revalidatePath("/service-store/bookings");
-  revalidatePath(`/service-store/bookings/${bookingNumber}`);
+  revalidatePath("/app/bookings");
+  revalidatePath(`/app/bookings/${bookingNumber}`);
   revalidatePath(`/bookings/${bookingNumber}`);
   revalidatePath("/bookings");
-  revalidatePath("/service-store/dashboard");
+  revalidatePath("/app/dashboard");
 }
 
 async function transitionServiceStoreBooking(
@@ -496,7 +496,7 @@ export async function createWalkInBooking(
       status: bookingNotification.status.replaceAll("_", " "),
     });
   }
-  redirect(`/service-store/bookings/${booking.bookingNumber}`);
+  redirect(`/app/bookings/${booking.bookingNumber}`);
 }
 
 export async function confirmBooking(bookingNumber: string) {

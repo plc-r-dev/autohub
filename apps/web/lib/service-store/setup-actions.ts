@@ -32,9 +32,9 @@ function formDataToObject(formData: FormData): Record<string, string> {
 }
 
 function revalidateSetupPaths() {
-  revalidatePath("/service-store/setup");
-  revalidatePath("/service-store/dashboard");
-  revalidatePath("/service-store/readiness");
+  revalidatePath("/app/setup");
+  revalidatePath("/app/dashboard");
+  revalidatePath("/app/readiness");
   revalidatePath("/browse");
 }
 
@@ -143,7 +143,7 @@ export async function saveVerifyBusinessStep(
   });
 
   revalidateSetupPaths();
-  redirect("/service-store/setup/services");
+  redirect("/app/setup/services");
 }
 
 export async function savePaymentAccountStep(
@@ -175,14 +175,14 @@ export async function savePaymentAccountStep(
   });
 
   revalidateSetupPaths();
-  redirect("/service-store/setup/team");
+  redirect("/app/setup/team");
 }
 
 export async function completeOnboardingSetup() {
   const ctx = await requireServiceStoreContext();
   const input = await loadOnboardingSetupInput(ctx.serviceStore.id);
   if (!input || !canTransitionToReadyForBooking(input)) {
-    redirect("/service-store/setup");
+    redirect("/app/setup");
   }
 
   await prisma.serviceStore.update({
@@ -194,12 +194,12 @@ export async function completeOnboardingSetup() {
   });
 
   revalidateSetupPaths();
-  redirect("/service-store/dashboard");
+  redirect("/app/dashboard");
 }
 
 export async function skipTeamSetupStep() {
   await requireServiceStoreContext();
-  redirect("/service-store/setup/payment");
+  redirect("/app/setup/payment");
 }
 
 export async function fetchClaimPrefillAction(serviceStoreId: string, googlePlaceId?: string) {

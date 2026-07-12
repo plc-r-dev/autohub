@@ -240,7 +240,7 @@ export async function submitServiceStoreClaim(
     return mapOnboardingError(error);
   }
 
-  redirect("/service-store/waiting");
+  redirect("/app/waiting");
 }
 
 export async function createServiceStoreDirect(
@@ -329,7 +329,7 @@ export async function createServiceStoreDirect(
     return mapOnboardingError(error);
   }
 
-  redirect("/service-store/setup");
+  redirect("/app/setup");
 }
 
 export async function completeCustomerOnboarding(
@@ -533,7 +533,7 @@ export async function completeServiceStoreOnboarding(
     return { error: "Unable to complete serviceStore onboarding. Please try again." };
   }
 
-  redirect("/service-store/waiting");
+  redirect("/app/waiting");
 }
 
 export async function searchServiceStoresAction(tenantId: string, query: string) {

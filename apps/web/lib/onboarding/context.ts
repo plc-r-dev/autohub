@@ -20,10 +20,10 @@ async function resolveApprovedRedirect(domainUserId: string) {
   });
 
   if (store?.status === "ONBOARDING") {
-    return "/service-store/setup";
+    return "/app/setup";
   }
 
-  return "/service-store/dashboard";
+  return "/app/dashboard";
 }
 
 export type OnboardingContext = {
@@ -72,7 +72,7 @@ export async function requireOnboardingContext(): Promise<OnboardingContext> {
 export async function requireServiceStoreOnboardingContext(): Promise<OnboardingContext> {
   const session = await getServerSession();
   if (!session) {
-    redirect("/service-store/login?callbackUrl=/service-store/onboarding");
+    redirect("/app/login?callbackUrl=/app/onboarding");
   }
 
   const identity = await resolveIdentityLink(session.user.id);
@@ -85,7 +85,7 @@ export async function requireServiceStoreOnboardingContext(): Promise<Onboarding
       }
     }
     if (isPendingServiceStore(serviceStoreAccess)) {
-      redirect("/service-store/waiting");
+      redirect("/app/waiting");
     }
     // Linked customer without serviceStore profile — continue onboarding on same identity.
   }

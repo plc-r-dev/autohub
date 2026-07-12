@@ -6,12 +6,12 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/merchant",
-        destination: "/service-store",
+        destination: "/app",
         permanent: false,
       },
       {
         source: "/merchant/:path*",
-        destination: "/service-store/:path*",
+        destination: "/app/:path*",
         permanent: false,
       },
       {
@@ -21,7 +21,17 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/onboarding/merchant",
-        destination: "/service-store/onboarding",
+        destination: "/app/onboarding",
+        permanent: false,
+      },
+      {
+        source: "/service-store",
+        destination: "/app",
+        permanent: false,
+      },
+      {
+        source: "/service-store/:path*",
+        destination: "/app/:path*",
         permanent: false,
       },
     ];

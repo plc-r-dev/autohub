@@ -45,7 +45,7 @@ function isAdminPublicPath(pathname: string): boolean {
 }
 
 function isServiceStoreAppPath(pathname: string): boolean {
-  return pathname === "/service-store" || pathname.startsWith("/service-store/");
+  return pathname === "/app" || pathname.startsWith("/app/");
 }
 
 function isAdminAppPath(pathname: string): boolean {
@@ -84,10 +84,10 @@ async function getLinkedServiceStoreAccess(authUserId: string) {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Backward compatibility: legacy /merchant routes → /service-store
+  // Backward compatibility: legacy /merchant routes → /app
   if (pathname === "/merchant" || pathname.startsWith("/merchant/")) {
     const url = request.nextUrl.clone();
-    url.pathname = pathname.replace(/^\/merchant/, "/service-store");
+    url.pathname = pathname.replace(/^\/merchant/, "/app");
     return NextResponse.redirect(url);
   }
 
@@ -197,7 +197,7 @@ export async function proxy(request: NextRequest) {
     if (pathname === PORTALS.serviceStore.login) {
       const callbackUrl = request.nextUrl.searchParams.get("callbackUrl");
       const destination =
-        callbackUrl && callbackUrl.startsWith("/service-store")
+        callbackUrl && callbackUrl.startsWith("/app")
           ? callbackUrl
           : SERVICE_STORE_ONBOARDING;
       return NextResponse.redirect(new URL(destination, request.url));

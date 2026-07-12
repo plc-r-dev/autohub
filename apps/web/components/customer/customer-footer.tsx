@@ -3,7 +3,6 @@ import Link from "next/link";
 const FOOTER_LINKS = [
   { href: "#", label: "Privacy Policy" },
   { href: "#", label: "Terms of Service" },
-  { href: "/service-store/login", label: "Service Store Portal" },
   { href: "#", label: "Contact Support" },
 ] as const;
 

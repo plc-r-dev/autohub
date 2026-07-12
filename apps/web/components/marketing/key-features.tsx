@@ -21,7 +21,7 @@ const FEATURES = [
 
 export function KeyFeatures() {
   return (
-    <MarketingSection>
+    <MarketingSection id="features">
       <MarketingSectionHeading eyebrow="Platform Features" title="Everything, in one platform" />
       <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
         {FEATURES.map((feature) => (
