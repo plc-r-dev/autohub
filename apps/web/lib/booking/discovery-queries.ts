@@ -30,6 +30,9 @@ const marketplaceListSelect = {
     where: { role: "OWNER" },
     select: { id: true },
   },
+  payoutBankName: true,
+  payoutAccountName: true,
+  payoutAccountNumber: true,
   branches: {
     select: {
       id: true,
@@ -62,6 +65,9 @@ type MarketplaceServiceStoreRow = {
   tenant: { name: string; code?: string };
   claims: Array<{ status: "PENDING" | "APPROVED" | "REJECTED" }>;
   members: Array<{ id: string }>;
+  payoutBankName: string | null;
+  payoutAccountName: string | null;
+  payoutAccountNumber: string | null;
   branches: Array<{
     id: string;
     latitude: { toString(): string } | null;
@@ -89,6 +95,11 @@ function toFacts(row: MarketplaceServiceStoreRow): MarketplaceServiceStoreFacts 
     activeServiceCount,
     branchesWithOpenHoursCount,
     hasContactInfo: Boolean(row.phone?.trim() || row.email?.trim()),
+    hasPaymentAccount: Boolean(
+      row.payoutBankName?.trim() &&
+        row.payoutAccountName?.trim() &&
+        row.payoutAccountNumber?.trim(),
+    ),
   });
 
   return {

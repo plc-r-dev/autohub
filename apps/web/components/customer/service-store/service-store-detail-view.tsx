@@ -120,11 +120,6 @@ export function ServiceStoreDetailView({
             </div>
 
             <div className="hidden shrink-0 gap-2 md:flex">
-              {canBook ? (
-                <ButtonLink href={primaryBookHref} variant="primary" size="sm">
-                  Book Now
-                </ButtonLink>
-              ) : null}
               {phone ? (
                 <a
                   href={`tel:${phone}`}

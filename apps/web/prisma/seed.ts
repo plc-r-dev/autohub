@@ -446,7 +446,17 @@ async function seedServiceStoreClaims(prisma: PrismaClient, tenantId: string, se
 
     await prisma.serviceStore.update({
       where: { id: serviceStoreId },
-      data: { bookingEnabled },
+      data: {
+        bookingEnabled,
+        ...(claimStatus === "APPROVED"
+          ? {
+              payoutBankName: "Kasikornbank",
+              payoutAccountName: `Seed Partner ${n}`,
+              payoutAccountNumber: `123-4-${n}0000-1`,
+              payoutBankBranch: "Head Office",
+            }
+          : {}),
+      },
     });
 
     if (!claimStatus) {
@@ -475,6 +485,23 @@ async function seedServiceStoreClaims(prisma: PrismaClient, tenantId: string, se
       },
       select: { id: true },
     });
+
+    if (claimStatus === "APPROVED") {
+      await prisma.serviceStoreMember.upsert({
+        where: {
+          serviceStoreId_userId: {
+            serviceStoreId,
+            userId: user.id,
+          },
+        },
+        update: { role: "OWNER" },
+        create: {
+          serviceStoreId,
+          userId: user.id,
+          role: "OWNER",
+        },
+      });
+    }
 
     const existing = await prisma.serviceStoreClaim.findFirst({
       where: {
