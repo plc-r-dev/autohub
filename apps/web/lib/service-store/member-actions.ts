@@ -34,6 +34,7 @@ const transferSchema = z.object({
 });
 
 function revalidateServiceStorePaths() {
+  revalidatePath("/app/settings");
   revalidatePath("/app/members");
   revalidatePath("/app/readiness");
   revalidatePath("/app/dashboard");

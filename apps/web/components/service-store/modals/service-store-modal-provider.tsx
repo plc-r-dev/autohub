@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  Suspense,
   useCallback,
   useContext,
   useEffect,
@@ -41,8 +42,6 @@ export function useServiceStoreModals() {
 }
 
 export function ServiceStoreModalProvider({ children }: { children: React.ReactNode }) {
-  const searchParams = useSearchParams()
-
   const [customerOpen, setCustomerOpen] = useState(false)
   const [customerLoading, setCustomerLoading] = useState(false)
   const [customerError, setCustomerError] = useState<string | null>(null)
@@ -118,27 +117,6 @@ export function ServiceStoreModalProvider({ children }: { children: React.ReactN
 
   const openedFromUrl = useRef(false)
 
-  useEffect(() => {
-    if (openedFromUrl.current) {
-      return
-    }
-
-    const customerId = searchParams.get("customerId")
-    const vehicleId = searchParams.get("vehicleId")
-
-    if (!customerId) {
-      return
-    }
-
-    openedFromUrl.current = true
-
-    void openCustomer(customerId).then(() => {
-      if (vehicleId) {
-        void openVehicle(customerId, vehicleId)
-      }
-    })
-  }, [searchParams, openCustomer, openVehicle])
-
   const value = useMemo(
     () => ({ openCustomer, openVehicle, openBooking }),
     [openCustomer, openVehicle, openBooking],
@@ -146,6 +124,13 @@ export function ServiceStoreModalProvider({ children }: { children: React.ReactN
 
   return (
     <ServiceStoreModalContext.Provider value={value}>
+      <Suspense fallback={null}>
+        <ServiceStoreModalUrlSync
+          openedFromUrl={openedFromUrl}
+          onOpenCustomer={openCustomer}
+          onOpenVehicle={openVehicle}
+        />
+      </Suspense>
       {children}
 
       <CustomerDetailModal
@@ -187,4 +172,39 @@ export function ServiceStoreModalProvider({ children }: { children: React.ReactN
       />
     </ServiceStoreModalContext.Provider>
   )
+}
+
+function ServiceStoreModalUrlSync({
+  openedFromUrl,
+  onOpenCustomer,
+  onOpenVehicle,
+}: {
+  openedFromUrl: React.MutableRefObject<boolean>
+  onOpenCustomer: (customerId: string) => Promise<void>
+  onOpenVehicle: (customerId: string, vehicleId: string) => Promise<void>
+}) {
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    if (openedFromUrl.current) {
+      return
+    }
+
+    const customerId = searchParams.get("customerId")
+    const vehicleId = searchParams.get("vehicleId")
+
+    if (!customerId) {
+      return
+    }
+
+    openedFromUrl.current = true
+
+    void onOpenCustomer(customerId).then(() => {
+      if (vehicleId) {
+        void onOpenVehicle(customerId, vehicleId)
+      }
+    })
+  }, [searchParams, onOpenCustomer, onOpenVehicle, openedFromUrl])
+
+  return null
 }

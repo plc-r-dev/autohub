@@ -44,11 +44,14 @@ export const storeServiceSchema = z.object({
     .optional()
     .transform((value) => (value === "" ? undefined : value)),
   duration: z.coerce.number().int().min(5, "Minimum 5 minutes").max(480),
-  price: z.coerce.number().min(0, "Price must be positive"),
-  isActive: z
-    .enum(["true", "false"])
+  bufferMinutes: z.coerce
+    .number()
+    .int()
+    .min(0, "Buffer cannot be negative")
+    .max(120, "Maximum 120 minutes")
     .optional()
-    .transform((value) => value !== "false"),
+    .transform((value) => value ?? 0),
+  price: z.coerce.number().min(0, "Price must be positive"),
 })
 
 export function slugifyServiceCode(name: string) {

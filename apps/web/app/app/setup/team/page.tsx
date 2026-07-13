@@ -23,10 +23,10 @@ export default async function ServiceStoreSetupTeamPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <ServiceStoreCard className="space-y-4">
           <p className="text-sm text-[#5b6b7a]">
-            You can invite team members by phone number from the members page. This step is optional.
+            You can share an invitation link from Store Settings → Staff. This step is optional.
           </p>
           <div className="flex flex-wrap gap-2">
-            <ServiceStoreButtonLink href="/app/members">Manage members</ServiceStoreButtonLink>
+            <ServiceStoreButtonLink href="/app/settings?tab=staff">Manage staff</ServiceStoreButtonLink>
             <Link href="/app/setup/complete" className="text-sm font-semibold text-[#16A34A] hover:underline">
               Skip and finish setup
             </Link>

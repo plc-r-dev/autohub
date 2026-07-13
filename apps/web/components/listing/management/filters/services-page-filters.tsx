@@ -1,6 +1,6 @@
 "use client"
 
-import { ManagementListFilterSelect, ManagementListFilters } from "@/components/listing/management"
+import { ManagementListFilters } from "@/components/listing/management"
 
 type ServicesPageFiltersProps = {
   hasActiveFilters: boolean
@@ -12,16 +12,6 @@ export function ServicesPageFilters({ hasActiveFilters }: ServicesPageFiltersPro
       searchPlaceholder="Search service name"
       searchAriaLabel="Search services"
       hasActiveFilters={hasActiveFilters}
-    >
-      <ManagementListFilterSelect
-        paramKey="status"
-        ariaLabel="Service status"
-        placeholder="All statuses"
-        options={[
-          { value: "active", label: "Active" },
-          { value: "inactive", label: "Inactive" },
-        ]}
-      />
-    </ManagementListFilters>
+    />
   )
 }

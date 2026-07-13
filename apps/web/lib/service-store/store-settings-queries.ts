@@ -20,8 +20,8 @@ export type StoreSettingsServiceRow = {
   name: string
   description: string | null
   duration: number
+  bufferMinutes: number
   price: string
-  isActive: boolean
   imageUrl: string | null
 }
 
@@ -81,11 +81,6 @@ export async function getStoreSettingsPageData(
 
   const where = {
     branchId: branch.id,
-    ...(searchParams.status === "active"
-      ? { isActive: true }
-      : searchParams.status === "inactive"
-        ? { isActive: false }
-        : {}),
     ...(keyword
       ? {
           OR: [
@@ -105,8 +100,8 @@ export async function getStoreSettingsPageData(
         name: true,
         description: true,
         duration: true,
+        bufferMinutes: true,
         price: true,
-        isActive: true,
         imageKey: true,
       },
       orderBy: { name: sort },
@@ -144,8 +139,8 @@ export async function getStoreSettingsPageData(
       name: service.name,
       description: service.description,
       duration: service.duration,
+      bufferMinutes: service.bufferMinutes,
       price: service.price.toString(),
-      isActive: service.isActive,
       imageUrl: await resolveMediaPreviewUrl(service.imageKey),
     })),
   )
@@ -167,7 +162,7 @@ export async function getStoreSettingsPageData(
       rows,
       page,
       pageSize,
-      hasFilters: Boolean(keyword || searchParams.status),
+      hasFilters: Boolean(keyword),
     },
     hours,
   }
@@ -189,8 +184,8 @@ export async function getStoreServiceForEdit(
       name: true,
       description: true,
       duration: true,
+      bufferMinutes: true,
       price: true,
-      isActive: true,
       imageKey: true,
     },
   })
@@ -204,8 +199,8 @@ export async function getStoreServiceForEdit(
     name: service.name,
     description: service.description ?? "",
     duration: service.duration,
+    bufferMinutes: service.bufferMinutes,
     price: service.price.toString(),
-    isActive: service.isActive,
     imageUrl: await resolveMediaPreviewUrl(service.imageKey),
   }
 }

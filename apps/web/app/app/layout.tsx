@@ -8,9 +8,5 @@ type ServiceStorePortalLayoutProps = {
 export default function ServiceStorePortalLayout({
   children,
 }: ServiceStorePortalLayoutProps) {
-  return (
-    <Suspense fallback={children}>
-      <ServiceStoreModalProvider>{children}</ServiceStoreModalProvider>
-    </Suspense>
-  )
+  return <ServiceStoreModalProvider>{children}</ServiceStoreModalProvider>
 }

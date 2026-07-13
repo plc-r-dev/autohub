@@ -32,18 +32,99 @@ export async function saveStoreGeneral(
   formData: FormData,
 ): Promise<StoreSettingsActionResult> {
   const { serviceStore } = await requireApprovedServiceStoreUser()
-  const parsed = storeGeneralSchema.safeParse(Object.fromEntries(formData.entries()))
+  const parsed = storeGeneralSchema.safeParse({
+    name: formData.get("name"),
+    description: formData.get("description"),
+    phone: formData.get("phone"),
+    email: formData.get("email"),
+    address: formData.get("address"),
+  })
 
   if (!parsed.success) {
     return { ok: false, fieldErrors: parsed.error.flatten().fieldErrors, error: "Validation failed." }
   }
 
   const branch = await ensureDefaultBranch(serviceStore.id, parsed.data.name)
+  const store = await prisma.serviceStore.findUnique({
+    where: { id: serviceStore.id },
+    select: { logoKey: true, galleryImageKeys: true },
+  })
+
+  if (!store) {
+    return { ok: false, error: "Store not found." }
+  }
+
+  let logoKey = store.logoKey
+  const removeLogo = formData.get("removeLogo") === "true"
+  const logoFile = formData.get("logo")
+
+  if (removeLogo && logoKey) {
+    await removeMediaFile(logoKey)
+    logoKey = null
+  }
+
+  if (logoFile instanceof File && logoFile.size > 0) {
+    try {
+      const uploaded = await uploadStoreImageFile({
+        serviceStoreId: serviceStore.id,
+        kind: "logo",
+        file: logoFile,
+      })
+      if (logoKey) {
+        await removeMediaFile(logoKey)
+      }
+      logoKey = uploaded.key
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : "Logo upload failed.",
+      }
+    }
+  }
+
+  const removedGalleryKeys = formData
+    .getAll("removedGalleryKeys")
+    .map((value) => String(value))
+    .filter(Boolean)
+
+  let galleryImageKeys = store.galleryImageKeys.filter(
+    (key) => !removedGalleryKeys.includes(key),
+  )
+
+  for (const key of removedGalleryKeys) {
+    if (store.galleryImageKeys.includes(key)) {
+      await removeMediaFile(key)
+    }
+  }
+
+  const galleryFiles = formData
+    .getAll("gallery")
+    .filter((file): file is File => file instanceof File && file.size > 0)
+
+  for (const file of galleryFiles) {
+    try {
+      const uploaded = await uploadStoreImageFile({
+        serviceStoreId: serviceStore.id,
+        kind: "gallery",
+        file,
+      })
+      galleryImageKeys.push(uploaded.key)
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : "Gallery upload failed.",
+      }
+    }
+  }
 
   await prisma.$transaction([
     prisma.serviceStore.update({
       where: { id: serviceStore.id },
-      data: parsed.data,
+      data: {
+        ...parsed.data,
+        logoKey,
+        galleryImageKeys,
+      },
     }),
     prisma.branch.update({
       where: { id: branch.id },
@@ -52,7 +133,7 @@ export async function saveStoreGeneral(
   ])
 
   revalidateStoreSettings()
-  return { ok: true, message: "Store information saved." }
+  return { ok: true, message: "Store settings saved." }
 }
 
 export async function uploadStoreLogo(
@@ -280,8 +361,8 @@ export async function saveStoreService(
         name: data.name,
         description: data.description,
         duration: data.duration,
+        bufferMinutes: data.bufferMinutes,
         price: data.price,
-        isActive: data.isActive,
         imageKey,
       },
     })
@@ -301,9 +382,9 @@ export async function saveStoreService(
         name: data.name,
         description: data.description,
         duration: data.duration,
-        bufferMinutes: 0,
+        bufferMinutes: data.bufferMinutes,
         price: data.price,
-        isActive: data.isActive,
+        isActive: true,
       },
     })
 

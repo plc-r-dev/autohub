@@ -6,8 +6,8 @@ import { portalCardClassName } from "@/components/service-store/ui/portal-surfac
 
 const QUICK_ACTIONS = [
   { href: "/app/bookings?newBooking=1", label: "New booking", icon: Plus },
-  { href: "/app/customers", label: "Customer", icon: Users2 },
-  { href: "/app/branches", label: "Service", icon: Wrench },
+  { href: "/app/customers", label: "Customers", icon: Users2 },
+  { href: "/app/settings?tab=services", label: "Services", icon: Wrench },
 ] as const;
 
 /** Shortcut tiles to the most common Service Store destinations. */

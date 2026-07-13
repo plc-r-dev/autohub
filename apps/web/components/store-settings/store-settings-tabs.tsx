@@ -3,12 +3,13 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { DetailModalTabs } from "@/components/service-store/modals/detail-modal-parts"
 
-export type StoreSettingsTab = "general" | "services" | "hours"
+export type StoreSettingsTab = "general" | "services" | "hours" | "staff"
 
 const TABS: Array<{ value: StoreSettingsTab; label: string }> = [
   { value: "general", label: "General" },
   { value: "services", label: "Services" },
   { value: "hours", label: "Opening Hours" },
+  { value: "staff", label: "Staff" },
 ]
 
 type StoreSettingsTabsProps = {

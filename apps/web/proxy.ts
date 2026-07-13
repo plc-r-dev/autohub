@@ -21,6 +21,10 @@ function isAuthApiPath(pathname: string): boolean {
   return pathname.startsWith("/api/auth");
 }
 
+function isInvitePath(pathname: string): boolean {
+  return pathname === "/invite" || pathname.startsWith("/invite/");
+}
+
 function isMarketingPath(pathname: string): boolean {
   return pathname === MARKETING_HOME || pathname === OPEN_IN_LINE;
 }
@@ -98,6 +102,7 @@ export async function proxy(request: NextRequest) {
   if (!session) {
     if (
       isMarketingPath(pathname) ||
+      isInvitePath(pathname) ||
       isServiceStorePublicPath(pathname) ||
       isAdminPublicPath(pathname) ||
       isPublicCustomerPath(pathname)

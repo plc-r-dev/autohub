@@ -135,6 +135,7 @@ export async function listServiceStoreMembers(serviceStoreId: string) {
           email: true,
           phone: true,
           lineUserId: true,
+          status: true,
         },
       },
     },

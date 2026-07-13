@@ -4,8 +4,12 @@ import { ServicesPageFilters } from "@/components/listing/management/filters/ser
 import { StoreGeneralTab } from "@/components/store-settings/store-general-tab"
 import { StoreHoursTab } from "@/components/store-settings/store-hours-tab"
 import { StoreServicesTab } from "@/components/store-settings/store-services-tab"
+import { StoreStaffTab } from "@/components/store-settings/store-staff-tab"
 import { StoreSettingsTabs, type StoreSettingsTab } from "@/components/store-settings/store-settings-tabs"
 import { requireApprovedServiceStoreUser } from "@/lib/auth/domain-user"
+import { listServiceStoreMembers } from "@/lib/service-store/application/member-queries"
+import { requireServiceStoreContext } from "@/lib/service-store/context"
+import { SERVICE_STORE_PERMISSION } from "@/lib/service-store/domain"
 import { getStoreSettingsPageData } from "@/lib/service-store/store-settings-queries"
 
 type PageProps = {
@@ -20,16 +24,39 @@ type PageProps = {
 }
 
 function resolveTab(tab: string | undefined): StoreSettingsTab {
-  if (tab === "services" || tab === "hours") {
+  if (tab === "services" || tab === "hours" || tab === "staff") {
     return tab
   }
   return "general"
 }
 
 export default async function StoreSettingsPage({ searchParams }: PageProps) {
-  const { serviceStore } = await requireApprovedServiceStoreUser()
   const params = await searchParams
   const tab = resolveTab(params.tab)
+
+  if (tab === "staff") {
+    const ctx = await requireServiceStoreContext(SERVICE_STORE_PERMISSION.MEMBERS_VIEW)
+    const members = await listServiceStoreMembers(ctx.serviceStore.id)
+
+    return (
+      <PageShell title="Store Settings" nav={serviceStoreNav}>
+        <div className="space-y-5">
+          <Suspense fallback={null}>
+            <StoreSettingsTabs activeTab={tab} />
+          </Suspense>
+
+          <StoreStaffTab
+            serviceStoreId={ctx.serviceStore.id}
+            members={members}
+            currentUserId={ctx.user.id}
+            currentRole={ctx.membership.role}
+          />
+        </div>
+      </PageShell>
+    )
+  }
+
+  const { serviceStore } = await requireApprovedServiceStoreUser()
   const data = await getStoreSettingsPageData(serviceStore.id, serviceStore.name, params)
 
   return (

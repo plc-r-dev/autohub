@@ -12,28 +12,26 @@ export const serviceStoreNavItems: ServiceStoreNavItem[] = [
   },
   {
     href: "/app/bookings",
-    label: "Booking",
+    label: "Bookings",
     match: (path) => path.startsWith("/app/bookings"),
   },
   {
     href: "/app/customers",
-    label: "Customer",
+    label: "Customers",
     match: (path) => path.startsWith("/app/customers"),
-  },
-  {
-    href: "/app/settings",
-    label: "Settings",
-    match: (path) => path.startsWith("/app/settings") || path.startsWith("/app/profile"),
-  },
-  {
-    href: "/app/members",
-    label: "Staff",
-    match: (path) => path.startsWith("/app/members"),
   },
   {
     href: "/app/billings",
     label: "Billing",
     match: (path) => path.startsWith("/app/billings"),
+  },
+  {
+    href: "/app/settings",
+    label: "Store Settings",
+    match: (path) =>
+      path.startsWith("/app/settings") ||
+      path.startsWith("/app/profile") ||
+      path.startsWith("/app/members"),
   },
 ];
 

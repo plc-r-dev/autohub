@@ -1,14 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Plus, Wrench } from "lucide-react"
+import { ImageIcon, Plus, Wrench } from "lucide-react"
+import { ImagePreviewLightbox } from "@/components/customer/ui/image-preview-lightbox"
 import { ManagementInteractiveDataTable } from "@/components/listing/management/data-table.client"
 import { ManagementRowActionsMenu } from "@/components/listing/management/row-actions-menu"
 import type { ManagementTableColumn } from "@/components/listing/management/data-table"
 import { ServiceFormModal, type ServiceFormValues } from "@/components/store-settings/service-form-modal"
-import { ServiceStoreButton, ServiceStoreStatusBadge } from "@/components/service-store/ui"
+import { ServiceStoreButton } from "@/components/service-store/ui"
 import { formatPrice } from "@/lib/booking/format"
 import { deleteStoreService } from "@/lib/service-store/store-settings-actions"
 import type { StoreSettingsServiceRow } from "@/lib/service-store/store-settings-queries"
@@ -22,67 +23,6 @@ type StoreServicesTabProps = {
   searchParams: Record<string, string | undefined>
 }
 
-const columns: ManagementTableColumn<StoreSettingsServiceRow>[] = [
-  {
-    key: "image",
-    header: "",
-    className: "w-16",
-    render: (service) => (
-      <div className="relative size-11 overflow-hidden rounded-lg border border-border bg-muted/30">
-        {service.imageUrl ? (
-          <Image
-            src={service.imageUrl}
-            alt={service.name}
-            fill
-            unoptimized
-            className="object-cover"
-          />
-        ) : (
-          <div className="flex size-full items-center justify-center text-[10px] text-muted-foreground">
-            —
-          </div>
-        )}
-      </div>
-    ),
-  },
-  {
-    key: "name",
-    header: "Service",
-    render: (service) => (
-      <div className="min-w-0">
-        <p className="font-medium text-foreground">{service.name}</p>
-        {service.description ? (
-          <p className="truncate text-xs text-muted-foreground">{service.description}</p>
-        ) : null}
-      </div>
-    ),
-  },
-  {
-    key: "duration",
-    header: "Duration",
-    render: (service) => (
-      <span className="text-muted-foreground">{service.duration} min</span>
-    ),
-  },
-  {
-    key: "price",
-    header: "Price",
-    render: (service) => (
-      <span className="font-semibold text-foreground">{formatPrice(service.price)}</span>
-    ),
-  },
-  {
-    key: "status",
-    header: "Status",
-    render: (service) => (
-      <ServiceStoreStatusBadge
-        label={service.isActive ? "Active" : "Inactive"}
-        status={service.isActive ? "ACTIVE" : "CANCELLED"}
-      />
-    ),
-  },
-]
-
 export function StoreServicesTab({
   services,
   hasFilters,
@@ -95,6 +35,7 @@ export function StoreServicesTab({
   const [modalOpen, setModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<"create" | "edit">("create")
   const [editingService, setEditingService] = useState<ServiceFormValues | undefined>()
+  const [previewImage, setPreviewImage] = useState<{ src: string; alt: string } | null>(null)
 
   function openCreate() {
     setModalMode("create")
@@ -109,8 +50,8 @@ export function StoreServicesTab({
       name: service.name,
       description: service.description ?? "",
       duration: service.duration,
+      bufferMinutes: service.bufferMinutes,
       price: service.price,
-      isActive: service.isActive,
       imageUrl: service.imageUrl,
     })
     setModalOpen(true)
@@ -123,6 +64,78 @@ export function StoreServicesTab({
     await deleteStoreService(serviceId)
     router.refresh()
   }
+
+  const columns = useMemo<ManagementTableColumn<StoreSettingsServiceRow>[]>(
+    () => [
+      {
+        key: "service",
+        header: "Service",
+        render: (service) => (
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              aria-label={
+                service.imageUrl
+                  ? `Preview ${service.name} photo`
+                  : `${service.name} has no photo`
+              }
+              disabled={!service.imageUrl}
+              onClick={(event) => {
+                event.stopPropagation()
+                if (!service.imageUrl) {
+                  return
+                }
+                setPreviewImage({ src: service.imageUrl, alt: service.name })
+              }}
+              className="relative size-12 shrink-0 overflow-hidden rounded-xl border border-border bg-muted/30 transition-opacity hover:opacity-90 disabled:cursor-default disabled:opacity-100"
+            >
+              {service.imageUrl ? (
+                <Image
+                  src={service.imageUrl}
+                  alt={service.name}
+                  fill
+                  unoptimized
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex size-full items-center justify-center text-muted-foreground">
+                  <ImageIcon className="size-4" />
+                </div>
+              )}
+            </button>
+            <div className="min-w-0">
+              <p className="font-medium text-foreground">{service.name}</p>
+              {service.description ? (
+                <p className="truncate text-xs text-muted-foreground">{service.description}</p>
+              ) : null}
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: "duration",
+        header: "Duration",
+        render: (service) => (
+          <span className="text-muted-foreground">{service.duration} min</span>
+        ),
+      },
+      {
+        key: "buffer",
+        header: "Buffer",
+        render: (service) => (
+          <span className="text-muted-foreground">{service.bufferMinutes} min</span>
+        ),
+      },
+      {
+        key: "price",
+        header: "Price",
+        render: (service) => (
+          <span className="font-semibold text-foreground">{formatPrice(service.price)}</span>
+        ),
+      },
+    ],
+    [],
+  )
 
   return (
     <>
@@ -147,7 +160,7 @@ export function StoreServicesTab({
         totalCount={totalCount}
         searchParams={searchParams}
         itemLabel="services"
-        minWidth="760px"
+        minWidth="720px"
         actionColumn={{
           render: (service) => (
             <ManagementRowActionsMenu
@@ -172,6 +185,12 @@ export function StoreServicesTab({
         initialValues={editingService}
         onOpenChange={setModalOpen}
         onSaved={() => router.refresh()}
+      />
+
+      <ImagePreviewLightbox
+        images={previewImage ? [previewImage] : []}
+        open={Boolean(previewImage)}
+        onClose={() => setPreviewImage(null)}
       />
     </>
   )

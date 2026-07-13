@@ -55,7 +55,7 @@ export function evaluateServiceStoreReadiness(input: ReadinessInput): ServiceSto
       label: "Owner assigned",
       description: "At least one Owner is linked to this Service Store.",
       met: input.ownerCount > 0,
-      actionHref: "/app/members",
+      actionHref: "/app/settings?tab=staff",
     },
     {
       id: "branch_configured",

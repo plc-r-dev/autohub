@@ -35,8 +35,8 @@ export default async function ServiceStoreReadinessPage() {
           <ServiceStoreButtonLink href="/app/settings" variant="secondary">
             Update profile
           </ServiceStoreButtonLink>
-          <ServiceStoreButtonLink href="/app/branches" variant="secondary">
-            Manage branches
+          <ServiceStoreButtonLink href="/app/settings?tab=services" variant="secondary">
+            Manage services
           </ServiceStoreButtonLink>
           <Link
             href="/browse"

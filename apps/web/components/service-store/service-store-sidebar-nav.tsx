@@ -9,7 +9,6 @@ import {
   Lock,
   Receipt,
   Settings,
-  UserCog,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -26,9 +25,8 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   "/app/dashboard": LayoutDashboard,
   "/app/bookings": CalendarDays,
   "/app/customers": Users,
-  "/app/settings": Settings,
-  "/app/members": UserCog,
   "/app/billings": Receipt,
+  "/app/settings": Settings,
 };
 
 type NavProps = {

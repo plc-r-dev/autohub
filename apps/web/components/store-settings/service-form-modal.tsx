@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useTransition } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import Image from "next/image"
 import { Loader2 } from "lucide-react"
 import { DetailModalShell } from "@/components/service-store/modals/detail-modal-shell"
@@ -8,18 +8,17 @@ import {
   ServiceStoreButton,
   ServiceStoreFormField,
   serviceStoreInputClassName,
-  serviceStoreSelectClassName,
   serviceStoreTextareaClassName,
 } from "@/components/service-store/ui"
-import { deleteStoreService, saveStoreService } from "@/lib/service-store/store-settings-actions"
+import { saveStoreService } from "@/lib/service-store/store-settings-actions"
 
 export type ServiceFormValues = {
   id?: string
   name: string
   description: string
   duration: number
+  bufferMinutes: number
   price: string
-  isActive: boolean
   imageUrl?: string | null
 }
 
@@ -39,10 +38,18 @@ export function ServiceFormModal({
   onSaved,
 }: ServiceFormModalProps) {
   const formRef = useRef<HTMLFormElement>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(initialValues?.imageUrl ?? null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [isPending, startTransition] = useTransition()
+
+  useEffect(() => {
+    if (open) {
+      setPreviewUrl(initialValues?.imageUrl ?? null)
+      setError(null)
+      setFieldErrors({})
+    }
+  }, [open, initialValues])
 
   function handleClose() {
     onOpenChange(false)
@@ -176,7 +183,7 @@ export function ServiceFormModal({
           />
         </ServiceStoreFormField>
 
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-3">
           <ServiceStoreFormField
             id="service-duration"
             label="Duration (minutes)"
@@ -190,6 +197,23 @@ export function ServiceFormModal({
               required
               className={serviceStoreInputClassName}
               defaultValue={initialValues?.duration ?? 60}
+            />
+          </ServiceStoreFormField>
+
+          <ServiceStoreFormField
+            id="service-buffer"
+            label="Buffer time (minutes)"
+            error={fieldErrors.bufferMinutes?.[0]}
+          >
+            <input
+              id="service-buffer"
+              name="bufferMinutes"
+              type="number"
+              min={0}
+              max={120}
+              required
+              className={serviceStoreInputClassName}
+              defaultValue={initialValues?.bufferMinutes ?? 0}
             />
           </ServiceStoreFormField>
 
@@ -210,22 +234,6 @@ export function ServiceFormModal({
             />
           </ServiceStoreFormField>
         </div>
-
-        <ServiceStoreFormField
-          id="service-status"
-          label="Status"
-          error={fieldErrors.isActive?.[0]}
-        >
-          <select
-            id="service-status"
-            name="isActive"
-            className={serviceStoreSelectClassName}
-            defaultValue={initialValues?.isActive === false ? "false" : "true"}
-          >
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </select>
-        </ServiceStoreFormField>
 
         {isPending ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
