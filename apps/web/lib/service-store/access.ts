@@ -92,9 +92,9 @@ export function isPendingServiceStore(state: ServiceStoreAccessState): boolean {
   return state.status === SERVICE_STORE_ACCESS_STATUS.PENDING;
 }
 
-/** Where an approved user should land: a chooser if they manage more than one Service Store, else the dashboard. */
+/** Where an approved user should land: the workspace (store selector) if they manage more than one Service Store, else the dashboard. */
 export function resolveApprovedServiceStoreDestination(state: ServiceStoreAccessState): string {
-  return state.membershipCount > 1 ? "/choose-store" : "/app/dashboard";
+  return state.membershipCount > 1 ? PORTALS.serviceStore.home : PORTALS.serviceStore.dashboard;
 }
 
 /**

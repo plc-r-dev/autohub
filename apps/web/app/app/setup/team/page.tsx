@@ -11,7 +11,7 @@ export default async function ServiceStoreSetupTeamPage() {
   const progress = await getOnboardingSetupProgress(ctx.serviceStore.id);
 
   if (!progress) {
-    redirect("/app/onboarding");
+    redirect("/app");
   }
 
   return (

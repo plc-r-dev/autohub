@@ -14,8 +14,10 @@ async function resolveApprovedRedirect(domainUserId: string) {
     return null;
   }
 
+  // Multi-store owners can still claim/create another store from the
+  // workspace — don't bounce them away from the wizard.
   if (access.membershipCount > 1) {
-    return "/choose-store";
+    return null;
   }
 
   const store = await prisma.serviceStore.findUnique({
@@ -74,7 +76,7 @@ export async function requireOnboardingContext(): Promise<OnboardingContext> {
 
 /** ServiceStore portal onboarding — uses the same domain user as the customer profile when present. */
 export async function requireServiceStoreOnboardingContext(
-  callbackPath: string = "/app/onboarding",
+  callbackPath: string = "/app",
 ): Promise<OnboardingContext> {
   const session = await getServerSession();
   if (!session) {
@@ -91,7 +93,7 @@ export async function requireServiceStoreOnboardingContext(
       }
     }
     if (isPendingServiceStore(serviceStoreAccess)) {
-      redirect("/pending-approval");
+      redirect("/app");
     }
     // Linked customer without serviceStore profile — continue onboarding on same identity.
   }

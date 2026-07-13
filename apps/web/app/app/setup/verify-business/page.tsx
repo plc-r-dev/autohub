@@ -18,7 +18,7 @@ export default async function ServiceStoreSetupVerifyPage() {
     : null;
 
   if (!progress) {
-    redirect("/app/onboarding");
+    redirect("/app");
   }
 
   return (

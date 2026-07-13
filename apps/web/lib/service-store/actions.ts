@@ -175,7 +175,7 @@ export async function approveServiceStoreClaim(
   revalidatePath("/admin/service-store-requests");
   revalidatePath("/app");
   revalidatePath("/app/dashboard");
-  revalidatePath("/pending-approval");
+  revalidatePath("/app");
 
   if (notificationTarget) {
     await sendServiceStoreApproved({
@@ -214,7 +214,7 @@ export async function rejectServiceStoreClaim(
   }
 
   revalidatePath("/admin/service-store-requests");
-  revalidatePath("/pending-approval");
+  revalidatePath("/app");
 
   return { success: "Service Store claim rejected." };
 }
@@ -347,7 +347,7 @@ export async function approveServiceStoreOnboardingRequest(
   revalidatePath("/admin/service-store-requests");
   revalidatePath("/app");
   revalidatePath("/app/dashboard");
-  revalidatePath("/pending-approval");
+  revalidatePath("/app");
 
   if (notificationTarget) {
     await sendServiceStoreApproved({
@@ -386,7 +386,7 @@ export async function rejectServiceStoreOnboardingRequest(
   }
 
   revalidatePath("/admin/service-store-requests");
-  revalidatePath("/pending-approval");
+  revalidatePath("/app");
 
   return { success: "Service Store onboarding request rejected." };
 }

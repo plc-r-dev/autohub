@@ -11,7 +11,7 @@ export default async function ServiceStoreSetupCompletePage() {
   const progress = await getOnboardingSetupProgress(ctx.serviceStore.id);
 
   if (!progress) {
-    redirect("/app/onboarding");
+    redirect("/app");
   }
 
   if (ctx.serviceStore.status === "READY_FOR_BOOKING") {

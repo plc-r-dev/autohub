@@ -2,7 +2,6 @@
 
 import { switchActiveServiceStore } from "@/lib/service-store/member-actions";
 import { roleLabel } from "@/lib/service-store/domain";
-import { serviceStoreSelectClassName } from "@/components/service-store/ui";
 import type { ServiceStoreMemberRole } from "@/lib/generated/prisma/client";
 
 type MembershipOption = {
@@ -14,6 +13,7 @@ type MembershipOption = {
   };
 };
 
+/** Current Store selector — a header pill when there's one store, a compact dropdown when there are several. */
 export function ServiceStoreSwitcher({
   memberships,
   activeServiceStoreId,
@@ -25,38 +25,34 @@ export function ServiceStoreSwitcher({
     if (memberships.length === 1) {
       const row = memberships[0]!;
       return (
-        <p className="px-3 text-xs text-[#8a97a5]">
+        <span className="hidden rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground sm:inline-flex">
           {row.serviceStore.name} · {roleLabel(row.role)}
-        </p>
+        </span>
       );
     }
     return null;
   }
 
   return (
-    <div className="flex flex-col gap-1 px-3">
-      <label htmlFor="serviceStoreId" className="text-xs font-medium text-[#8a97a5]">
-        Active Service Store
-      </label>
-      <select
-        id="serviceStoreId"
-        name="serviceStoreId"
-        defaultValue={activeServiceStoreId}
-        className={serviceStoreSelectClassName}
-        onChange={async (event) => {
-          const nextId = event.target.value;
-          if (!nextId || nextId === activeServiceStoreId) {
-            return;
-          }
-          await switchActiveServiceStore(nextId);
-        }}
-      >
-        {memberships.map((row) => (
-          <option key={row.serviceStore.id} value={row.serviceStore.id}>
-            {row.serviceStore.name} ({roleLabel(row.role)})
-          </option>
-        ))}
-      </select>
-    </div>
+    <select
+      id="serviceStoreId"
+      name="serviceStoreId"
+      aria-label="Current Service Store"
+      defaultValue={activeServiceStoreId}
+      className="hidden max-w-40 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground outline-none sm:inline-flex"
+      onChange={async (event) => {
+        const nextId = event.target.value;
+        if (!nextId || nextId === activeServiceStoreId) {
+          return;
+        }
+        await switchActiveServiceStore(nextId);
+      }}
+    >
+      {memberships.map((row) => (
+        <option key={row.serviceStore.id} value={row.serviceStore.id}>
+          {row.serviceStore.name} ({roleLabel(row.role)})
+        </option>
+      ))}
+    </select>
   );
 }

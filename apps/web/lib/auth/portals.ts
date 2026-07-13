@@ -15,10 +15,12 @@ export const PORTALS = {
   serviceStore: {
     home: "/app",
     login: "/app/login",
-    onboarding: "/app/onboarding",
+    // Onboarding, pending-approval, and store-selection are all states of
+    // the single bootstrap workspace at "/app" — not separate routes.
+    onboarding: "/app",
     dashboard: "/app/dashboard",
-    waiting: "/pending-approval",
-    chooseStore: "/choose-store",
+    waiting: "/app",
+    chooseStore: "/app",
   },
   admin: {
     home: "/admin",

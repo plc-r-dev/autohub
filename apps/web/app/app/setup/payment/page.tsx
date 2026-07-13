@@ -10,7 +10,7 @@ export default async function ServiceStoreSetupPaymentPage() {
   const progress = await getOnboardingSetupProgress(ctx.serviceStore.id);
 
   if (!progress) {
-    redirect("/app/onboarding");
+    redirect("/app");
   }
 
   return (

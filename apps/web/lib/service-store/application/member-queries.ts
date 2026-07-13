@@ -26,6 +26,71 @@ export async function listUserServiceStoreMemberships(userId: string) {
   });
 }
 
+export type ServiceStoreWorkspaceSummary = {
+  role: ServiceStoreMemberRole;
+  serviceStore: {
+    id: string;
+    name: string;
+    code: string;
+    status: string;
+  };
+  primaryBranchName: string | null;
+  todaysBookings: number;
+  todaysRevenue: number;
+};
+
+/** Per-membership summary for the Workspace Home store grid — today's bookings/revenue snapshot. */
+export async function listServiceStoreWorkspaceSummaries(
+  userId: string,
+): Promise<ServiceStoreWorkspaceSummary[]> {
+  const memberships = await listUserServiceStoreMemberships(userId);
+  if (memberships.length === 0) {
+    return [];
+  }
+
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+
+  return Promise.all(
+    memberships.map(async (membership) => {
+      const serviceStoreId = membership.serviceStore.id;
+      const [primaryBranch, todaysBookings, todaysRevenueRaw] = await Promise.all([
+        prisma.branch.findFirst({
+          where: { serviceStoreId },
+          orderBy: { createdAt: "asc" },
+          select: { name: true },
+        }),
+        prisma.booking.count({
+          where: {
+            branch: { serviceStoreId },
+            bookingDate: { gte: todayStart, lte: todayEnd },
+          },
+        }),
+        prisma.bookingItem.aggregate({
+          where: {
+            booking: {
+              branch: { serviceStoreId },
+              status: "COMPLETED",
+              completedAt: { gte: todayStart, lte: todayEnd },
+            },
+          },
+          _sum: { unitPrice: true },
+        }),
+      ]);
+
+      return {
+        role: membership.role,
+        serviceStore: membership.serviceStore,
+        primaryBranchName: primaryBranch?.name ?? null,
+        todaysBookings,
+        todaysRevenue: Number(todaysRevenueRaw._sum.unitPrice ?? 0),
+      };
+    }),
+  );
+}
+
 export async function getServiceStoreMembership(userId: string, serviceStoreId: string) {
   return prisma.serviceStoreMember.findUnique({
     where: {

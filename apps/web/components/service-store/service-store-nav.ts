@@ -15,35 +15,20 @@ export const serviceStoreNavItems: ServiceStoreNavItem[] = [
     label: "Bookings",
     match: (path) => path.startsWith("/app/bookings"),
   },
-  {
-    href: "/app/branches",
-    label: "Branches",
-    match: (path) => path.startsWith("/app/branches"),
-  },
+  // {
+  //   href: "/app/branches",
+  //   label: "Branches",
+  //   match: (path) => path.startsWith("/app/branches"),
+  // },
   {
     href: "/app/customers",
-    label: "CRM",
+    label: "Customer",
     match: (path) => path.startsWith("/app/customers"),
   },
   {
     href: "/app/billings",
     label: "Billing",
     match: (path) => path.startsWith("/app/billings"),
-  },
-  {
-    href: "/app/members",
-    label: "Members",
-    match: (path) => path.startsWith("/app/members"),
-  },
-  {
-    href: "/app/readiness",
-    label: "Readiness",
-    match: (path) => path.startsWith("/app/readiness"),
-  },
-  {
-    href: "/app/profile",
-    label: "Settings",
-    match: (path) => path === "/app/profile",
   },
 ];
 

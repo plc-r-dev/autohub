@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/onboarding/merchant",
-        destination: "/app/onboarding",
+        destination: "/app",
         permanent: false,
       },
       {
@@ -36,7 +36,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/app/waiting",
-        destination: "/pending-approval",
+        destination: "/app",
         permanent: false,
       },
       {
@@ -46,12 +46,12 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/claim",
-        destination: "/app/onboarding?mode=claim",
+        destination: "/app?mode=claim",
         permanent: false,
       },
       {
         source: "/create-store",
-        destination: "/app/onboarding?mode=create",
+        destination: "/app?mode=create",
         permanent: false,
       },
     ];

@@ -1,0 +1,12 @@
+export { AvatarInitials } from "@/components/dashboard/avatar-initials";
+export { DashboardHeader } from "@/components/dashboard/dashboard-header";
+export { EmptyState } from "@/components/dashboard/empty-state";
+export { QuickActions } from "@/components/dashboard/quick-actions";
+export { ReadinessNotice } from "@/components/dashboard/readiness-notice";
+export { RecentBookings } from "@/components/dashboard/recent-bookings";
+export { RecentCustomers } from "@/components/dashboard/recent-customers";
+export { SectionHeader } from "@/components/dashboard/section-header";
+export { StatCard } from "@/components/dashboard/stat-card";
+export { StatGrid } from "@/components/dashboard/stat-grid";
+export { TopServices } from "@/components/dashboard/top-services";
+export { UpcomingSchedule } from "@/components/dashboard/upcoming-schedule";

@@ -12,8 +12,6 @@ import {
 } from "@/lib/service-store/access";
 
 const CUSTOMER_HOME = PORTALS.customer.home;
-const SERVICE_STORE_WAITING = PORTALS.serviceStore.waiting;
-const SERVICE_STORE_ONBOARDING = PORTALS.serviceStore.onboarding;
 const SERVICE_STORE_LANDING = PORTALS.serviceStore.home;
 const ADMIN_HOME = PORTALS.admin.dashboard;
 const MARKETING_HOME = PORTALS.marketing.home;
@@ -28,12 +26,7 @@ function isMarketingPath(pathname: string): boolean {
 }
 
 function isServiceStorePublicPath(pathname: string): boolean {
-  return (
-    pathname === SERVICE_STORE_LANDING ||
-    pathname === PORTALS.serviceStore.login ||
-    pathname === SERVICE_STORE_ONBOARDING ||
-    pathname.startsWith(`${SERVICE_STORE_ONBOARDING}/`)
-  );
+  return pathname === SERVICE_STORE_LANDING || pathname === PORTALS.serviceStore.login;
 }
 
 function isAdminPublicPath(pathname: string): boolean {
@@ -193,36 +186,17 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // ServiceStore login / landing / legacy onboarding hub.
-  if (
-    pathname === PORTALS.serviceStore.login ||
-    pathname === SERVICE_STORE_LANDING ||
-    isLegacyOnboardingPath(pathname)
-  ) {
+  // ServiceStore login / legacy onboarding hub — always resolve to a concrete destination.
+  if (pathname === PORTALS.serviceStore.login || isLegacyOnboardingPath(pathname)) {
     const destination = resolvePostAuthServiceStoreDestination(serviceStoreAccess);
 
-    if (destination !== SERVICE_STORE_ONBOARDING) {
-      return NextResponse.redirect(new URL(destination, request.url));
-    }
     if (pathname === PORTALS.serviceStore.login) {
       const callbackUrl = request.nextUrl.searchParams.get("callbackUrl");
       const loginDestination =
         callbackUrl && callbackUrl.startsWith("/app") ? callbackUrl : destination;
       return NextResponse.redirect(new URL(loginDestination, request.url));
     }
-    if (pathname === SERVICE_STORE_LANDING) {
-      return NextResponse.next();
-    }
     return NextResponse.redirect(new URL(destination, request.url));
-  }
-
-  // ServiceStore onboarding page.
-  if (pathname === SERVICE_STORE_ONBOARDING || pathname.startsWith(`${SERVICE_STORE_ONBOARDING}/`)) {
-    const destination = resolvePostAuthServiceStoreDestination(serviceStoreAccess);
-    if (destination !== SERVICE_STORE_ONBOARDING) {
-      return NextResponse.redirect(new URL(destination, request.url));
-    }
-    return NextResponse.next();
   }
 
   // Admin login → dashboard; /admin landing stays public-style when authed.
@@ -230,23 +204,20 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(ADMIN_HOME, request.url));
   }
 
-  // ServiceStore app routes require serviceStore profile (or onboarding / waiting).
+  // ServiceStore app routes. "/app" itself is the bootstrap workspace and
+  // renders every non-dashboard state (none/pending/multi-store) inline —
+  // only a single approved store needs an actual redirect, to the dashboard.
   if (isServiceStoreAppPath(pathname)) {
     const destination = resolvePostAuthServiceStoreDestination(serviceStoreAccess);
 
-    if (destination === SERVICE_STORE_ONBOARDING) {
-      return NextResponse.redirect(new URL(destination, request.url));
-    }
-
-    if (destination === SERVICE_STORE_WAITING) {
-      if (pathname !== SERVICE_STORE_WAITING) {
+    if (pathname === SERVICE_STORE_LANDING) {
+      if (destination !== SERVICE_STORE_LANDING) {
         return NextResponse.redirect(new URL(destination, request.url));
       }
       return NextResponse.next();
     }
 
-    // Approved: only steer away from the waiting/landing pages; other app pages pass through.
-    if (pathname === SERVICE_STORE_WAITING || pathname === SERVICE_STORE_LANDING) {
+    if (destination === SERVICE_STORE_LANDING) {
       return NextResponse.redirect(new URL(destination, request.url));
     }
 
