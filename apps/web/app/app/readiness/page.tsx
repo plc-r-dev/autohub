@@ -26,13 +26,13 @@ export default async function ServiceStoreReadinessPage() {
       )}
 
       <ServiceStoreCard className="space-y-3">
-        <h3 className="text-sm font-semibold text-[#15202b]">What happens when you are ready?</h3>
+        <h3 className="text-sm font-semibold text-[#0F172A]">What happens when you are ready?</h3>
         <p className="text-sm text-[#5b6b7a]">
           Ready Service Stores appear as bookable on the customer marketplace. Until then, customers
           can view your profile but cannot complete an online booking.
         </p>
         <div className="flex flex-wrap gap-2">
-          <ServiceStoreButtonLink href="/app/profile" variant="secondary">
+          <ServiceStoreButtonLink href="/app/settings" variant="secondary">
             Update profile
           </ServiceStoreButtonLink>
           <ServiceStoreButtonLink href="/app/branches" variant="secondary">
@@ -40,7 +40,7 @@ export default async function ServiceStoreReadinessPage() {
           </ServiceStoreButtonLink>
           <Link
             href="/browse"
-            className="inline-flex items-center text-sm font-semibold text-[#0F9B76] hover:underline"
+            className="inline-flex items-center text-sm font-semibold text-[#16A34A] hover:underline"
           >
             Preview marketplace listing
           </Link>

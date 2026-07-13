@@ -22,8 +22,8 @@ export default async function BrowseBranchPage({ params }: PageProps) {
     >
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
         <div>
-          <p className="text-[14px] font-medium text-[#0F9B76]">{branch.serviceStore.name}</p>
-          <h1 className="mt-1 text-[32px] font-semibold tracking-tight text-[#0A0A0A] md:text-[36px]">
+          <p className="text-[14px] font-medium text-[#16A34A]">{branch.serviceStore.name}</p>
+          <h1 className="mt-1 text-[32px] font-semibold tracking-tight text-[#0F172A] md:text-[36px]">
             {branch.name}
           </h1>
           {branch.address ? (

@@ -58,7 +58,7 @@ export function ServiceStoreWorkspaceHeaderMenu({
           }
         />
         <DropdownMenuContent align="end">
-          <DropdownMenuItem render={<Link href="/app/profile" />}>
+          <DropdownMenuItem render={<Link href="/app/settings" />}>
             <User />
             My Profile
           </DropdownMenuItem>

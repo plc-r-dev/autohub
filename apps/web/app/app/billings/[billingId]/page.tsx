@@ -35,7 +35,7 @@ export default async function ServiceStoreBillingDetailPage({ params }: PageProp
     >
       <ServiceStoreCard className="space-y-5">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-[#15202b]">Summary</h2>
+          <h2 className="text-sm font-semibold text-[#0F172A]">Summary</h2>
           <ServiceStoreStatusBadge
             label={billingStatusLabel(billing.status)}
             status={billing.status}
@@ -45,53 +45,53 @@ export default async function ServiceStoreBillingDetailPage({ params }: PageProp
         <dl className="grid gap-4 text-sm sm:grid-cols-2">
           <div>
             <dt className="text-[#8a97a5]">Completed bookings</dt>
-            <dd className="mt-1 font-medium text-[#15202b]">{billing.bookingCount}</dd>
+            <dd className="mt-1 font-medium text-[#0F172A]">{billing.bookingCount}</dd>
           </div>
           <div>
             <dt className="text-[#8a97a5]">Booking fee</dt>
-            <dd className="mt-1 font-medium text-[#15202b]">
+            <dd className="mt-1 font-medium text-[#0F172A]">
               {formatBillingCurrency(billing.bookingFee)}
             </dd>
           </div>
           <div>
             <dt className="text-[#8a97a5]">VAT rate</dt>
-            <dd className="mt-1 font-medium text-[#15202b]">{billing.vatRate.toString()}%</dd>
+            <dd className="mt-1 font-medium text-[#0F172A]">{billing.vatRate.toString()}%</dd>
           </div>
           <div>
             <dt className="text-[#8a97a5]">Subtotal</dt>
-            <dd className="mt-1 font-medium text-[#15202b]">
+            <dd className="mt-1 font-medium text-[#0F172A]">
               {formatBillingCurrency(billing.subtotal)}
             </dd>
           </div>
           <div>
             <dt className="text-[#8a97a5]">VAT</dt>
-            <dd className="mt-1 font-medium text-[#15202b]">
+            <dd className="mt-1 font-medium text-[#0F172A]">
               {formatBillingCurrency(billing.vat)}
             </dd>
           </div>
           <div>
             <dt className="text-[#8a97a5]">Discount</dt>
-            <dd className="mt-1 font-medium text-[#15202b]">
+            <dd className="mt-1 font-medium text-[#0F172A]">
               {formatBillingCurrency(billing.discount)}
             </dd>
           </div>
           {billing.invoiceNumber ? (
             <div>
               <dt className="text-[#8a97a5]">Invoice</dt>
-              <dd className="mt-1 font-medium text-[#15202b]">{billing.invoiceNumber}</dd>
+              <dd className="mt-1 font-medium text-[#0F172A]">{billing.invoiceNumber}</dd>
             </div>
           ) : null}
           {billing.receiptNumber ? (
             <div>
               <dt className="text-[#8a97a5]">Receipt</dt>
-              <dd className="mt-1 font-medium text-[#15202b]">{billing.receiptNumber}</dd>
+              <dd className="mt-1 font-medium text-[#0F172A]">{billing.receiptNumber}</dd>
             </div>
           ) : null}
         </dl>
 
         <div className="flex justify-between border-t border-[#eef3f7] pt-4 text-base font-semibold">
-          <span className="text-[#15202b]">Total</span>
-          <span className="text-[#0F9B76]">{formatBillingCurrency(billing.total)}</span>
+          <span className="text-[#0F172A]">Total</span>
+          <span className="text-[#16A34A]">{formatBillingCurrency(billing.total)}</span>
         </div>
 
         {billing.rejectReason ? (
@@ -104,7 +104,7 @@ export default async function ServiceStoreBillingDetailPage({ params }: PageProp
       <ServiceStoreSubmitBillingButton billingId={billing.id} status={billing.status} />
 
       <ServiceStoreCard>
-        <h2 className="text-sm font-semibold text-[#15202b]">Billing items</h2>
+        <h2 className="text-sm font-semibold text-[#0F172A]">Billing items</h2>
         {billing.items.length === 0 ? (
           <p className="mt-4 text-sm text-[#8a97a5]">No billable items.</p>
         ) : (
@@ -115,10 +115,10 @@ export default async function ServiceStoreBillingDetailPage({ params }: PageProp
                 className="flex items-center justify-between gap-4 rounded-xl border border-[#eef3f7] p-3 text-sm"
               >
                 <div>
-                  <p className="font-semibold text-[#15202b]">{item.bookingNumber}</p>
+                  <p className="font-semibold text-[#0F172A]">{item.bookingNumber}</p>
                   <p className="text-[#8a97a5]">{formatBillingDate(item.bookingDate)}</p>
                 </div>
-                <p className="font-semibold text-[#15202b]">{formatBillingCurrency(item.amount)}</p>
+                <p className="font-semibold text-[#0F172A]">{formatBillingCurrency(item.amount)}</p>
               </div>
             ))}
           </div>
@@ -126,7 +126,7 @@ export default async function ServiceStoreBillingDetailPage({ params }: PageProp
       </ServiceStoreCard>
 
       <ServiceStoreCard>
-        <h2 className="text-sm font-semibold text-[#15202b]">Upload payment slip</h2>
+        <h2 className="text-sm font-semibold text-[#0F172A]">Upload payment slip</h2>
         <div className="mt-4">
           <ServiceStorePaymentSlipForm
             billingId={billing.id}
@@ -136,7 +136,7 @@ export default async function ServiceStoreBillingDetailPage({ params }: PageProp
       </ServiceStoreCard>
 
       <ServiceStoreCard>
-        <h2 className="text-sm font-semibold text-[#15202b]">Payment history</h2>
+        <h2 className="text-sm font-semibold text-[#0F172A]">Payment history</h2>
         {billing.payments.length === 0 ? (
           <p className="mt-4 text-sm text-[#8a97a5]">No payment submissions yet.</p>
         ) : (
@@ -144,7 +144,7 @@ export default async function ServiceStoreBillingDetailPage({ params }: PageProp
             {billing.payments.map((payment) => (
               <div key={payment.id} className="rounded-xl border border-[#eef3f7] p-3 text-sm">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="font-semibold text-[#15202b]">
+                  <p className="font-semibold text-[#0F172A]">
                     {formatBillingDate(payment.paymentDate)} ·{" "}
                     {formatBillingCurrency(payment.amount)}
                   </p>

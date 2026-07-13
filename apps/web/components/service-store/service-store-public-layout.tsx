@@ -30,7 +30,7 @@ export function ServiceStorePublicLayout({
             {backHref ? (
               <Link
                 href={backHref}
-                className="mb-3 inline-flex text-sm font-medium text-[#5b6b7a] hover:text-[#15202b]"
+                className="mb-3 inline-flex text-sm font-medium text-[#5b6b7a] hover:text-[#0F172A]"
               >
                 ← {backLabel}
               </Link>
@@ -38,7 +38,7 @@ export function ServiceStorePublicLayout({
             <p className="text-xs font-semibold tracking-wide text-[#0b7a3a] uppercase">
               AutoHub ServiceStore
             </p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#15202b]">{title}</h1>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#0F172A]">{title}</h1>
             {description ? (
               <p className="mt-3 text-base leading-relaxed text-[#5b6b7a]">{description}</p>
             ) : null}

@@ -40,7 +40,7 @@ export function ServiceStoreBookingActions({
 
   return (
     <ServiceStoreCard>
-      <h2 className="text-sm font-semibold text-[#15202b]">Actions</h2>
+      <h2 className="text-sm font-semibold text-[#0F172A]">Actions</h2>
       <div className="mt-4 flex flex-wrap gap-2">
         {status === "PENDING" ? (
           <>

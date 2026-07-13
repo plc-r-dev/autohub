@@ -34,7 +34,7 @@ export function LiffShell({
 
         {title ? (
           <header className="mb-6">
-            <h1 className="text-[24px] font-semibold tracking-tight text-[#0A0A0A]">{title}</h1>
+            <h1 className="text-[24px] font-semibold tracking-tight text-[#0F172A]">{title}</h1>
             {subtitle ? <p className="mt-1 text-[14px] leading-relaxed text-[#64748B]">{subtitle}</p> : null}
           </header>
         ) : null}

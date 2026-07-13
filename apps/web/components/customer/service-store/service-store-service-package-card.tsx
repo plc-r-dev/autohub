@@ -41,7 +41,7 @@ export function ServiceStoreServicePackageCard({
       <article className="rounded-[14px] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[14px] text-[#0A0A0A]">
+            <p className="truncate text-[14px] text-[#0F172A]">
               <span className="font-semibold">{service.name}</span>
               {service.popular ? (
                 <span className="ml-2 rounded bg-[#062C21] px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-white uppercase">
@@ -79,7 +79,7 @@ export function ServiceStoreServicePackageCard({
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-3">
-            <h3 className="font-serif text-[22px] font-semibold tracking-tight text-[#0A0A0A] md:text-[24px]">
+            <h3 className="font-serif text-[22px] font-semibold tracking-tight text-[#0F172A] md:text-[24px]">
               {service.name}
             </h3>
             {service.popular ? (
@@ -98,7 +98,7 @@ export function ServiceStoreServicePackageCard({
 
         <div className="flex shrink-0 flex-col items-stretch gap-4 sm:items-end lg:text-right">
           {showPrice ? (
-            <p className={cn("font-semibold text-[#0A0A0A]", "text-[22px]")}>
+            <p className={cn("font-semibold text-[#0F172A]", "text-[22px]")}>
               {formatPrice(service.price)}
             </p>
           ) : null}

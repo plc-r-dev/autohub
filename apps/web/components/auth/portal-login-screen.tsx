@@ -56,10 +56,10 @@ function PortalLoginForm({
     <div className="flex w-full flex-col gap-4">
       <div className="text-center">
         <div className="mx-auto mb-3 flex items-center justify-center gap-2">
-          <span className="size-2 rounded-full bg-[#06C755]" aria-hidden />
+          <span className="size-2 rounded-full bg-[#16A34A]" aria-hidden />
           <span className="text-xs font-medium text-[#6b7c8c]">LINE Official Account</span>
         </div>
-        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-[#06C755] text-2xl font-bold text-white">
+        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-[#16A34A] text-2xl font-bold text-white">
           {portal === "admin" ? "A" : "S"}
         </div>
         <h1 className="text-xl font-semibold text-[#111]">{title}</h1>
@@ -70,7 +70,7 @@ function PortalLoginForm({
         type="button"
         disabled={isLoading}
         onClick={handleLineSignIn}
-        className="h-12 rounded-xl bg-[#06C755] text-[15px] font-semibold text-white hover:bg-[#05b34c]"
+        className="h-12 rounded-xl text-[15px] font-semibold"
       >
         {isLoading ? "Opening LINE..." : "Continue with LINE"}
       </Button>

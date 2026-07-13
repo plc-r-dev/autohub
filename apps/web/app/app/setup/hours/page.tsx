@@ -33,7 +33,7 @@ export default async function ServiceStoreSetupHoursPage() {
             <ServiceStoreButtonLink href={`/app/branches/${branchId}/hours`}>
               Edit operating hours
             </ServiceStoreButtonLink>
-            <Link href="/app/setup/payment" className="text-sm font-semibold text-[#0F9B76] hover:underline">
+            <Link href="/app/setup/payment" className="text-sm font-semibold text-[#16A34A] hover:underline">
               Continue to payment
             </Link>
           </div>

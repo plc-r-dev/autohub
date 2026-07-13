@@ -3,7 +3,6 @@ import { CustomerShell } from "@/components/customer/customer-shell";
 import { HomeHero } from "@/components/customer/home-hero";
 import {
   BookingCard,
-  type BookingCardData,
   ServiceStoreCard,
   type ServiceStoreCardData,
   SectionHeader,
@@ -16,6 +15,7 @@ import { BrowseServiceStoreFilters } from "@/components/browse/browse-service-st
 import { listBrowseServiceStoresPaginated } from "@/lib/booking/discovery-queries";
 import type { MarketplaceServiceStoreListItem } from "@/lib/booking/discovery-queries";
 import { formatDistanceKm } from "@/lib/geo/distance";
+import { toCustomerBookingCardData } from "@/lib/booking/customer-booking-display";
 import { getCustomerBookingsPaginated } from "@/lib/booking/queries";
 import { resolveIdentityLink } from "@/lib/auth/identity";
 import { getCustomerForUser } from "@/lib/customer/context";
@@ -93,25 +93,8 @@ export default async function BrowsePage({ searchParams }: PageProps) {
     (b) => b.bookingNumber !== upcoming?.bookingNumber,
   );
 
-  const upcomingCard: BookingCardData | null = upcoming
-    ? {
-        bookingNumber: upcoming.bookingNumber,
-        serviceStoreName: upcoming.branch.serviceStore.name,
-        bookingDate: upcoming.bookingDate,
-        vehiclePlate: upcoming.vehicle.licensePlate,
-        status: upcoming.status,
-      }
-    : null;
-
-  const recentCard: BookingCardData | null = recent
-    ? {
-        bookingNumber: recent.bookingNumber,
-        serviceStoreName: recent.branch.serviceStore.name,
-        bookingDate: recent.bookingDate,
-        vehiclePlate: recent.vehicle.licensePlate,
-        status: recent.status,
-      }
-    : null;
+  const upcomingCard = upcoming ? toCustomerBookingCardData(upcoming) : null;
+  const recentCard = recent ? toCustomerBookingCardData(recent) : null;
 
   if (params.q) {
     return (

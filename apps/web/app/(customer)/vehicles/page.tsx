@@ -30,7 +30,7 @@ export default async function VehiclesPage() {
     <CustomerShell>
       <div className="flex flex-col gap-8 pb-24">
         <div>
-          <h1 className="text-[32px] font-semibold tracking-tight text-[#0A0A0A] md:text-[36px]">
+          <h1 className="text-[32px] font-semibold tracking-tight text-[#0F172A] md:text-[36px]">
             Vehicles
           </h1>
           <p className="mt-2 text-[16px] text-[#64748B]">Your saved cars for faster booking</p>

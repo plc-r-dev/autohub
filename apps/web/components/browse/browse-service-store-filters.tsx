@@ -39,7 +39,7 @@ export function BrowseServiceStoreFilters() {
               "rounded-full border px-4 py-2 text-[14px] font-semibold transition-colors",
               selected
                 ? "border-[#062C21] bg-[#062C21] text-white"
-                : "border-[#E2E8F0] bg-white text-[#0A0A0A] hover:border-[#CBD5E1]",
+                : "border-[#E2E8F0] bg-white text-[#0F172A] hover:border-[#CBD5E1]",
             )}
           >
             {filter.label}

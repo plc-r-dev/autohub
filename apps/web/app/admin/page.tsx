@@ -54,7 +54,7 @@ export default function AdminLandingPage() {
 
           <Link
             href={PORTALS.admin.login}
-            className="inline-flex h-12 items-center justify-center rounded-2xl bg-[#06C755] px-6 text-center text-sm font-semibold text-white shadow-[0_8px_20px_rgba(6,199,85,0.25)]"
+            className="inline-flex h-12 items-center justify-center rounded-2xl bg-[#16A34A] px-6 text-center text-sm font-semibold text-white shadow-[0_8px_20px_rgba(22,163,74,0.25)]"
           >
             Login with LINE
           </Link>

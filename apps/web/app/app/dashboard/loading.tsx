@@ -1,6 +1,6 @@
 export default function LoadingServiceStoreDashboard() {
   return (
-    <div className="min-h-svh bg-[#f4f7fa]">
+    <div className="min-h-svh bg-background">
       <div className="mx-auto flex w-full max-w-7xl gap-6 p-4 md:p-6 lg:p-8">
         <aside className="hidden w-56 shrink-0 lg:block">
           <div className="sticky top-6 flex flex-col gap-6">

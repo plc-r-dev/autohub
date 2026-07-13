@@ -3,7 +3,7 @@ const PROMOTIONS = [
     id: "welcome",
     title: "First wash 10% off",
     subtitle: "AutoHub partners near you",
-    tone: "from-[#06C755] to-[#04a847]",
+    tone: "from-[#16A34A] to-[#15803D]",
   },
   {
     id: "weekend",

@@ -46,7 +46,7 @@ export function CustomerSideNav() {
             className={cn(
               "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors",
               active
-                ? "bg-[#eef9f1] text-[#06C755]"
+                ? "bg-[#F0FDF4] text-[#16A34A]"
                 : "text-[#3d4d5c] hover:bg-[#f5f6f8]",
             )}
           >

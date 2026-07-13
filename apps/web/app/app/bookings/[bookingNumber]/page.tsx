@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { CustomerDetailLink } from "@/components/customers/customer-detail-link";
 import { notFound } from "next/navigation";
 import { PageShell, serviceStoreNav } from "@/components/layout/page-shell";
 import { BookingTimeline } from "@/components/booking/booking-timeline";
@@ -37,7 +37,7 @@ export default async function ServiceStoreBookingDetailPage({ params }: PageProp
       <div className="grid gap-4 lg:grid-cols-2">
         <ServiceStoreCard className="space-y-5">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-[#15202b]">Booking details</h2>
+            <h2 className="text-sm font-semibold text-[#0F172A]">Booking details</h2>
             <ServiceStoreStatusBadge
               label={bookingStatusLabel(booking.status)}
               status={booking.status}
@@ -47,13 +47,10 @@ export default async function ServiceStoreBookingDetailPage({ params }: PageProp
           <dl className="grid gap-4 text-sm">
             <div>
               <dt className="text-[#8a97a5]">Customer</dt>
-              <dd className="mt-1 font-medium text-[#15202b]">
-                <Link
-                  href={`/app/customers/${booking.customer.id}`}
-                  className="hover:underline"
-                >
+              <dd className="mt-1 font-medium text-[#0F172A]">
+                <CustomerDetailLink customerId={booking.customer.id}>
                   {booking.customer.firstName} {booking.customer.lastName}
-                </Link>
+                </CustomerDetailLink>
                 {booking.customer.isWalkIn ? " (walk-in)" : ""}
               </dd>
               {booking.customer.phone ? (
@@ -62,14 +59,14 @@ export default async function ServiceStoreBookingDetailPage({ params }: PageProp
             </div>
             <div>
               <dt className="text-[#8a97a5]">Branch</dt>
-              <dd className="mt-1 font-medium text-[#15202b]">{booking.branch.name}</dd>
+              <dd className="mt-1 font-medium text-[#0F172A]">{booking.branch.name}</dd>
               {booking.branch.address ? (
                 <dd className="text-[#5b6b7a]">{booking.branch.address}</dd>
               ) : null}
             </div>
             <div>
               <dt className="text-[#8a97a5]">Vehicle</dt>
-              <dd className="mt-1 font-medium text-[#15202b]">
+              <dd className="mt-1 font-medium text-[#0F172A]">
                 {booking.vehicle.licensePlate} · {booking.vehicle.brand} {booking.vehicle.model}
               </dd>
             </div>
@@ -77,12 +74,12 @@ export default async function ServiceStoreBookingDetailPage({ params }: PageProp
         </ServiceStoreCard>
 
         <ServiceStoreCard className="space-y-4">
-          <h2 className="text-sm font-semibold text-[#15202b]">Services</h2>
+          <h2 className="text-sm font-semibold text-[#0F172A]">Services</h2>
           <ul className="space-y-3 text-sm">
             {booking.items.map((item) => (
               <li key={item.id} className="flex justify-between gap-4 border-b border-[#eef3f7] pb-3 last:border-0">
                 <span>
-                  <span className="font-medium text-[#15202b]">{item.service.name}</span>
+                  <span className="font-medium text-[#0F172A]">{item.service.name}</span>
                   <span className="mt-0.5 block text-[#8a97a5]">{item.service.duration} min</span>
                 </span>
                 <span className="font-semibold">{formatPrice(item.unitPrice)}</span>
@@ -91,7 +88,7 @@ export default async function ServiceStoreBookingDetailPage({ params }: PageProp
           </ul>
           <div className="flex justify-between border-t border-[#eef3f7] pt-4 text-base font-semibold">
             <span>Total</span>
-            <span className="text-[#0F9B76]">{formatPrice(totalPrice)}</span>
+            <span className="text-[#16A34A]">{formatPrice(totalPrice)}</span>
           </div>
           {booking.note ? (
             <p className="rounded-xl bg-[#f4f7fa] p-3 text-sm text-[#5b6b7a]">{booking.note}</p>

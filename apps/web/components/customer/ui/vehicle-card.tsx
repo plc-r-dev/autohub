@@ -23,7 +23,7 @@ export function VehicleCard({ vehicle, footer }: VehicleCardProps) {
         variant="vehicle"
       />
       <div className="p-6">
-        <p className="text-[22px] font-semibold tracking-tight text-[#0A0A0A]">
+        <p className="text-[22px] font-semibold tracking-tight text-[#0F172A]">
           {vehicle.licensePlate}
         </p>
         <p className="mt-1 text-[15px] text-[#64748B]">

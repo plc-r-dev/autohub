@@ -31,7 +31,7 @@ export function CustomerShell({
         <div className="mx-auto max-w-[1280px] px-5 pt-6 md:px-8">
           <Link
             href={backHref}
-            className="inline-flex items-center gap-2 text-[14px] font-medium text-[#64748B] hover:text-[#0A0A0A]"
+            className="inline-flex items-center gap-2 text-[14px] font-medium text-[#64748B] hover:text-[#0F172A]"
           >
             <span aria-hidden>←</span>
             {backLabel}
@@ -48,7 +48,7 @@ export function CustomerShell({
       >
         {title ? (
           <header className="mb-6">
-            <h1 className="text-[24px] font-semibold tracking-tight text-[#0A0A0A]">{title}</h1>
+            <h1 className="text-[24px] font-semibold tracking-tight text-[#0F172A]">{title}</h1>
             {subtitle ? (
               <p className="mt-1 text-[14px] leading-relaxed text-[#64748B]">{subtitle}</p>
             ) : null}

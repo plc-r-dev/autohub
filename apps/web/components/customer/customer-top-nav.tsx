@@ -27,7 +27,7 @@ export function CustomerTopNav() {
       <div className="mx-auto grid max-w-[1280px] grid-cols-[1fr_auto_1fr] items-center gap-4 px-5 py-5 md:px-8">
         <Link
           href="/browse"
-          className="font-serif text-[22px] font-semibold tracking-tight text-[#0A0A0A]"
+          className="font-serif text-[22px] font-semibold tracking-tight text-[#0F172A]"
         >
           AutoHub
         </Link>
@@ -40,8 +40,8 @@ export function CustomerTopNav() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "relative text-[14px] font-medium text-[#64748B] transition-colors hover:text-[#0A0A0A]",
-                  active && "text-[#0A0A0A]",
+                  "relative text-[14px] font-medium text-[#64748B] transition-colors hover:text-[#0F172A]",
+                  active && "text-[#0F172A]",
                 )}
               >
                 {link.label}
@@ -78,7 +78,7 @@ export function CustomerTopNav() {
                   onClick={() => setOpen(false)}
                   className={cn(
                     "flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium",
-                    active ? "bg-[#F0F0F0] text-[#0A0A0A]" : "text-[#0A0A0A]",
+                    active ? "bg-[#F0F0F0] text-[#0F172A]" : "text-[#0F172A]",
                   )}
                 >
                   <Icon className="size-5" />

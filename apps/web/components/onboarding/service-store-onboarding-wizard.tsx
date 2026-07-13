@@ -115,7 +115,7 @@ export function ServiceStoreOnboardingWizard({
           />
 
           <section className="flex flex-col gap-4">
-            <h2 className="text-base font-semibold text-[#15202b]">Find your business</h2>
+            <h2 className="text-base font-semibold text-[#0F172A]">Find your business</h2>
             <ServiceStoreFormField
               id="serviceStoreSearch"
               label="Search AutoHub directory"
@@ -141,11 +141,11 @@ export function ServiceStoreOnboardingWizard({
                       className={cn(
                         "w-full rounded-xl border p-4 text-left text-sm",
                         selectedServiceStoreId === store.id
-                          ? "border-[#06C755] bg-[#ecfdf5]"
+                          ? "border-[#16A34A] bg-[#F0FDF4]"
                           : "border-[#dce5ee] bg-white hover:bg-[#f4f7fa]",
                       )}
                     >
-                      <div className="font-semibold text-[#15202b]">{store.name}</div>
+                      <div className="font-semibold text-[#0F172A]">{store.name}</div>
                       <div className="mt-1 text-[#8a97a5]">
                         {store.code} · {store.status}
                       </div>
@@ -199,7 +199,7 @@ export function ServiceStoreOnboardingWizard({
           />
 
           <section className="flex flex-col gap-4">
-            <h2 className="text-base font-semibold text-[#15202b]">Business details</h2>
+            <h2 className="text-base font-semibold text-[#0F172A]">Business details</h2>
             <GooglePlacesAutocomplete
               onSelect={(place) => {
                 setCreatePlaceId(place.placeId);
@@ -253,7 +253,7 @@ function ProfileFields({
 }) {
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-[#15202b]">Your profile</h2>
+      <h2 className="text-base font-semibold text-[#0F172A]">Your profile</h2>
       <ServiceStoreFormField id="tenantId" label="Tenant" error={fieldErrors?.tenantId?.[0]}>
         <select
           id="tenantId"
@@ -315,7 +315,7 @@ function ClaimReviewFields({
 }) {
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-[#15202b]">Review business information</h2>
+      <h2 className="text-base font-semibold text-[#0F172A]">Review business information</h2>
       <p className="text-sm text-[#5b6b7a]">
         We prefilled details from Google Places where available. Edit any missing fields before
         submitting.

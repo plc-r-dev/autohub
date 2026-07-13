@@ -1,4 +1,4 @@
-import { formatDateTime } from "@/lib/booking/format";
+import { bookingStatusLabel, formatDateTime } from "@/lib/booking/format";
 import { CustomerCard } from "@/components/customer/customer-ui";
 import { cn } from "@workspace/ui/lib/utils";
 
@@ -12,12 +12,12 @@ type BookingTimelineProps = {
 };
 
 const STEPS = [
-  { key: "PENDING", label: "Pending" },
-  { key: "CONFIRMED", label: "Confirmed" },
-  { key: "IN_PROGRESS", label: "In progress" },
-  { key: "COMPLETED", label: "Completed" },
-  { key: "CANCELLED", label: "Cancelled" },
-  { key: "NO_SHOW", label: "No show" },
+  { key: "PENDING", label: bookingStatusLabel("PENDING") },
+  { key: "CONFIRMED", label: bookingStatusLabel("CONFIRMED") },
+  { key: "IN_PROGRESS", label: bookingStatusLabel("IN_PROGRESS") },
+  { key: "COMPLETED", label: bookingStatusLabel("COMPLETED") },
+  { key: "CANCELLED", label: bookingStatusLabel("CANCELLED") },
+  { key: "NO_SHOW", label: bookingStatusLabel("NO_SHOW") },
 ] as const;
 
 function timestampForStatus(

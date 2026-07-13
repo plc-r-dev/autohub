@@ -30,7 +30,7 @@ export default async function NewVehiclePage({ searchParams }: PageProps) {
     <CustomerShell backHref={backHref} backLabel={backLabel}>
       <div className="mx-auto flex max-w-lg flex-col gap-6">
         <div>
-          <h1 className="text-[32px] font-semibold tracking-tight text-[#0A0A0A]">Add vehicle</h1>
+          <h1 className="text-[32px] font-semibold tracking-tight text-[#0F172A]">Add vehicle</h1>
           <p className="mt-2 text-[16px] text-[#64748B]">
             Save your car once and book faster next time.
           </p>

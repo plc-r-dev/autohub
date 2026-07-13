@@ -56,7 +56,7 @@ export function BranchHoursForm({ branchId, hours }: BranchHoursFormProps) {
               key={dayOfWeek}
               className="grid gap-4 sm:grid-cols-[7rem_1fr_1fr_auto] sm:items-end"
             >
-              <p className="text-sm font-semibold text-[#15202b]">{label}</p>
+              <p className="text-sm font-semibold text-[#0F172A]">{label}</p>
 
               <ServiceStoreFormField
                 id={`${prefix}-openTime`}

@@ -40,7 +40,7 @@ export function LiffShell({
           <header className="sticky top-0 z-10 border-b border-[#e5e8eb] bg-[#f7f8fa]/96 backdrop-blur-sm">
             {showLineContext ? (
               <div className="flex items-center gap-2 px-4 py-2">
-                <span className="size-2 rounded-full bg-[#06C755]" aria-hidden />
+                <span className="size-2 rounded-full bg-[#16A34A]" aria-hidden />
                 <span className="text-xs font-medium text-[#6b7c8c]">AutoHub Official Account</span>
               </div>
             ) : null}
@@ -49,7 +49,7 @@ export function LiffShell({
                 {backHref ? (
                   <Link
                     href={backHref}
-                    className="inline-flex size-11 items-center justify-center rounded-xl text-lg text-[#15202b] active:bg-[#e5e8eb]"
+                    className="inline-flex size-11 items-center justify-center rounded-xl text-lg text-[#0F172A] active:bg-[#e5e8eb]"
                     aria-label="Back"
                   >
                     ‹

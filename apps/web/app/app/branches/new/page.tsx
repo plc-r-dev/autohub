@@ -1,19 +1,5 @@
-import { PageShell, serviceStoreNav } from "@/components/layout/page-shell";
-import { BranchForm } from "@/components/service-store/branch-form";
-import { ServiceStoreCard } from "@/components/service-store/ui";
+import { redirect } from "next/navigation"
 
-export default function NewBranchPage() {
-  return (
-    <PageShell
-      title="New branch"
-      description="Create a new branch location."
-      nav={serviceStoreNav}
-      backHref="/app/branches"
-      backLabel="Branches"
-    >
-      <ServiceStoreCard>
-        <BranchForm mode="create" />
-      </ServiceStoreCard>
-    </PageShell>
-  );
+export default function NewBranchRedirectPage() {
+  redirect("/app/settings")
 }

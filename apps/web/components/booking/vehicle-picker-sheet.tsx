@@ -46,11 +46,11 @@ export function VehiclePickerSheet({
               className={cn(
                 "rounded-[16px] border p-4 text-left transition-colors",
                 selected
-                  ? "border-[#0F9B76] bg-[#ECFDF5]"
+                  ? "border-[#16A34A] bg-[#F0FDF4]"
                   : "border-[#E2E8F0] bg-white hover:border-[#CBD5E1]",
               )}
             >
-              <p className="text-[16px] font-semibold text-[#0A0A0A]">
+              <p className="text-[16px] font-semibold text-[#0F172A]">
                 {vehicle.brand} {vehicle.model}
               </p>
               <p className="mt-1 text-[14px] text-[#64748B]">{vehicle.licensePlate}</p>
@@ -67,7 +67,7 @@ export function VehiclePickerSheet({
             onClose();
             onAddNew();
           }}
-          className="flex items-center justify-center gap-2 rounded-[16px] border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-4 text-[14px] font-semibold text-[#0F9B76]"
+          className="flex items-center justify-center gap-2 rounded-[16px] border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-4 text-[14px] font-semibold text-[#16A34A]"
         >
           <Plus className="size-4" />
           Add vehicle

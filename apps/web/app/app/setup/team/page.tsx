@@ -27,7 +27,7 @@ export default async function ServiceStoreSetupTeamPage() {
           </p>
           <div className="flex flex-wrap gap-2">
             <ServiceStoreButtonLink href="/app/members">Manage members</ServiceStoreButtonLink>
-            <Link href="/app/setup/complete" className="text-sm font-semibold text-[#0F9B76] hover:underline">
+            <Link href="/app/setup/complete" className="text-sm font-semibold text-[#16A34A] hover:underline">
               Skip and finish setup
             </Link>
           </div>

@@ -12,7 +12,13 @@ const bookingListSelect = {
   cancelledAt: true,
   noShowAt: true,
   customer: {
-    select: { firstName: true, lastName: true, phone: true, isWalkIn: true },
+    select: {
+      firstName: true,
+      lastName: true,
+      phone: true,
+      isWalkIn: true,
+      linePictureUrl: true,
+    },
   },
   vehicle: {
     select: { licensePlate: true, brand: true, model: true, province: true },
@@ -20,8 +26,6 @@ const bookingListSelect = {
   branch: { select: { name: true } },
   items: {
     select: {
-      quantity: true,
-      unitPrice: true,
       service: { select: { name: true } },
     },
   },
@@ -84,7 +88,7 @@ export async function getCustomerBookingsPaginated(
         branch: {
           select: {
             name: true,
-            serviceStore: { select: { name: true } },
+            serviceStore: { select: { id: true, name: true } },
           },
         },
       },

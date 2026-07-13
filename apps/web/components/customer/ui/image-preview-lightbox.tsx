@@ -85,7 +85,7 @@ export function ImagePreviewLightbox({
     >
       <button
         type="button"
-        className="absolute inset-0 bg-[#0A0A0A]/90"
+        className="absolute inset-0 bg-[#0F172A]/90"
         aria-label="Close preview"
         onClick={onClose}
       />

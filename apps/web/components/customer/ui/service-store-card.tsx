@@ -35,14 +35,14 @@ export function ServiceStoreCard({ serviceStore }: { serviceStore: ServiceStoreC
             previewable
           />
           <div className="absolute top-4 left-4 flex gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-semibold text-[#0A0A0A] backdrop-blur-sm">
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-semibold text-[#0F172A] backdrop-blur-sm">
               <Star className="size-3 fill-amber-400 text-amber-400" />
               {serviceStore.rating ?? "4.8"}
             </span>
             <span
               className={cn(
                 "rounded-full px-2.5 py-1 text-[11px] font-semibold text-white",
-                isOpen ? "bg-[#0F9B76]" : "bg-[#64748B]",
+                isOpen ? "bg-[#16A34A]" : "bg-[#64748B]",
               )}
             >
               {isOpen ? "Open" : "Closed"}
@@ -56,11 +56,11 @@ export function ServiceStoreCard({ serviceStore }: { serviceStore: ServiceStoreC
         </div>
       <Link href={`/browse/${serviceStore.id}`} className="block">
         <div className="p-6">
-          <h3 className="text-[18px] font-semibold tracking-tight text-[#0A0A0A]">{serviceStore.name}</h3>
+          <h3 className="text-[18px] font-semibold tracking-tight text-[#0F172A]">{serviceStore.name}</h3>
           <p className="mt-1 text-[14px] text-[#64748B]">{serviceStore.distance ?? "1.2 km away"}</p>
           {serviceStore.startingPrice ? (
-            <p className="mt-3 text-[15px] font-semibold text-[#0A0A0A]">
-              From <span className="text-[#0F9B76]">{serviceStore.startingPrice}</span>
+            <p className="mt-3 text-[15px] font-semibold text-[#0F172A]">
+              From <span className="text-[#16A34A]">{serviceStore.startingPrice}</span>
             </p>
           ) : null}
         </div>

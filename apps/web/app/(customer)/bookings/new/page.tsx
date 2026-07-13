@@ -97,7 +97,7 @@ export default async function BookingWizardPage({ searchParams }: PageProps) {
       return (
         <CustomerShell backHref={`/browse/${serviceStoreId}`} backLabel="Service shop">
           <Card className="py-10 text-center">
-            <p className="text-[15px] text-[#0A0A0A]">
+            <p className="text-[15px] text-[#0F172A]">
               {presentation?.unavailableMessage ?? "This service shop is not available for booking."}
             </p>
             <div className="mt-6">

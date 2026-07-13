@@ -103,7 +103,7 @@ export function ServiceStoreDetailView({
                 <span
                   className={cn(
                     "rounded-full px-2.5 py-1 text-[11px] font-semibold text-white",
-                    openStatus.isOpen ? "bg-[#0F9B76]" : "bg-white/20",
+                    openStatus.isOpen ? "bg-[#16A34A]" : "bg-white/20",
                   )}
                 >
                   {openStatus.label}
@@ -121,7 +121,7 @@ export function ServiceStoreDetailView({
               {phone ? (
                 <a
                   href={`tel:${phone}`}
-                  className="flex h-10 items-center gap-2 rounded-full bg-white/95 px-4 text-[13px] font-semibold text-[#0A0A0A] hover:bg-white"
+                  className="flex h-10 items-center gap-2 rounded-full bg-white/95 px-4 text-[13px] font-semibold text-[#0F172A] hover:bg-white"
                 >
                   <Phone className="size-4" />
                   Call
@@ -131,7 +131,7 @@ export function ServiceStoreDetailView({
                 href={`https://maps.google.com/?q=${encodeURIComponent(mapsQuery)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-10 items-center gap-2 rounded-full bg-white/95 px-4 text-[13px] font-semibold text-[#0A0A0A] hover:bg-white"
+                className="flex h-10 items-center gap-2 rounded-full bg-white/95 px-4 text-[13px] font-semibold text-[#0F172A] hover:bg-white"
               >
                 <Navigation className="size-4" />
                 Directions
@@ -145,7 +145,7 @@ export function ServiceStoreDetailView({
           {phone ? (
             <a
               href={`tel:${phone}`}
-              className="flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-[12px] bg-[#F8FAFC] text-[11px] font-semibold text-[#0A0A0A]"
+              className="flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-[12px] bg-[#F8FAFC] text-[11px] font-semibold text-[#0F172A]"
             >
               <Phone className="size-4" />
               Call
@@ -155,7 +155,7 @@ export function ServiceStoreDetailView({
             href="https://line.me/R/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-[12px] bg-[#ECFDF5] text-[11px] font-semibold text-[#047857]"
+            className="flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-[12px] bg-[#F0FDF4] text-[11px] font-semibold text-[#047857]"
           >
             <MessageCircle className="size-4" />
             LINE
@@ -164,7 +164,7 @@ export function ServiceStoreDetailView({
             href={`https://maps.google.com/?q=${encodeURIComponent(mapsQuery)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-[12px] bg-[#F8FAFC] text-[11px] font-semibold text-[#0A0A0A]"
+            className="flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-[12px] bg-[#F8FAFC] text-[11px] font-semibold text-[#0F172A]"
           >
             <Navigation className="size-4" />
             Maps
@@ -176,7 +176,7 @@ export function ServiceStoreDetailView({
       <div className="lg:grid lg:grid-cols-[1fr_300px] lg:items-start lg:gap-8">
         <section className="order-1 flex flex-col gap-4">
           <div className="flex items-baseline justify-between">
-            <h2 className="text-[19px] font-semibold tracking-tight text-[#0A0A0A] md:text-[22px]">
+            <h2 className="text-[19px] font-semibold tracking-tight text-[#0F172A] md:text-[22px]">
               Services
             </h2>
             <span className="text-[13px] text-[#94A3B8]">
@@ -225,14 +225,14 @@ export function ServiceStoreDetailView({
           ) : null}
 
           <div className="rounded-[16px] bg-white p-4 shadow-sm">
-            <h2 className="text-[14px] font-semibold text-[#0A0A0A]">Opening hours</h2>
+            <h2 className="text-[14px] font-semibold text-[#0F172A]">Opening hours</h2>
             <ul className="mt-2.5 space-y-1.5">
               {hours.map((row) => (
                 <li
                   key={row.day}
                   className={cn(
                     "flex justify-between text-[13px]",
-                    row.isToday ? "font-semibold text-[#0A0A0A]" : "text-[#64748B]",
+                    row.isToday ? "font-semibold text-[#0F172A]" : "text-[#64748B]",
                   )}
                 >
                   <span>{row.day}</span>
@@ -244,7 +244,7 @@ export function ServiceStoreDetailView({
 
           {description ? (
             <div className="rounded-[16px] bg-white p-4 shadow-sm">
-              <h2 className="text-[14px] font-semibold text-[#0A0A0A]">About</h2>
+              <h2 className="text-[14px] font-semibold text-[#0F172A]">About</h2>
               <p className="mt-2 line-clamp-4 text-[13px] leading-relaxed text-[#64748B]">
                 {description}
               </p>
@@ -252,7 +252,7 @@ export function ServiceStoreDetailView({
           ) : null}
 
           <div className="rounded-[16px] bg-white p-4 shadow-sm">
-            <h2 className="mb-3 text-[14px] font-semibold text-[#0A0A0A]">Photos</h2>
+            <h2 className="mb-3 text-[14px] font-semibold text-[#0F172A]">Photos</h2>
             <ServiceStoreGallery serviceStoreId={serviceStoreId} serviceStoreName={name} />
           </div>
         </aside>

@@ -251,7 +251,7 @@ export function WalkInBookingForm({ branches }: WalkInBookingFormProps) {
       </ServiceStoreFormField>
 
       <ServiceStoreButton type="submit" disabled={isPending || services.length === 0}>
-        {isPending ? "Creating..." : "Create walk-in booking"}
+        {isPending ? "Creating..." : "Create booking"}
       </ServiceStoreButton>
     </form>
   );

@@ -548,7 +548,7 @@ function AnonymousLandingView() {
           </div>
           <Link
             href={PORTALS.serviceStore.login}
-            className="text-sm font-semibold text-[#15202b] underline-offset-4 hover:underline"
+            className="text-sm font-semibold text-[#0F172A] underline-offset-4 hover:underline"
           >
             Sign in
           </Link>
@@ -556,7 +556,7 @@ function AnonymousLandingView() {
 
         <main className="flex flex-1 flex-col justify-center gap-10 py-12">
           <section className="max-w-2xl">
-            <h1 className="text-4xl font-semibold tracking-tight text-[#15202b] sm:text-5xl">
+            <h1 className="text-4xl font-semibold tracking-tight text-[#0F172A] sm:text-5xl">
               Manage your business.
             </h1>
             <p className="mt-5 text-lg leading-relaxed text-[#5b6b7a]">
@@ -571,7 +571,7 @@ function AnonymousLandingView() {
                 key={item.title}
                 className="rounded-2xl border border-[#dce5ee] bg-white p-5 shadow-sm"
               >
-                <h2 className="font-semibold text-[#15202b]">{item.title}</h2>
+                <h2 className="font-semibold text-[#0F172A]">{item.title}</h2>
                 <p className="mt-2 text-sm leading-relaxed text-[#5b6b7a]">{item.description}</p>
               </article>
             ))}
@@ -580,19 +580,19 @@ function AnonymousLandingView() {
           <section className="grid gap-3 sm:grid-cols-3">
             <Link
               href={`${PORTALS.serviceStore.login}?callbackUrl=${encodeURIComponent(PORTALS.serviceStore.dashboard)}`}
-              className="inline-flex h-12 items-center justify-center rounded-2xl bg-[#06C755] px-4 text-center text-sm font-semibold text-white shadow-[0_8px_20px_rgba(6,199,85,0.25)]"
+              className="inline-flex h-12 items-center justify-center rounded-2xl bg-[#16A34A] px-4 text-center text-sm font-semibold text-white shadow-[0_8px_20px_rgba(22,163,74,0.25)] dark:border dark:border-border dark:bg-muted dark:text-foreground dark:shadow-none dark:hover:bg-accent"
             >
               Login with LINE
             </Link>
             <Link
               href={`${PORTALS.serviceStore.login}?callbackUrl=${encodeURIComponent(onboardingClaim)}`}
-              className="inline-flex h-12 items-center justify-center rounded-2xl border border-[#dce5ee] bg-white px-4 text-center text-sm font-semibold text-[#15202b]"
+              className="inline-flex h-12 items-center justify-center rounded-2xl border border-[#dce5ee] bg-white px-4 text-center text-sm font-semibold text-[#0F172A]"
             >
               Claim Business
             </Link>
             <Link
               href={`${PORTALS.serviceStore.login}?callbackUrl=${encodeURIComponent(onboardingCreate)}`}
-              className="inline-flex h-12 items-center justify-center rounded-2xl border border-[#dce5ee] bg-white px-4 text-center text-sm font-semibold text-[#15202b]"
+              className="inline-flex h-12 items-center justify-center rounded-2xl border border-[#dce5ee] bg-white px-4 text-center text-sm font-semibold text-[#0F172A]"
             >
               Create Business
             </Link>

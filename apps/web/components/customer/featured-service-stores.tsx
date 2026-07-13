@@ -26,11 +26,11 @@ export function FeaturedServiceStores({ serviceStores }: FeaturedServiceStoresPr
               className="h-40"
             />
             <div className="p-5">
-              <p className="font-semibold text-[#0A0A0A]">{serviceStore.name}</p>
+              <p className="font-semibold text-[#0F172A]">{serviceStore.name}</p>
               <p className="mt-1 text-[14px] text-[#64748B]">
                 {serviceStore.rating} ★ · {serviceStore.distance}
               </p>
-              <p className="mt-2 text-[14px] font-semibold text-[#0F9B76]">
+              <p className="mt-2 text-[14px] font-semibold text-[#16A34A]">
                 From {serviceStore.startingPrice ?? "฿299"}
               </p>
             </div>

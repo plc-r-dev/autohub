@@ -3,7 +3,7 @@ import { bookingStatusLabel } from "@/lib/booking/format";
 
 const STATUS_STYLES: Record<string, string> = {
   PENDING: "bg-amber-50 text-amber-700",
-  CONFIRMED: "bg-[#ECFDF5] text-[#0F9B76]",
+  CONFIRMED: "bg-[#F0FDF4] text-[#16A34A]",
   IN_PROGRESS: "bg-violet-50 text-violet-700",
   COMPLETED: "bg-emerald-50 text-emerald-700",
   CANCELLED: "bg-red-50 text-red-600",

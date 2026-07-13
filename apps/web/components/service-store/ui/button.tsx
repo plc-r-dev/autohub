@@ -14,10 +14,12 @@ export function ServiceStoreButton({
     <button
       className={cn(
         base,
-        variant === "primary" && "bg-[#06C755] text-white hover:bg-[#05b34c]",
+        variant === "primary" &&
+          "bg-[#16A34A] text-white hover:bg-[#15803D] dark:border dark:border-border dark:bg-muted dark:text-foreground dark:hover:bg-accent",
         variant === "secondary" &&
-          "border border-[#dce5ee] bg-white text-[#15202b] hover:bg-[#f4f7fa]",
-        variant === "ghost" && "text-[#5b6b7a] hover:bg-[#eef3f7] hover:text-[#15202b]",
+          "border border-[#dce5ee] bg-white text-[#0F172A] hover:bg-[#f4f7fa] dark:border-border dark:bg-card dark:text-foreground dark:hover:bg-muted",
+        variant === "ghost" &&
+          "text-[#5b6b7a] hover:bg-[#eef3f7] hover:text-[#0F172A] dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-foreground",
         className,
       )}
       {...props}
@@ -43,10 +45,12 @@ export function ServiceStoreButtonLink({
       href={href}
       className={cn(
         base,
-        variant === "primary" && "bg-[#06C755] text-white hover:bg-[#05b34c]",
+        variant === "primary" &&
+          "bg-[#16A34A] text-white hover:bg-[#15803D] dark:border dark:border-border dark:bg-muted dark:text-foreground dark:hover:bg-accent",
         variant === "secondary" &&
-          "border border-[#dce5ee] bg-white text-[#15202b] hover:bg-[#f4f7fa]",
-        variant === "ghost" && "text-[#5b6b7a] hover:bg-[#eef3f7] hover:text-[#15202b]",
+          "border border-[#dce5ee] bg-white text-[#0F172A] hover:bg-[#f4f7fa] dark:border-border dark:bg-card dark:text-foreground dark:hover:bg-muted",
+        variant === "ghost" &&
+          "text-[#5b6b7a] hover:bg-[#eef3f7] hover:text-[#0F172A] dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-foreground",
         className,
       )}
     >

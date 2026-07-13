@@ -19,18 +19,18 @@ export default async function ServiceStoreMembersPage() {
 
   return (
     <PageShell
-      title="Members"
+      title="Staff"
       description="Manage who can access this Service Store and their roles."
       nav={serviceStoreNav}
-      backHref="/app/dashboard"
     >
+      <div className="space-y-5">
       <ServiceStoreCard className="space-y-2">
-        <p className="text-sm text-[#5b6b7a]">
+        <p className="text-sm text-muted-foreground">
           You are signed in as <strong>{roleLabel(ctx.membership.role)}</strong> for{" "}
           <strong>{ctx.serviceStore.name}</strong>.
         </p>
         {!canManage ? (
-          <p className="text-sm text-[#8a97a5]">
+          <p className="text-sm text-muted-foreground">
             Only Owners and Managers can invite or change members.
           </p>
         ) : null}
@@ -42,6 +42,7 @@ export default async function ServiceStoreMembersPage() {
         currentRole={ctx.membership.role}
         canManage={canManage}
       />
+      </div>
     </PageShell>
   );
 }

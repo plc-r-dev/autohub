@@ -1,70 +1,62 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import {
-  DashboardHeader,
-  QuickActions,
-  ReadinessNotice,
-  RecentBookings,
-  RecentCustomers,
-  StatGrid,
-  TopServices,
-  UpcomingSchedule,
-} from "@/components/dashboard";
+import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
+import { DashboardDateFilter } from "@/components/dashboard/dashboard-date-filter";
+import { ReadinessNotice } from "@/components/dashboard";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { PageShell, serviceStoreNav } from "@/components/layout/page-shell";
 import { getServiceStoreReadiness } from "@/lib/service-store/application/readiness-queries";
 import { requireServiceStoreContext } from "@/lib/service-store/context";
-import { roleLabel, SERVICE_STORE_PERMISSION } from "@/lib/service-store/domain";
+import { SERVICE_STORE_PERMISSION } from "@/lib/service-store/domain";
+import { parseDashboardDateKey } from "@/lib/reporting/dashboard-date";
 import { getServiceStoreDashboardMetrics } from "@/lib/reporting/queries";
 
-export default async function ServiceStoreDashboardPage() {
+export const dynamic = "force-dynamic";
+
+type PageProps = {
+  searchParams: Promise<{ date?: string }>;
+};
+
+export default async function ServiceStoreDashboardPage({ searchParams }: PageProps) {
   const ctx = await requireServiceStoreContext(SERVICE_STORE_PERMISSION.STORE_VIEW);
 
   if (ctx.serviceStore.status === "ONBOARDING") {
     redirect("/app/setup");
   }
 
+  const params = await searchParams;
+  const selectedDate = parseDashboardDateKey(params.date);
+
   const [metrics, readiness] = await Promise.all([
-    getServiceStoreDashboardMetrics(ctx.serviceStore.id),
+    getServiceStoreDashboardMetrics(ctx.serviceStore.id, { date: selectedDate }),
     getServiceStoreReadiness(ctx.serviceStore.id),
   ]);
 
+  const displayName = [ctx.user.firstName, ctx.user.lastName].filter(Boolean).join(" ").trim() || "there";
+
   return (
     <PageShell
-      title={`Welcome back, ${[ctx.user.firstName, ctx.user.lastName].filter(Boolean).join(" ")}`}
-      description={`Performance overview for ${ctx.serviceStore.name}`}
+      title="Overview"
+      description={`Welcome back, ${displayName}.`}
       nav={serviceStoreNav}
+      actions={
+        <Suspense fallback={null}>
+          <DashboardDateFilter />
+        </Suspense>
+      }
     >
-      <DashboardHeader
-        storeCode={ctx.serviceStore.code}
-        role={roleLabel(ctx.membership.role)}
-        status={ctx.serviceStore.status}
-      />
-
       <ReadinessNotice readiness={readiness} />
 
       {!metrics ? (
         <EmptyState message="No service store metrics available." />
       ) : (
-        <>
-          <StatGrid
-            todaysBookings={metrics.todaysBookings}
-            todaysRevenue={metrics.todaysRevenue}
-            inService={metrics.statusCount.IN_PROGRESS}
-            outstandingBilling={metrics.outstandingBilling}
-          />
-
-          <QuickActions />
-
-          <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-            <RecentBookings bookings={metrics.recentBookings} />
-            <UpcomingSchedule bookings={metrics.upcomingBookings} />
-          </section>
-
-          <section className="grid gap-6 lg:grid-cols-2">
-            <TopServices services={metrics.topServices} />
-            <RecentCustomers customers={metrics.recentCustomers} />
-          </section>
-        </>
+        <Suspense
+          fallback={
+            <div className="h-40 animate-pulse rounded-2xl border border-border bg-muted/40" />
+          }
+        >
+          <DashboardOverview initialMetrics={metrics} />
+        </Suspense>
       )}
     </PageShell>
   );

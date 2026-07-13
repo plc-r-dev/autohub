@@ -48,7 +48,7 @@ export default async function ServiceStoreSetupServicesPage() {
             <ServiceStoreButtonLink href={`/app/branches/${branchId}/services/new`}>
               Add service
             </ServiceStoreButtonLink>
-            <Link href="/app/setup/hours" className="text-sm font-semibold text-[#0F9B76] hover:underline">
+            <Link href="/app/setup/hours" className="text-sm font-semibold text-[#16A34A] hover:underline">
               Continue to hours
             </Link>
           </div>

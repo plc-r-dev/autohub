@@ -39,7 +39,7 @@ export function ReturnToLineButton({
       className={cn(
         "inline-flex h-12 w-full items-center justify-center rounded-xl px-4 text-[15px] font-semibold active:opacity-90",
         variant === "primary"
-          ? "bg-[#06C755] text-white active:bg-[#05b34c]"
+          ? "bg-[#16A34A] text-white active:bg-[#15803D]"
           : "border border-[#e5e8eb] bg-white text-[#111] active:bg-[#f0f2f5]",
         className,
       )}

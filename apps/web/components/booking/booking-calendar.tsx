@@ -69,13 +69,13 @@ export function BookingCalendar({ value, onChange, minDateValue }: BookingCalend
   return (
     <div>
       <div className="flex items-center justify-between">
-        <p className="text-[15px] font-semibold text-[#0A0A0A]">{monthLabel}</p>
+        <p className="text-[15px] font-semibold text-[#0F172A]">{monthLabel}</p>
         <div className="flex gap-1">
           <button
             type="button"
             onClick={goToPrevMonth}
             disabled={isPrevDisabled}
-            className="flex size-9 items-center justify-center rounded-full border border-[#E2E8F0] text-[#0A0A0A] transition-colors hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-30"
+            className="flex size-9 items-center justify-center rounded-full border border-[#E2E8F0] text-[#0F172A] transition-colors hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-30"
             aria-label="Previous month"
           >
             <ChevronLeft className="size-4" />
@@ -83,7 +83,7 @@ export function BookingCalendar({ value, onChange, minDateValue }: BookingCalend
           <button
             type="button"
             onClick={goToNextMonth}
-            className="flex size-9 items-center justify-center rounded-full border border-[#E2E8F0] text-[#0A0A0A] transition-colors hover:bg-[#F8FAFC]"
+            className="flex size-9 items-center justify-center rounded-full border border-[#E2E8F0] text-[#0F172A] transition-colors hover:bg-[#F8FAFC]"
             aria-label="Next month"
           >
             <ChevronRight className="size-4" />
@@ -110,10 +110,10 @@ export function BookingCalendar({ value, onChange, minDateValue }: BookingCalend
               className={cn(
                 "flex aspect-square items-center justify-center rounded-full text-[14px] font-medium transition-colors",
                 cell.dateValue === value
-                  ? "bg-[#0F9B76] text-white"
+                  ? "bg-[#16A34A] text-white dark:border dark:border-border dark:bg-muted dark:text-foreground"
                   : cell.disabled
                     ? "cursor-not-allowed text-[#CBD5E1]"
-                    : "text-[#0A0A0A] hover:bg-[#F1F5F9]",
+                    : "text-[#0F172A] hover:bg-[#F1F5F9]",
               )}
             >
               {cell.day}

@@ -33,7 +33,7 @@ export function ServiceStoreSetupVerifyForm({
   return (
     <form action={action} className="flex flex-col gap-4 rounded-2xl border border-[#dce5ee] bg-white p-5">
       {state.error ? <p className="text-sm text-red-600">{state.error}</p> : null}
-      {state.success ? <p className="text-sm text-[#06C755]">{state.success}</p> : null}
+      {state.success ? <p className="text-sm text-[#16A34A]">{state.success}</p> : null}
 
       <ServiceStoreFormField id="name" label="Store name" error={state.fieldErrors?.name?.[0]}>
         <input id="name" name="name" required defaultValue={defaultValues.name} className={serviceStoreInputClassName} />

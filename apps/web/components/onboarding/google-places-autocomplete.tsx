@@ -100,7 +100,7 @@ export function GooglePlacesAutocomplete({
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-sm font-medium text-[#15202b]">{label}</label>
+      <label className="text-sm font-medium text-[#0F172A]">{label}</label>
       <input
         value={query}
         onChange={(event) => setQuery(event.target.value)}

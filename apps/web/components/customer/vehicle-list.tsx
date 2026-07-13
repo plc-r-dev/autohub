@@ -26,7 +26,7 @@ export function VehicleList({ vehicles }: VehicleListProps) {
                 <button
                   type="button"
                   onClick={() => setEditVehicle(vehicle)}
-                  className="min-h-[52px] border-r border-[#F1F5F9] text-[14px] font-semibold text-[#0A0A0A] hover:bg-[#F8FAFC]"
+                  className="min-h-[52px] border-r border-[#F1F5F9] text-[14px] font-semibold text-[#0F172A] hover:bg-[#F8FAFC]"
                 >
                   Details
                 </button>
@@ -46,7 +46,7 @@ export function VehicleList({ vehicles }: VehicleListProps) {
       <button
         type="button"
         onClick={() => setAddOpen(true)}
-        className="fixed bottom-8 right-6 z-10 flex size-14 items-center justify-center rounded-full bg-[#0F9B76] text-white shadow-[0_8px_24px_rgba(15,155,118,0.35)] hover:bg-[#0D8666] md:right-[max(1.5rem,calc(50%-640px+1.5rem))]"
+        className="fixed bottom-8 right-6 z-10 flex size-14 items-center justify-center rounded-full bg-[#16A34A] text-white shadow-[0_8px_24px_rgba(22,163,74,0.35)] hover:bg-[#15803D] md:right-[max(1.5rem,calc(50%-640px+1.5rem))]"
         aria-label="Add vehicle"
       >
         <Plus className="size-6" strokeWidth={2} />
@@ -72,7 +72,7 @@ export function VehicleList({ vehicles }: VehicleListProps) {
           <div className="space-y-4">
             <Card className="py-4">
               <p className="text-[11px] font-medium tracking-wide text-[#94A3B8] uppercase">Plate</p>
-              <p className="mt-1 text-[24px] font-semibold text-[#0A0A0A]">
+              <p className="mt-1 text-[24px] font-semibold text-[#0F172A]">
                 {editVehicle.licensePlate}
               </p>
             </Card>

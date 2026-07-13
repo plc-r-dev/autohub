@@ -27,7 +27,7 @@ export function CustomerPageTitle({
   return (
     <div className="mb-2">
       {subtitle ? <p className="text-[14px] font-medium text-[#64748B]">{subtitle}</p> : null}
-      <h1 className="text-[32px] font-semibold tracking-tight text-[#0A0A0A] md:text-[36px]">
+      <h1 className="text-[32px] font-semibold tracking-tight text-[#0F172A] md:text-[36px]">
         {title}
       </h1>
     </div>

@@ -26,7 +26,7 @@ export default async function ProfilePage() {
     <CustomerShell>
       <div className="mx-auto flex max-w-2xl flex-col gap-8">
         <div>
-          <h1 className="text-[32px] font-semibold tracking-tight text-[#0A0A0A] md:text-[36px]">
+          <h1 className="text-[32px] font-semibold tracking-tight text-[#0F172A] md:text-[36px]">
             Profile
           </h1>
           <p className="mt-2 text-[16px] text-[#64748B]">Your account and preferences</p>
@@ -38,14 +38,14 @@ export default async function ProfilePage() {
               <img
                 src={avatarUrl}
                 alt=""
-                className="size-28 rounded-full object-cover ring-4 ring-[#ECFDF5]"
+                className="size-28 rounded-full object-cover ring-4 ring-[#F0FDF4]"
               />
             ) : (
-              <div className="flex size-28 items-center justify-center rounded-full bg-[#0F9B76] text-4xl font-semibold text-white ring-4 ring-[#ECFDF5]">
+              <div className="flex size-28 items-center justify-center rounded-full bg-[#16A34A] text-4xl font-semibold text-white ring-4 ring-[#F0FDF4]">
                 {displayName.slice(0, 1).toUpperCase()}
               </div>
             )}
-            <h2 className="mt-6 text-[24px] font-semibold tracking-tight text-[#0A0A0A]">
+            <h2 className="mt-6 text-[24px] font-semibold tracking-tight text-[#0F172A]">
               {displayName}
             </h2>
           </div>
@@ -53,13 +53,13 @@ export default async function ProfilePage() {
           <dl className="divide-y divide-[#F1F5F9] border-t border-[#F1F5F9]">
             <div className="flex justify-between gap-4 px-6 py-5">
               <dt className="text-[14px] text-[#64748B]">Phone</dt>
-              <dd className="text-[14px] font-medium text-[#0A0A0A]">
+              <dd className="text-[14px] font-medium text-[#0F172A]">
                 {customer.phone?.trim() || "—"}
               </dd>
             </div>
             <div className="flex justify-between gap-4 px-6 py-5">
               <dt className="text-[14px] text-[#64748B]">Email</dt>
-              <dd className="text-[14px] font-medium text-[#0A0A0A]">
+              <dd className="text-[14px] font-medium text-[#0F172A]">
                 {customer.email?.trim() || user.email || "—"}
               </dd>
             </div>

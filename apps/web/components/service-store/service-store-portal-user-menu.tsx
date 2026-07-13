@@ -52,7 +52,7 @@ export function ServiceStorePortalUserMenu({
         }
       />
       <DropdownMenuContent align="end">
-        <DropdownMenuItem render={<Link href="/app/profile" />}>
+        <DropdownMenuItem render={<Link href="/app/settings" />}>
           <User />
           My Profile
         </DropdownMenuItem>
@@ -60,7 +60,7 @@ export function ServiceStorePortalUserMenu({
           <ArrowLeftRight />
           Switch Store
         </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/app/profile" />}>
+        <DropdownMenuItem render={<Link href="/app/settings" />}>
           <Settings />
           Settings
         </DropdownMenuItem>

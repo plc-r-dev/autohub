@@ -1,4 +1,4 @@
-import { formatDateTime } from "@/lib/booking/format";
+import { bookingStatusLabel, formatDateTime } from "@/lib/booking/format";
 import { Card } from "@/components/customer/ui/card";
 import { cn } from "@workspace/ui/lib/utils";
 import { Check } from "lucide-react";
@@ -13,12 +13,12 @@ type TimelineProps = {
 };
 
 const STEPS = [
-  { key: "PENDING", label: "Pending" },
-  { key: "CONFIRMED", label: "Confirmed" },
-  { key: "IN_PROGRESS", label: "In progress" },
-  { key: "COMPLETED", label: "Completed" },
-  { key: "CANCELLED", label: "Cancelled" },
-  { key: "NO_SHOW", label: "No show" },
+  { key: "PENDING", label: bookingStatusLabel("PENDING") },
+  { key: "CONFIRMED", label: bookingStatusLabel("CONFIRMED") },
+  { key: "IN_PROGRESS", label: bookingStatusLabel("IN_PROGRESS") },
+  { key: "COMPLETED", label: bookingStatusLabel("COMPLETED") },
+  { key: "CANCELLED", label: bookingStatusLabel("CANCELLED") },
+  { key: "NO_SHOW", label: bookingStatusLabel("NO_SHOW") },
 ] as const;
 
 function timestampForStatus(
@@ -76,9 +76,9 @@ export function Timeline(props: TimelineProps) {
                   className={cn(
                     "flex size-10 items-center justify-center rounded-full border-2 transition-colors",
                     active
-                      ? "border-[#0F9B76] bg-[#ECFDF5] text-[#0F9B76]"
+                      ? "border-[#16A34A] bg-[#F0FDF4] text-[#16A34A]"
                       : "border-[#E2E8F0] bg-white text-[#94A3B8]",
-                    isCurrent && "ring-4 ring-[#0F9B76]/15",
+                    isCurrent && "ring-4 ring-[#16A34A]/15",
                   )}
                 >
                   {active && !isCurrent ? (
@@ -91,7 +91,7 @@ export function Timeline(props: TimelineProps) {
                   <div
                     className={cn(
                       "mt-2 w-px flex-1 min-h-[28px]",
-                      active ? "bg-[#0F9B76]" : "bg-[#E2E8F0]",
+                      active ? "bg-[#16A34A]" : "bg-[#E2E8F0]",
                     )}
                   />
                 ) : null}
@@ -100,7 +100,7 @@ export function Timeline(props: TimelineProps) {
                 <p
                   className={cn(
                     "text-[15px] font-semibold",
-                    active ? "text-[#0A0A0A]" : "text-[#94A3B8]",
+                    active ? "text-[#0F172A]" : "text-[#94A3B8]",
                   )}
                 >
                   {step.label}
@@ -108,7 +108,7 @@ export function Timeline(props: TimelineProps) {
                 {timestamp ? (
                   <p className="mt-1 text-[13px] text-[#64748B]">{formatDateTime(timestamp)}</p>
                 ) : isCurrent ? (
-                  <p className="mt-1 text-[13px] font-medium text-[#0F9B76]">Current</p>
+                  <p className="mt-1 text-[13px] font-medium text-[#16A34A]">Current</p>
                 ) : null}
               </div>
             </li>

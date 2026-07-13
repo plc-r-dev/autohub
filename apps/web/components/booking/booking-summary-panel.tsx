@@ -31,8 +31,8 @@ function SummaryRow({
       <dd
         className={cn(
           "text-right text-[14px] font-medium",
-          value ? "text-[#0A0A0A]" : "text-[#CBD5E1]",
-          highlight && value && "text-[#0F9B76]",
+          value ? "text-[#0F172A]" : "text-[#CBD5E1]",
+          highlight && value && "text-[#16A34A]",
         )}
       >
         {value ?? "—"}

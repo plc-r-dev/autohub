@@ -54,3 +54,37 @@ export function buildPaymentSlipKey(
   const safeName = sanitizeFileName(fileName);
   return `payment-slips/${billingId}/${paymentId}/${safeName}`;
 }
+
+const IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
+const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp"]);
+
+export function validateImageUploadFile(file: File): void {
+  if (file.size === 0) {
+    throw new UploadValidationError("File is empty.");
+  }
+
+  if (file.size > MAX_UPLOAD_BYTES) {
+    throw new UploadValidationError("File must be 5 MB or less.");
+  }
+
+  const extension = getExtension(file.name);
+  const mimeAllowed = IMAGE_MIME_TYPES.has(file.type.toLowerCase());
+  const extensionAllowed = IMAGE_EXTENSIONS.has(extension);
+
+  if (!mimeAllowed && !extensionAllowed) {
+    throw new UploadValidationError("Only JPG, PNG, and WebP images are allowed.");
+  }
+}
+
+export function buildStoreMediaKey(
+  serviceStoreId: string,
+  kind: "logo" | "cover" | "gallery" | "service",
+  fileName: string,
+  serviceId?: string,
+): string {
+  const safeName = sanitizeFileName(fileName);
+  if (kind === "service" && serviceId) {
+    return `stores/${serviceStoreId}/services/${serviceId}/${safeName}`;
+  }
+  return `stores/${serviceStoreId}/${kind}/${safeName}`;
+}

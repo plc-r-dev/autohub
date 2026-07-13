@@ -52,13 +52,13 @@ export function ServiceStoreMemberManagement({
     <div className="flex flex-col gap-6">
       {canManage ? (
         <form action={inviteAction} className="flex flex-col gap-4 rounded-2xl border border-[#dce5ee] bg-white p-5">
-          <h3 className="text-sm font-semibold text-[#15202b]">Invite member</h3>
+          <h3 className="text-sm font-semibold text-[#0F172A]">Invite member</h3>
           <p className="text-sm text-[#5b6b7a]">
             Add a team member by phone number. They must have signed in with LINE at least once.
           </p>
           {inviteState.error ? <p className="text-sm text-red-600">{inviteState.error}</p> : null}
           {inviteState.success ? (
-            <p className="text-sm text-[#06C755]">{inviteState.success}</p>
+            <p className="text-sm text-[#0F172A]">{inviteState.success}</p>
           ) : null}
           <div className="grid gap-4 sm:grid-cols-2">
             <ServiceStoreFormField
@@ -131,7 +131,7 @@ function MemberRowActions({
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-[#eef3f7] p-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <p className="font-semibold text-[#15202b]">
+        <p className="font-semibold text-[#0F172A]">
           {member.user.firstName} {member.user.lastName}
           {isSelf ? " (you)" : ""}
         </p>

@@ -29,21 +29,21 @@ export function ListDateFilter({ fromKey = "from", toKey = "to" }: ListDateFilte
   return (
     <>
       <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-[#15202b]">From</span>
+        <span className="font-medium text-[#0F172A]">From</span>
         <input
           type="date"
           value={from}
           onChange={(event) => updateDate(fromKey, event.target.value)}
-          className="h-11 rounded-xl border border-[#dce5ee] bg-white px-3 text-[#15202b]"
+          className="h-11 rounded-xl border border-[#dce5ee] bg-white px-3 text-[#0F172A]"
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-[#15202b]">To</span>
+        <span className="font-medium text-[#0F172A]">To</span>
         <input
           type="date"
           value={to}
           onChange={(event) => updateDate(toKey, event.target.value)}
-          className="h-11 rounded-xl border border-[#dce5ee] bg-white px-3 text-[#15202b]"
+          className="h-11 rounded-xl border border-[#dce5ee] bg-white px-3 text-[#0F172A]"
         />
       </label>
     </>

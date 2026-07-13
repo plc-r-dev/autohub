@@ -1,10 +1,16 @@
-type ServiceStorePortalLayoutProps = {
-  children: React.ReactNode;
-};
+import { Suspense } from "react"
+import { ServiceStoreModalProvider } from "@/components/service-store/modals"
 
-/** ServiceStore portal route group — pages own their chrome. */
+type ServiceStorePortalLayoutProps = {
+  children: React.ReactNode
+}
+
 export default function ServiceStorePortalLayout({
   children,
 }: ServiceStorePortalLayoutProps) {
-  return children;
+  return (
+    <Suspense fallback={children}>
+      <ServiceStoreModalProvider>{children}</ServiceStoreModalProvider>
+    </Suspense>
+  )
 }

@@ -99,7 +99,7 @@ export function ServiceStoreOnboardingForm({
       ) : (
         <>
           <section className="flex flex-col gap-4">
-            <h2 className="text-base font-semibold text-[#15202b]">Your profile</h2>
+            <h2 className="text-base font-semibold text-[#0F172A]">Your profile</h2>
 
             <ServiceStoreFormField
               id="tenantId"
@@ -170,7 +170,7 @@ export function ServiceStoreOnboardingForm({
           </section>
 
           <section className="flex flex-col gap-4">
-            <h2 className="text-base font-semibold text-[#15202b]">Business setup</h2>
+            <h2 className="text-base font-semibold text-[#0F172A]">Business setup</h2>
 
             <div className="flex flex-wrap gap-2">
               <ServiceStoreButton
@@ -223,11 +223,11 @@ export function ServiceStoreOnboardingForm({
                           className={cn(
                             "w-full rounded-xl border p-4 text-left text-sm transition-colors",
                             selectedServiceStoreId === serviceStore.id
-                              ? "border-[#06C755] bg-[#ecfdf5]"
+                              ? "border-[#16A34A] bg-[#F0FDF4]"
                               : "border-[#dce5ee] bg-white hover:bg-[#f4f7fa]",
                           )}
                         >
-                          <div className="font-semibold text-[#15202b]">{serviceStore.name}</div>
+                          <div className="font-semibold text-[#0F172A]">{serviceStore.name}</div>
                           <div className="mt-1 text-[#8a97a5]">
                             {serviceStore.code} · {serviceStore.status}
                           </div>

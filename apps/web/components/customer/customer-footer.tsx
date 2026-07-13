@@ -13,7 +13,7 @@ export function CustomerFooter() {
         <div>
           <Link
             href="/browse"
-            className="font-serif text-[22px] font-semibold tracking-tight text-[#0A0A0A]"
+            className="font-serif text-[22px] font-semibold tracking-tight text-[#0F172A]"
           >
             AutoHub
           </Link>
@@ -26,7 +26,7 @@ export function CustomerFooter() {
             <Link
               key={link.label}
               href={link.href}
-              className="text-[14px] font-medium text-[#64748B] transition-colors hover:text-[#0A0A0A]"
+              className="text-[14px] font-medium text-[#64748B] transition-colors hover:text-[#0F172A]"
             >
               {link.label}
             </Link>

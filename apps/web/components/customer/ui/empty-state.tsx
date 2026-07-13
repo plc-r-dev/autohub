@@ -21,7 +21,7 @@ export function EmptyState({
           </svg>
         )}
       </div>
-      <h3 className="text-[20px] font-semibold tracking-tight text-[#0A0A0A]">{title}</h3>
+      <h3 className="text-[20px] font-semibold tracking-tight text-[#0F172A]">{title}</h3>
       {description ? (
         <p className="mt-2 max-w-sm text-[15px] leading-relaxed text-[#64748B]">{description}</p>
       ) : null}

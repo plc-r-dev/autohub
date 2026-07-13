@@ -112,8 +112,8 @@ function SelectChip({
       className={cn(
         "min-h-[44px] shrink-0 rounded-full border px-5 text-[14px] font-semibold transition-all",
         selected
-          ? "border-[#0F9B76] bg-[#ECFDF5] text-[#0F9B76]"
-          : "border-[#E2E8F0] bg-white text-[#0A0A0A] hover:border-[#CBD5E1]",
+          ? "border-[#16A34A] bg-[#F0FDF4] text-[#16A34A]"
+          : "border-[#E2E8F0] bg-white text-[#0F172A] hover:border-[#CBD5E1]",
         disabled && "cursor-not-allowed opacity-40",
         className,
       )}
@@ -322,7 +322,7 @@ export function BookingWizard({
                   className={cn(
                     "flex gap-3 rounded-[20px] border-2 bg-white p-4 text-left transition-colors",
                     selectedServiceId === service.id
-                      ? "border-[#0F9B76] bg-[#ECFDF5]"
+                      ? "border-[#16A34A] bg-[#F0FDF4]"
                       : "border-[#E8EDF2] hover:border-[#CBD5E1]",
                   )}
                 >
@@ -334,7 +334,7 @@ export function BookingWizard({
                     sizes="64px"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-[#0A0A0A]">{service.name}</p>
+                    <p className="font-semibold text-[#0F172A]">{service.name}</p>
                     <p className="mt-1 line-clamp-2 text-[13px] text-[#64748B]">
                       {getServiceDisplayDescription(service.name, storeDescription)}
                     </p>
@@ -344,7 +344,7 @@ export function BookingWizard({
                     <p className="mt-2 flex items-center gap-2 text-[13px]">
                       <span className="text-[#64748B]">{service.duration} min</span>
                       <span className="text-[#CBD5E1]">·</span>
-                      <span className="font-semibold text-[#0F9B76]">{formatPrice(service.price)}</span>
+                      <span className="font-semibold text-[#16A34A]">{formatPrice(service.price)}</span>
                     </p>
                   </div>
                 </button>

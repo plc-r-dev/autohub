@@ -127,7 +127,7 @@ async function transitionServiceStoreBooking(
     PENDING: "Booking updated.",
     CONFIRMED: "Booking confirmed.",
     CHECKED_IN: "Booking updated.",
-    IN_PROGRESS: "Service started.",
+    IN_PROGRESS: "Booking moved to In Service.",
     COMPLETED: "Booking completed.",
     CANCELLED: "Booking cancelled.",
     NO_SHOW: "Booking marked as no-show.",
@@ -522,4 +522,12 @@ export async function completeBooking(bookingNumber: string) {
 export async function markBookingNoShow(bookingNumber: string) {
   const { serviceStore } = await requireApprovedServiceStoreUser();
   return transitionServiceStoreBooking(bookingNumber, serviceStore.id, "NO_SHOW");
+}
+
+export async function updateServiceStoreBookingStatus(
+  bookingNumber: string,
+  toStatus: BookingStatus,
+) {
+  const { serviceStore } = await requireApprovedServiceStoreUser();
+  return transitionServiceStoreBooking(bookingNumber, serviceStore.id, toStatus);
 }

@@ -27,7 +27,7 @@ export function Sheet({ open, onClose, title, children, className }: SheetProps)
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
       <button
         type="button"
-        className="absolute inset-0 bg-[#0A0A0A]/20 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-[#0F172A]/20 backdrop-blur-[2px]"
         aria-label="Close"
         onClick={onClose}
       />
@@ -39,7 +39,7 @@ export function Sheet({ open, onClose, title, children, className }: SheetProps)
       >
         <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-[#E2E8F0]" />
         {title ? (
-          <h2 className="mb-5 text-center text-[20px] font-semibold tracking-tight text-[#0A0A0A]">
+          <h2 className="mb-5 text-center text-[20px] font-semibold tracking-tight text-[#0F172A]">
             {title}
           </h2>
         ) : null}

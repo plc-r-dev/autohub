@@ -58,7 +58,7 @@ export default async function BookingDetailPage({ params }: PageProps) {
           <>
             <div>
               <p className="text-[14px] text-[#94A3B8]">{booking.bookingNumber}</p>
-              <h1 className="mt-1 text-[32px] font-semibold tracking-tight text-[#0A0A0A]">
+              <h1 className="mt-1 text-[32px] font-semibold tracking-tight text-[#0F172A]">
                 Booking details
               </h1>
             </div>
@@ -66,7 +66,7 @@ export default async function BookingDetailPage({ params }: PageProps) {
             <Card>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[18px] font-semibold text-[#0A0A0A]">
+                  <p className="text-[18px] font-semibold text-[#0F172A]">
                     {booking.branch.serviceStore.name}
                   </p>
                   <p className="mt-1 text-[14px] text-[#64748B]">{booking.branch.name}</p>
@@ -127,7 +127,7 @@ export default async function BookingDetailPage({ params }: PageProps) {
               </ul>
               <div className="mt-6 flex justify-between border-t border-[#F1F5F9] pt-4 text-[17px] font-semibold">
                 <span>Total</span>
-                <span className="text-[#0F9B76]">{formatPrice(totalPrice)}</span>
+                <span className="text-[#16A34A]">{formatPrice(totalPrice)}</span>
               </div>
             </Card>
 
@@ -143,7 +143,7 @@ export default async function BookingDetailPage({ params }: PageProps) {
               {phone ? (
                 <a
                   href={`tel:${phone}`}
-                  className="inline-flex h-[52px] items-center justify-center gap-2 rounded-[20px] bg-[#0F9B76] text-[15px] font-semibold text-white"
+                  className="inline-flex h-[52px] items-center justify-center gap-2 rounded-[20px] bg-[#16A34A] text-[15px] font-semibold text-white"
                 >
                   <Phone className="size-4" />
                   Call service shop
@@ -153,7 +153,7 @@ export default async function BookingDetailPage({ params }: PageProps) {
                 href={`https://maps.google.com/?q=${encodeURIComponent(mapsQuery)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-[52px] items-center justify-center gap-2 rounded-[20px] border border-[#E2E8F0] bg-white text-[15px] font-semibold text-[#0A0A0A]"
+                className="inline-flex h-[52px] items-center justify-center gap-2 rounded-[20px] border border-[#E2E8F0] bg-white text-[15px] font-semibold text-[#0F172A]"
               >
                 <Navigation className="size-4" />
                 Navigate

@@ -42,7 +42,7 @@ export function LineJourney() {
           />
           <div className="mx-auto max-w-sm rounded-3xl border border-border bg-card p-5 shadow-xl">
             <div className="flex items-center gap-2 border-b border-border pb-4">
-              <div className="flex size-9 items-center justify-center rounded-full bg-[#06C755]">
+              <div className="flex size-9 items-center justify-center rounded-full bg-[#16A34A]">
                 <MessageCircle className="size-4 text-white" />
               </div>
               <div>
@@ -63,7 +63,7 @@ export function LineJourney() {
               </div>
             </div>
 
-            <div className="mt-4 w-full rounded-full bg-[#06C755] px-4 py-2.5 text-center text-sm font-semibold text-white">
+            <div className="mt-4 w-full rounded-full bg-[#16A34A] px-4 py-2.5 text-center text-sm font-semibold text-white">
               Book Now
             </div>
           </div>

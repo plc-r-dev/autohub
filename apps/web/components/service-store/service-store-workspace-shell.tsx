@@ -1,5 +1,6 @@
-import Link from "next/link";
-import { ServiceStoreMobileNav, ServiceStoreSidebarNav } from "@/components/service-store/service-store-sidebar-nav";
+import { ServiceStoreHeaderBrand } from "@/components/service-store/service-store-header-brand";
+import { ServiceStoreMobileNav } from "@/components/service-store/service-store-sidebar-nav";
+import { ServiceStoreSidebar } from "@/components/service-store/service-store-sidebar";
 import { ServiceStoreWorkspaceHeaderMenu } from "@/components/service-store/service-store-workspace-header-menu";
 import { Badge } from "@workspace/ui/components/badge";
 
@@ -31,11 +32,8 @@ export function ServiceStoreWorkspaceShell({
 }: ServiceStoreWorkspaceShellProps) {
   return (
     <div className="flex min-h-svh flex-col bg-background">
-      <header className="flex items-center justify-between gap-4 border-b border-border bg-card px-4 py-3 md:px-6">
-        <Link href="/app" className="flex shrink-0 flex-col leading-tight">
-          <span className="text-xs font-semibold tracking-wide text-primary uppercase">AutoHub</span>
-          <span className="text-base font-semibold text-foreground">Service Store</span>
-        </Link>
+      <header className="flex items-center justify-between gap-4 bg-card px-4 py-3 shadow-sm md:px-6">
+        <ServiceStoreHeaderBrand href="/app" />
 
         <div className="hidden min-w-0 flex-col items-center sm:flex">
           <p className="text-xs text-muted-foreground">Welcome back, {displayName || "there"}</p>
@@ -48,14 +46,10 @@ export function ServiceStoreWorkspaceShell({
         <ServiceStoreWorkspaceHeaderMenu displayName={displayName} avatarUrl={avatarUrl} />
       </header>
 
-      <div className="flex flex-1">
-        <aside className="hidden w-56 shrink-0 border-r border-border lg:block">
-          <div className="sticky top-0 flex flex-col gap-6 p-4">
-            <ServiceStoreSidebarNav locked={navLocked} />
-          </div>
-        </aside>
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <ServiceStoreSidebar locked={navLocked} />
 
-        <main className="min-w-0 flex-1 p-4 md:p-6 lg:p-8">
+        <main className="min-w-0 flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
           <div className="mb-4">
             <ServiceStoreMobileNav locked={navLocked} />
           </div>

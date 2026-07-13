@@ -2,8 +2,8 @@ import { cn } from "@workspace/ui/lib/utils";
 
 /** LINE Official Account + LIFF design tokens */
 export const lineColors = {
-  green: "#06C755",
-  greenDark: "#05b34c",
+  green: "#16A34A",
+  greenDark: "#15803D",
   greenLight: "#8de055",
   chatBg: "#8cabd8",
   chatBgLight: "#b2c7d9",
@@ -85,7 +85,7 @@ export function LineFlexAction({
         href={href}
         className={cn(
           base,
-          variant === "primary" ? "bg-[#06C755] text-white active:bg-[#05b34c]" : "text-[#06C755]",
+          variant === "primary" ? "bg-[#16A34A] text-white active:bg-[#15803D]" : "text-[#16A34A]",
           className,
         )}
       >
@@ -100,7 +100,7 @@ export function LineFlexAction({
       onClick={onClick}
       className={cn(
         base,
-        variant === "primary" ? "bg-[#06C755] text-white active:bg-[#05b34c]" : "text-[#06C755]",
+        variant === "primary" ? "bg-[#16A34A] text-white active:bg-[#15803D]" : "text-[#16A34A]",
         className,
       )}
     >
@@ -139,7 +139,7 @@ export function LineChatRow({ children, from = "oa" }: LineChatRowProps) {
   return (
     <div className={cn("flex gap-2", from === "user" ? "flex-row-reverse" : "flex-row")}>
       {from === "oa" ? (
-        <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-[#06C755] text-[11px] font-bold text-white">
+        <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-[#16A34A] text-[11px] font-bold text-white">
           A
         </div>
       ) : (
@@ -153,7 +153,7 @@ export function LineChatRow({ children, from = "oa" }: LineChatRowProps) {
 /** OA chat header bar */
 export function LineOaHeader({ name = "AutoHub" }: { name?: string }) {
   return (
-    <header className="flex shrink-0 items-center gap-3 border-b border-black/5 bg-[#06C755] px-4 py-3 text-white">
+    <header className="flex shrink-0 items-center gap-3 border-b border-black/5 bg-[#16A34A] px-4 py-3 text-white">
       <div className="flex size-9 items-center justify-center rounded-full bg-white/20 text-sm font-bold">
         A
       </div>

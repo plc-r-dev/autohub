@@ -52,10 +52,10 @@ export function BookingSuccessPanel({
   return (
     <Card padding={false}>
       <div className="px-6 py-12 text-center md:px-10">
-        <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-[#ECFDF5]">
-          <CheckCircle2 className="size-10 text-[#0F9B76]" strokeWidth={1.5} />
+        <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-[#F0FDF4]">
+          <CheckCircle2 className="size-10 text-[#16A34A]" strokeWidth={1.5} />
         </div>
-        <h2 className="mt-6 text-[32px] font-semibold tracking-tight text-[#0A0A0A]">
+        <h2 className="mt-6 text-[32px] font-semibold tracking-tight text-[#0F172A]">
           You&apos;re booked
         </h2>
         <p className="mt-2 text-[16px] text-[#64748B]">Your appointment is confirmed</p>
@@ -63,7 +63,7 @@ export function BookingSuccessPanel({
         <p className="mt-10 text-[11px] font-semibold tracking-widest text-[#94A3B8] uppercase">
           Booking number
         </p>
-        <p className="mt-1 text-[28px] font-semibold tracking-tight text-[#0A0A0A]">
+        <p className="mt-1 text-[28px] font-semibold tracking-tight text-[#0F172A]">
           {bookingNumber}
         </p>
         <div className="mt-4 flex justify-center">
@@ -75,7 +75,7 @@ export function BookingSuccessPanel({
             <p className="text-[11px] font-semibold tracking-widest text-[#94A3B8] uppercase">
               Service shop
             </p>
-            <p className="mt-2 text-[18px] font-semibold text-[#0A0A0A]">{serviceStoreName}</p>
+            <p className="mt-2 text-[18px] font-semibold text-[#0F172A]">{serviceStoreName}</p>
             {branchName ? (
               <p className="mt-1 text-[14px] text-[#64748B]">{branchName}</p>
             ) : null}
@@ -86,19 +86,19 @@ export function BookingSuccessPanel({
               <p className="text-[11px] font-semibold tracking-widest text-[#94A3B8] uppercase">
                 Date
               </p>
-              <p className="mt-2 text-[14px] font-medium text-[#0A0A0A]">{dateLabel}</p>
+              <p className="mt-2 text-[14px] font-medium text-[#0F172A]">{dateLabel}</p>
             </div>
             <div>
               <p className="text-[11px] font-semibold tracking-widest text-[#94A3B8] uppercase">
                 Time
               </p>
-              <p className="mt-2 text-[14px] font-medium text-[#0A0A0A]">{timeLabel}</p>
+              <p className="mt-2 text-[14px] font-medium text-[#0F172A]">{timeLabel}</p>
             </div>
             <div>
               <p className="text-[11px] font-semibold tracking-widest text-[#94A3B8] uppercase">
                 Vehicle
               </p>
-              <p className="mt-2 text-[14px] font-medium text-[#0A0A0A]">{vehicleLabel}</p>
+              <p className="mt-2 text-[14px] font-medium text-[#0F172A]">{vehicleLabel}</p>
             </div>
           </div>
 
@@ -113,20 +113,20 @@ export function BookingSuccessPanel({
                   className="flex items-start justify-between gap-4 text-[15px]"
                 >
                   <span>
-                    <span className="font-medium text-[#0A0A0A]">{service.name}</span>
+                    <span className="font-medium text-[#0F172A]">{service.name}</span>
                     <span className="mt-0.5 block text-[13px] text-[#64748B]">
                       {service.duration} min
                     </span>
                   </span>
-                  <span className="shrink-0 font-medium text-[#0A0A0A]">
+                  <span className="shrink-0 font-medium text-[#0F172A]">
                     {formatPrice(service.price)}
                   </span>
                 </li>
               ))}
             </ul>
             <div className="mt-5 flex items-center justify-between border-t border-[#E2E8F0] pt-4 text-[17px] font-semibold">
-              <span className="text-[#0A0A0A]">Total</span>
-              <span className="text-[#0F9B76]">{formatPrice(totalPrice)}</span>
+              <span className="text-[#0F172A]">Total</span>
+              <span className="text-[#16A34A]">{formatPrice(totalPrice)}</span>
             </div>
           </div>
         </div>
