@@ -6,7 +6,8 @@ import { authClient } from "@/lib/auth-client";
 import { Button } from "@workspace/ui/components/button";
 
 type PortalLoginFormProps = {
-  portal: "customer" | "serviceStore" | "admin";
+  /** Customers never see this screen — LINE OA / LIFF is their only entry. */
+  portal: "serviceStore" | "admin";
   title: string;
   description: string;
   defaultCallbackUrl: string;
@@ -59,7 +60,7 @@ function PortalLoginForm({
           <span className="text-xs font-medium text-[#6b7c8c]">LINE Official Account</span>
         </div>
         <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-[#06C755] text-2xl font-bold text-white">
-          {portal === "admin" ? "A" : portal === "serviceStore" ? "S" : "C"}
+          {portal === "admin" ? "A" : "S"}
         </div>
         <h1 className="text-xl font-semibold text-[#111]">{title}</h1>
         <p className="mt-2 text-sm leading-relaxed text-[#6b7c8c]">{description}</p>
