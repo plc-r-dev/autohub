@@ -141,7 +141,7 @@ export function StaffInviteCard({
               value={inviteUrl}
               placeholder={isPending ? "Generating link…" : "Invitation link"}
               className={cn(
-                "h-10 min-w-0 flex-1 rounded-xl border border-border bg-muted/20 px-3 text-sm text-foreground",
+                "h-10 min-w-0 flex-1 rounded-xl border border-border bg-muted/30 px-3 text-sm text-foreground dark:bg-muted/20",
               )}
             />
             <div className="flex flex-wrap gap-2">

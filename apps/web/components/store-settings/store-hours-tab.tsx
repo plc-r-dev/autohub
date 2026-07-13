@@ -135,7 +135,7 @@ export function StoreHoursTab({ hours }: StoreHoursTabProps) {
           </p>
         ) : null}
 
-        <div className="rounded-xl border border-border bg-muted/15 px-4">
+        <div className="rounded-xl border border-border bg-muted/30 px-4 dark:bg-muted/20">
           <div className="hidden border-b border-border py-2.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase sm:grid sm:grid-cols-[5.5rem_7.5rem_1fr_1fr] sm:gap-4">
             <span>Day</span>
             <span>Status</span>

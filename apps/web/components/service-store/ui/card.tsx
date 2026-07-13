@@ -12,7 +12,7 @@ export function ServiceStoreCard({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-2xl border border-[#dce5ee] bg-white shadow-sm",
+        "overflow-hidden rounded-2xl border border-border bg-card shadow-sm",
         padding && "p-5",
         className,
       )}
