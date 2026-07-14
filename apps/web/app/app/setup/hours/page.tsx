@@ -10,12 +10,12 @@ import {
 import { requireServiceStoreContext } from "@/lib/service-store/context";
 
 export default async function ServiceStoreSetupHoursPage() {
-  const ctx = await requireServiceStoreContext();
+  const ctx = await requireServiceStoreContext(undefined, { allowOnboarding: true });
   const progress = await getOnboardingSetupProgress(ctx.serviceStore.id);
   const branchId = await getPrimaryBranchId(ctx.serviceStore.id);
 
   if (!progress || !branchId) {
-    redirect("/app/setup/verify-business");
+    redirect("/app/setup");
   }
 
   return (

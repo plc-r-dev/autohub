@@ -29,11 +29,11 @@ type RecentBookingsProps = {
 };
 
 const STATUS_FILTER_OPTIONS: Array<{ value: BookingStatus | "ALL"; label: string }> = [
-  ...BOOKING_STATUS_OPTIONS,
   { value: "ALL", label: "All statuses" },
+  ...BOOKING_STATUS_OPTIONS,
 ];
 
-const DEFAULT_STATUS: BookingStatus = "PENDING";
+const DEFAULT_STATUS: BookingStatus | "ALL" = "ALL";
 
 function formatVehicleLabel(booking: DashboardBooking) {
   const vehicle = `${booking.vehicle.brand} ${booking.vehicle.model}`.trim();

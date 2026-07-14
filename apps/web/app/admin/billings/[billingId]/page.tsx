@@ -1,29 +1,49 @@
-import { notFound } from "next/navigation";
-import { AdminLayout } from "@/components/admin/admin-layout";
-import { AdminBillingReviewActions } from "@/components/billing/admin-billing-review-actions";
-import { AdminPaymentReviewActions } from "@/components/billing/admin-payment-review-actions";
-import { PaymentSlipPreview } from "@/components/billing/payment-slip-preview";
-import { requireAdminSession } from "@/lib/auth/require-admin";
+import { notFound } from "next/navigation"
+import Alert from "@mui/material/Alert"
+import Divider from "@mui/material/Divider"
+import Grid from "@mui/material/Grid"
+import Stack from "@mui/material/Stack"
+import Typography from "@mui/material/Typography"
+import { AdminLayout } from "@/components/admin/admin-layout"
+import { AdminSectionCard } from "@/components/admin/ui/admin-section-card"
+import { AdminStatusChip } from "@/components/admin/ui/admin-status-chip"
+import { AdminPaymentReviewActions } from "@/components/billing/admin-payment-review-actions"
+import { PaymentSlipPreview } from "@/components/billing/payment-slip-preview"
+import { requireAdminSession } from "@/lib/auth/require-admin"
+import { canReviewBillingPayment } from "@/lib/billing/domain"
 import {
   billingPaymentReviewStatusLabel,
   formatBillingCurrency,
   formatBillingDate,
   formatBillingDateTime,
-} from "@/lib/billing/format";
-import { billingStatusLabel, getAdminBillingDetail } from "@/lib/billing/queries";
-import { getPaymentSlipPreviewUrl } from "@/lib/storage/upload-service";
+} from "@/lib/billing/format"
+import { billingStatusLabel, getAdminBillingDetail } from "@/lib/billing/queries"
+import { getPaymentSlipPreviewUrl } from "@/lib/storage/upload-service"
 
 type PageProps = {
-  params: Promise<{ billingId: string }>;
-};
+  params: Promise<{ billingId: string }>
+}
+
+function Meta({ label, value }: { label: string; value: string }) {
+  return (
+    <Stack spacing={0.25}>
+      <Typography variant="caption" color="text.secondary">
+        {label}
+      </Typography>
+      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+        {value}
+      </Typography>
+    </Stack>
+  )
+}
 
 export default async function AdminBillingDetailPage({ params }: PageProps) {
-  await requireAdminSession();
-  const { billingId } = await params;
-  const billing = await getAdminBillingDetail(billingId);
+  await requireAdminSession()
+  const { billingId } = await params
+  const billing = await getAdminBillingDetail(billingId)
 
   if (!billing) {
-    notFound();
+    notFound()
   }
 
   const paymentPreviews = await Promise.all(
@@ -31,93 +51,193 @@ export default async function AdminBillingDetailPage({ params }: PageProps) {
       paymentId: payment.id,
       previewUrl: await getPaymentSlipPreviewUrl(payment.slipKey),
     })),
-  );
+  )
   const previewByPaymentId = new Map(
     paymentPreviews.map((preview) => [preview.paymentId, preview.previewUrl]),
-  );
+  )
+
+  const latestPendingPayment = billing.payments.find(
+    (payment) =>
+      payment.reviewStatus === "PENDING" &&
+      canReviewBillingPayment(billing.status),
+  )
 
   return (
     <AdminLayout
       title="Billing detail"
       description={`${billing.serviceStore.name} · ${formatBillingDate(billing.periodStart)} - ${formatBillingDate(billing.periodEnd)}`}
     >
-      <div className="border-input flex flex-col gap-3 rounded-md border p-4 text-sm">
-        <p>Status: {billingStatusLabel(billing.status)}</p>
-        <p>Booking count: {billing.bookingCount}</p>
-        <p>Booking fee: {formatBillingCurrency(billing.bookingFee)}</p>
-        <p>VAT rate: {billing.vatRate.toString()}%</p>
-        <p>Subtotal: {formatBillingCurrency(billing.subtotal)}</p>
-        <p>VAT: {formatBillingCurrency(billing.vat)}</p>
-        <p>Discount: {formatBillingCurrency(billing.discount)}</p>
-        <p className="font-medium">Total: {formatBillingCurrency(billing.total)}</p>
-        {billing.invoiceNumber ? <p>Invoice number: {billing.invoiceNumber}</p> : null}
-        {billing.receiptNumber ? <p>Receipt number: {billing.receiptNumber}</p> : null}
+      <AdminSectionCard
+        title="Billing summary"
+        action={
+          <AdminStatusChip
+            label={billingStatusLabel(billing.status)}
+            status={billing.status}
+          />
+        }
+      >
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Meta label="Service store" value={billing.serviceStore.name} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Meta label="Bookings" value={String(billing.bookingCount)} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Meta
+              label="Booking fee"
+              value={formatBillingCurrency(billing.bookingFee)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Meta
+              label="VAT"
+              value={`${formatBillingCurrency(billing.vat)} (${billing.vatRate.toString()}%)`}
+            />
+          </Grid>
+          {billing.invoiceNumber ? (
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Meta label="Invoice" value={billing.invoiceNumber} />
+            </Grid>
+          ) : null}
+          {billing.receiptNumber ? (
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Meta label="Receipt" value={billing.receiptNumber} />
+            </Grid>
+          ) : null}
+        </Grid>
+        <Divider sx={{ my: 2 }} />
+        <Stack
+          direction="row"
+          sx={{ justifyContent: "space-between", alignItems: "center" }}
+        >
+          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+            Total
+          </Typography>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+            {formatBillingCurrency(billing.total)}
+          </Typography>
+        </Stack>
         {billing.rejectReason ? (
-          <p className="text-destructive">Reject reason: {billing.rejectReason}</p>
+          <Alert severity="error" sx={{ mt: 2 }}>
+            Rejection reason: {billing.rejectReason}
+          </Alert>
         ) : null}
-      </div>
+      </AdminSectionCard>
 
-      <AdminBillingReviewActions billingId={billing.id} status={billing.status} />
-
-      <section className="flex flex-col gap-3">
-        <h2 className="font-medium">Billing items</h2>
+      <AdminSectionCard title="Billing items">
         {billing.items.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No billing items.</p>
+          <Typography variant="body2" color="text.secondary">
+            No billing items.
+          </Typography>
         ) : (
-          <div className="flex flex-col gap-2">
+          <Stack spacing={1.5}>
             {billing.items.map((item) => (
-              <div key={item.id} className="border-input rounded-md border p-3 text-sm">
-                <p className="font-medium">{item.bookingNumber}</p>
-                <p className="text-muted-foreground">{formatBillingDate(item.bookingDate)}</p>
-                <p>{formatBillingCurrency(item.amount)}</p>
-              </div>
+              <Stack
+                key={item.id}
+                direction="row"
+                sx={{
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  px: 2,
+                  py: 1.5,
+                }}
+              >
+                <Stack spacing={0.25}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {item.bookingNumber}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {formatBillingDate(item.bookingDate)}
+                  </Typography>
+                </Stack>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {formatBillingCurrency(item.amount)}
+                </Typography>
+              </Stack>
             ))}
-          </div>
+          </Stack>
         )}
-      </section>
+      </AdminSectionCard>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="font-medium">Payment submissions</h2>
+      <AdminSectionCard title="Payment review">
         {billing.payments.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No payment submissions yet.</p>
+          <Typography variant="body2" color="text.secondary">
+            No payment submissions yet. Waiting for the store to pay.
+          </Typography>
         ) : (
-          <div className="flex flex-col gap-3">
-            {billing.payments.map((payment) => (
-              <article key={payment.id} className="border-input rounded-md border p-4 text-sm">
-                <p>
-                  {formatBillingDate(payment.paymentDate)} ·{" "}
-                  {formatBillingCurrency(payment.amount)}
-                </p>
-                <p className="text-muted-foreground">
-                  {payment.bank}
-                  {payment.referenceNumber ? ` · ${payment.referenceNumber}` : ""}
-                </p>
-                <p className="text-muted-foreground">
-                  Submitted {formatBillingDateTime(payment.submittedAt)} ·{" "}
-                  {payment.fileName} ({payment.fileSize} bytes)
-                </p>
-                <p>Status: {billingPaymentReviewStatusLabel(payment.reviewStatus)}</p>
-                {payment.rejectReason ? (
-                  <p className="text-destructive">Reject reason: {payment.rejectReason}</p>
-                ) : null}
-                <div className="mt-3">
+          <Stack spacing={2}>
+            {billing.payments.map((payment) => {
+              const isLatestReviewTarget =
+                latestPendingPayment?.id === payment.id
+              return (
+                <Stack
+                  key={payment.id}
+                  spacing={1.5}
+                  sx={{
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 2,
+                    p: 2,
+                  }}
+                >
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                    }}
+                    useFlexGap
+                  >
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {formatBillingDate(payment.paymentDate)} ·{" "}
+                      {formatBillingCurrency(payment.amount)}
+                    </Typography>
+                    <AdminStatusChip
+                      label={billingPaymentReviewStatusLabel(
+                        payment.reviewStatus,
+                      )}
+                      status={payment.reviewStatus}
+                    />
+                  </Stack>
+                  {payment.referenceNumber ? (
+                    <Typography variant="body2" color="text.secondary">
+                      Reference: {payment.referenceNumber}
+                    </Typography>
+                  ) : null}
+                  <Typography variant="body2" color="text.secondary">
+                    Submitted {formatBillingDateTime(payment.submittedAt)} ·{" "}
+                    {payment.fileName}
+                  </Typography>
+                  {payment.rejectReason ? (
+                    <Alert severity="error">
+                      Reject reason: {payment.rejectReason}
+                    </Alert>
+                  ) : null}
                   <PaymentSlipPreview
                     previewUrl={previewByPaymentId.get(payment.id) ?? ""}
                     fileName={payment.fileName}
                     mimeType={payment.mimeType}
                   />
-                </div>
-                <AdminPaymentReviewActions
-                  billingId={billing.id}
-                  paymentId={payment.id}
-                  reviewStatus={payment.reviewStatus}
-                  billingStatus={billing.status}
-                />
-              </article>
-            ))}
-          </div>
+                  {isLatestReviewTarget ? (
+                    <AdminPaymentReviewActions
+                      billingId={billing.id}
+                      paymentId={payment.id}
+                      reviewStatus={payment.reviewStatus}
+                      billingStatus={billing.status}
+                    />
+                  ) : null}
+                </Stack>
+              )
+            })}
+          </Stack>
         )}
-      </section>
+      </AdminSectionCard>
     </AdminLayout>
-  );
+  )
 }

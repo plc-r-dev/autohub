@@ -1,50 +1,52 @@
-"use client";
+"use client"
 
-import { useTransition } from "react";
-import { Button } from "@workspace/ui/components/button";
+import { useTransition } from "react"
+import Button from "@mui/material/Button"
+import Stack from "@mui/material/Stack"
 import {
   approveServiceStoreClaim,
   approveServiceStoreOnboardingRequest,
   rejectServiceStoreClaim,
   rejectServiceStoreOnboardingRequest,
-} from "@/lib/service-store/actions";
+} from "@/lib/service-store/actions"
 
 type ServiceStoreRequestActionsProps = {
-  type: "claim" | "onboarding-request";
-  requestId: string;
-};
+  type: "claim" | "onboarding-request"
+  requestId: string
+}
 
 export function ServiceStoreRequestActions({
   type,
   requestId,
 }: ServiceStoreRequestActionsProps) {
-  const [isPending, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition()
 
   function handleApprove() {
     startTransition(async () => {
       if (type === "claim") {
-        await approveServiceStoreClaim(requestId);
+        await approveServiceStoreClaim(requestId)
       } else {
-        await approveServiceStoreOnboardingRequest(requestId);
+        await approveServiceStoreOnboardingRequest(requestId)
       }
-    });
+    })
   }
 
   function handleReject() {
     startTransition(async () => {
       if (type === "claim") {
-        await rejectServiceStoreClaim(requestId);
+        await rejectServiceStoreClaim(requestId)
       } else {
-        await rejectServiceStoreOnboardingRequest(requestId);
+        await rejectServiceStoreOnboardingRequest(requestId)
       }
-    });
+    })
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
       <Button
         type="button"
-        size="sm"
+        size="small"
+        variant="contained"
         disabled={isPending}
         onClick={handleApprove}
       >
@@ -52,13 +54,14 @@ export function ServiceStoreRequestActions({
       </Button>
       <Button
         type="button"
-        size="sm"
-        variant="outline"
+        size="small"
+        variant="outlined"
+        color="error"
         disabled={isPending}
         onClick={handleReject}
       >
         Reject
       </Button>
-    </div>
-  );
+    </Stack>
+  )
 }

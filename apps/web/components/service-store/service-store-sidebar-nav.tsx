@@ -32,6 +32,8 @@ const NAV_ICONS: Record<string, LucideIcon> = {
 type NavProps = {
   /** Pending/no-store states: nothing under /app is reachable yet. */
   locked?: boolean;
+  /** Catalog incomplete: only Store Settings is reachable. */
+  settingsOnly?: boolean;
 };
 
 function NavIcon({ href }: { href: string }) {
@@ -39,34 +41,62 @@ function NavIcon({ href }: { href: string }) {
   return <Icon className="size-4 shrink-0" strokeWidth={2} />;
 }
 
-export function ServiceStoreSidebarNav({ locked = false }: NavProps) {
+function LockedNavItem({
+  href,
+  label,
+  reason,
+}: {
+  href: string;
+  label: string;
+  reason: string;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <span
+            role="button"
+            aria-disabled="true"
+            tabIndex={0}
+            className="flex cursor-not-allowed items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground/50"
+          >
+            <span className="flex items-center gap-3">
+              <NavIcon href={href} />
+              {label}
+            </span>
+            <Lock className="size-3.5" />
+          </span>
+        }
+      />
+      <TooltipContent>{reason}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+export function ServiceStoreSidebarNav({
+  locked = false,
+  settingsOnly = false,
+}: NavProps) {
   const pathname = usePathname();
+  const lockReason = locked
+    ? "Available after approval"
+    : "Add services and opening hours in Store Settings first";
 
   return (
     <TooltipProvider>
       <nav className="flex flex-col gap-1">
         {serviceStoreNavItems.map((item) => {
-          if (locked) {
+          const isSettings = item.href === "/app/settings";
+          const itemLocked = locked || (settingsOnly && !isSettings);
+
+          if (itemLocked) {
             return (
-              <Tooltip key={item.href}>
-                <TooltipTrigger
-                  render={
-                    <span
-                      role="button"
-                      aria-disabled="true"
-                      tabIndex={0}
-                      className="flex cursor-not-allowed items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground/50"
-                    >
-                      <span className="flex items-center gap-3">
-                        <NavIcon href={item.href} />
-                        {item.label}
-                      </span>
-                      <Lock className="size-3.5" />
-                    </span>
-                  }
-                />
-                <TooltipContent>Available after approval</TooltipContent>
-              </Tooltip>
+              <LockedNavItem
+                key={item.href}
+                href={item.href}
+                label={item.label}
+                reason={lockReason}
+              />
             );
           }
 
@@ -95,19 +125,28 @@ export function ServiceStoreSidebarNav({ locked = false }: NavProps) {
   );
 }
 
-export function ServiceStoreMobileNav({ locked = false }: NavProps) {
+export function ServiceStoreMobileNav({
+  locked = false,
+  settingsOnly = false,
+}: NavProps) {
   const pathname = usePathname();
+  const lockReason = locked
+    ? "Available after approval"
+    : "Add services and opening hours in Store Settings first";
 
   return (
     <nav className="flex gap-2 overflow-x-auto pb-1 lg:hidden">
       {serviceStoreNavItems.map((item) => {
-        if (locked) {
+        const isSettings = item.href === "/app/settings";
+        const itemLocked = locked || (settingsOnly && !isSettings);
+
+        if (itemLocked) {
           return (
             <button
               key={item.href}
               type="button"
               disabled
-              title="Available after approval"
+              title={lockReason}
               className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-muted-foreground/50"
             >
               <NavIcon href={item.href} />

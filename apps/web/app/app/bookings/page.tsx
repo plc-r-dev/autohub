@@ -41,24 +41,27 @@ export default async function ServiceStoreBookingsPage({ searchParams }: PagePro
     }),
   ]);
 
-  const singleDayRange = isSingleDayBookingRange(dateRange.from, dateRange.to);
+  const singleDayRange =
+    dateRange.from !== null &&
+    dateRange.to !== null &&
+    isSingleDayBookingRange(dateRange.from, dateRange.to);
 
   const { totalCount, rows } = await getServiceStoreBookingsPaginated(serviceStore.id, {
     q: params.q,
     status: params.status as BookingStatus | undefined,
     branchId: branches.length > 1 ? params.branchId : undefined,
-    from: dateRange.from,
-    to: dateRange.to,
+    from: dateRange.from ?? undefined,
+    to: dateRange.to ?? undefined,
     page,
     pageSize,
-    sort: singleDayRange ? "asc" : "desc",
+    sort: singleDayRange || dateRange.preset === "upcoming" ? "asc" : "desc",
   });
 
   const hasFilters = Boolean(
     params.q ||
       params.status ||
       (branches.length > 1 && params.branchId) ||
-      dateRange.preset !== "today" ||
+      dateRange.preset !== "all" ||
       params.from ||
       params.to,
   );

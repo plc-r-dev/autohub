@@ -1,86 +1,106 @@
-import { AdminLayout } from "@/components/admin/admin-layout";
-import { SimpleBarChart } from "@/components/reporting/simple-bar-chart";
-import { requireAdminSession } from "@/lib/auth/require-admin";
-import { formatBillingCurrency } from "@/lib/billing/format";
+import { AdminDashboardTabs } from "@/components/admin/admin-dashboard-tabs"
+import { AdminLayout } from "@/components/admin/admin-layout"
+import { requireAdminSession } from "@/lib/auth/require-admin"
+import { formatBillingCurrency } from "@/lib/billing/format"
+import {
+  getAdminRecentActivity,
+  getAdminSystemAlerts,
+  getAdminTodoTaskCards,
+} from "@/lib/reporting/admin-dashboard"
 import {
   getBillingPaidVsOutstanding,
   getBookingTrend,
-  getServiceStoreGrowthMonthly,
   getMonthlyRevenueTrend,
   getPlatformDashboardCardMetrics,
-} from "@/lib/reporting/queries";
+  getServiceStoreGrowthMonthly,
+} from "@/lib/reporting/queries"
 
-export default async function AdminDashboardPage() {
-  await requireAdminSession();
+type PageProps = {
+  searchParams: Promise<{ tab?: string }>
+}
 
-  const [cards, booking7, booking30, monthlyRevenue, billingBalance, serviceStoreGrowth] =
-    await Promise.all([
-      getPlatformDashboardCardMetrics(),
-      getBookingTrend(7),
-      getBookingTrend(30),
-      getMonthlyRevenueTrend(),
-      getBillingPaidVsOutstanding(),
-      getServiceStoreGrowthMonthly(),
-    ]);
+export default async function AdminDashboardPage({ searchParams }: PageProps) {
+  await requireAdminSession()
+  const params = await searchParams
+  const initialTab = params.tab === "kpi" ? "kpi" : "todo"
 
-  const overviewCards = [
-    { label: "Total Service Stores", value: cards.totalServiceStores },
-    { label: "Active Service Stores", value: cards.activeServiceStores },
-    { label: "Total Customers", value: cards.totalCustomers },
-    { label: "Total Vehicles", value: cards.totalVehicles },
-    { label: "Total Bookings", value: cards.totalBookings },
-    { label: "Today's Bookings", value: cards.todaysBookings },
-    { label: "Today's Revenue", value: formatBillingCurrency(cards.todaysRevenue) },
-    { label: "Outstanding Billing", value: formatBillingCurrency(cards.outstandingBilling) },
-    { label: "Pending Service Store Approval", value: cards.pendingServiceStoreApproval },
-    { label: "Pending Billing Approval", value: cards.pendingBillingApproval },
-    { label: "Pending Payment Review", value: cards.pendingPaymentReview },
-  ];
+  const [
+    cards,
+    booking7,
+    booking30,
+    monthlyRevenue,
+    billingBalance,
+    serviceStoreGrowth,
+    tasks,
+    activity,
+    alerts,
+  ] = await Promise.all([
+    getPlatformDashboardCardMetrics(),
+    getBookingTrend(7),
+    getBookingTrend(30),
+    getMonthlyRevenueTrend(),
+    getBillingPaidVsOutstanding(),
+    getServiceStoreGrowthMonthly(),
+    getAdminTodoTaskCards(),
+    getAdminRecentActivity(),
+    getAdminSystemAlerts(),
+  ])
 
   return (
     <AdminLayout
       title="Platform dashboard"
-      description="Operational overview, financial trend, and growth metrics."
+      description="Operations workspace and executive KPIs."
     >
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {overviewCards.map((card) => (
-          <article key={card.label} className="border-input rounded-md border p-4">
-            <p className="text-muted-foreground text-xs">{card.label}</p>
-            <p className="mt-1 text-lg font-semibold">{card.value}</p>
-          </article>
-        ))}
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-2">
-        <SimpleBarChart
-          title="Bookings - Last 7 Days"
-          points={booking7.map((point) => ({ label: point.bucket.slice(5), value: point.count }))}
-        />
-        <SimpleBarChart
-          title="Bookings - Last 30 Days"
-          points={booking30.map((point) => ({ label: point.bucket.slice(5), value: point.count }))}
-        />
-        <SimpleBarChart
-          title="Monthly Revenue"
-          points={monthlyRevenue.map((point) => ({
+      <AdminDashboardTabs
+        initialTab={initialTab}
+        todo={{
+          tasks,
+          activity,
+          alerts,
+        }}
+        kpi={{
+          store: [
+            { label: "Total Service Stores", value: cards.totalServiceStores },
+            { label: "Active Service Stores", value: cards.activeServiceStores },
+            { label: "Suspended Stores", value: cards.suspendedServiceStores },
+          ],
+          customer: [
+            { label: "Total Customers", value: cards.totalCustomers },
+            { label: "Total Vehicles", value: cards.totalVehicles },
+          ],
+          operations: [
+            { label: "Today's Bookings", value: cards.todaysBookings },
+            {
+              label: "Today's Revenue",
+              value: formatBillingCurrency(cards.todaysRevenue),
+            },
+            {
+              label: "Outstanding Billing",
+              value: formatBillingCurrency(cards.outstandingBilling),
+            },
+          ],
+          bookingTrend7: booking7.map((point) => ({
+            label: point.bucket.slice(5),
+            value: point.count,
+          })),
+          bookingTrend30: booking30.map((point) => ({
+            label: point.bucket.slice(5),
+            value: point.count,
+          })),
+          revenueTrend: monthlyRevenue.map((point) => ({
             label: point.bucket,
             value: point.amount,
-          }))}
-          valueFormatter={(value) => formatBillingCurrency(value)}
-        />
-        <SimpleBarChart
-          title="Service Store Growth"
-          points={serviceStoreGrowth.map((point) => ({ label: point.bucket, value: point.count }))}
-        />
-        <SimpleBarChart
-          title="Billing - Paid vs Outstanding"
-          points={[
+          })),
+          storeGrowth: serviceStoreGrowth.map((point) => ({
+            label: point.bucket,
+            value: point.count,
+          })),
+          billingStatus: [
             { label: "Paid", value: billingBalance.paid },
             { label: "Outstanding", value: billingBalance.outstanding },
-          ]}
-          valueFormatter={(value) => formatBillingCurrency(value)}
-        />
-      </section>
+          ],
+        }}
+      />
     </AdminLayout>
-  );
+  )
 }

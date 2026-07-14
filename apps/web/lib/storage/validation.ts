@@ -55,6 +55,33 @@ export function buildPaymentSlipKey(
   return `payment-slips/${billingId}/${paymentId}/${safeName}`;
 }
 
+export function buildClaimDocumentKey(
+  claimId: string,
+  kind: "citizen-id" | "company-document",
+  fileName: string,
+): string {
+  const safeName = sanitizeFileName(fileName);
+  return `claims/${claimId}/${kind}/${safeName}`;
+}
+
+export function buildStoreDocumentKey(
+  serviceStoreId: string,
+  kind: "citizen-id" | "company-document",
+  fileName: string,
+): string {
+  const safeName = sanitizeFileName(fileName);
+  return `stores/${serviceStoreId}/documents/${kind}/${safeName}`;
+}
+
+export function buildOnboardingRequestDocumentKey(
+  requestId: string,
+  kind: "citizen-id" | "company-document",
+  fileName: string,
+): string {
+  const safeName = sanitizeFileName(fileName);
+  return `onboarding-requests/${requestId}/${kind}/${safeName}`;
+}
+
 const IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp"]);
 

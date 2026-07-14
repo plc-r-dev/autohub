@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { AutohubLogo } from "@/components/brand/autohub-logo";
 
 export function Hero() {
   return (
@@ -20,9 +21,12 @@ export function Hero() {
         <p className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
           Precision Engine Management
         </p>
-        <h1 className="mt-4 text-6xl font-semibold tracking-tight text-foreground sm:text-7xl md:text-8xl">
-          AutoHub
-        </h1>
+        <AutohubLogo
+          href={null}
+          priority
+          heightClassName="h-14 sm:h-16 md:h-20"
+          className="mt-6 justify-center"
+        />
         <p className="mt-6 text-2xl font-medium text-foreground sm:text-3xl">
           The Automotive Service Platform
         </p>

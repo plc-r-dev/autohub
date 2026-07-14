@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { randomUUID } from "crypto";
 import { isIdentityLinked, resolveIdentityLink } from "@/lib/auth/identity";
 import { getServerSession } from "@/lib/auth/session";
 import { getLineUserId } from "@/lib/onboarding/context";
@@ -11,8 +12,15 @@ import {
   serviceStoreOnboardingSchema,
 } from "@/lib/onboarding/schemas";
 import { searchServiceStores } from "@/lib/onboarding/queries";
-import { slugifyBusinessCode } from "@/lib/service-store/domain";
-import { prisma } from "@/lib/prisma";
+import { slugifyBusinessCode } from "@/lib/service-store/domain"
+import { prisma } from "@/lib/prisma"
+import type { Prisma } from "@/lib/generated/prisma/client"
+import {
+  deleteStoredFile,
+  uploadClaimDocumentFile,
+  uploadOnboardingRequestDocumentFile,
+} from "@/lib/storage/upload-service"
+import { UploadValidationError } from "@/lib/storage/validation"
 
 export type OnboardingActionState = {
   error?: string;
@@ -20,7 +28,74 @@ export type OnboardingActionState = {
 };
 
 function formDataToObject(formData: FormData): Record<string, string> {
-  return Object.fromEntries(formData.entries()) as Record<string, string>;
+  const result: Record<string, string> = {}
+  for (const [key, value] of formData.entries()) {
+    if (typeof value === "string") {
+      result[key] = value
+    }
+  }
+  return result
+}
+
+function parseGoogleMapsCoordinates(
+  url: string,
+): { latitude: number; longitude: number } | null {
+  const atMatch = url.match(/@(-?\d+\.?\d*),\s*(-?\d+\.?\d*)/)
+  if (atMatch) {
+    return {
+      latitude: Number(atMatch[1]),
+      longitude: Number(atMatch[2]),
+    }
+  }
+
+  const queryMatch = url.match(/[?&](?:q|ll|query)=(-?\d+\.?\d*),\s*(-?\d+\.?\d*)/)
+  if (queryMatch) {
+    return {
+      latitude: Number(queryMatch[1]),
+      longitude: Number(queryMatch[2]),
+    }
+  }
+
+  const bangMatch = url.match(/!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/)
+  if (bangMatch) {
+    return {
+      latitude: Number(bangMatch[1]),
+      longitude: Number(bangMatch[2]),
+    }
+  }
+
+  return null
+}
+
+function requireUploadFiles(formData: FormData):
+  | { ok: true; citizenIdFile: File; companyDocumentFile: File }
+  | { ok: false; state: OnboardingActionState } {
+  const citizenIdFile = formData.get("citizenIdFile")
+  const companyDocumentFile = formData.get("companyDocumentFile")
+
+  if (!(citizenIdFile instanceof File) || citizenIdFile.size === 0) {
+    return {
+      ok: false,
+      state: {
+        fieldErrors: {
+          citizenIdFile: ["Citizen ID document is required."],
+        },
+      },
+    }
+  }
+
+  if (!(companyDocumentFile instanceof File) || companyDocumentFile.size === 0) {
+    return {
+      ok: false,
+      state: {
+        fieldErrors: {
+          companyDocumentFile: ["Store Document is required."],
+        },
+      },
+    }
+  }
+
+  return { ok: true, citizenIdFile, companyDocumentFile }
 }
 
 async function assertUnlinkedAuthUser(
@@ -149,24 +224,144 @@ async function generateUniqueBusinessCode(tenantId: string, name: string) {
 }
 
 function mapOnboardingError(error: unknown): OnboardingActionState {
+  if (error instanceof UploadValidationError) {
+    return { error: error.message }
+  }
   if (error instanceof Error) {
     if (error.message === "MERCHANT_NOT_FOUND") {
-      return { error: "The selected business could not be found." };
+      return { error: "The selected business could not be found." }
     }
     if (error.message === "CLAIM_EXISTS") {
-      return { error: "You already have a pending claim for this business." };
+      return {
+        error:
+          "This LINE account has already claimed this business and cannot claim it again.",
+      }
+    }
+    if (error.message === "ALREADY_MEMBER") {
+      return {
+        error: "You are already a member of this service store.",
+      }
+    }
+    if (error.message === "NAME_PENDING_CLAIM") {
+      return {
+        error:
+          "This store name matches a pending claim or create request. Please use a different name.",
+        fieldErrors: {
+          businessName: [
+            "This name is already used on a pending request.",
+          ],
+        },
+      }
+    }
+    if (error.message === "PENDING_CREATE_EXISTS") {
+      return {
+        error:
+          "You already have a pending create-store request awaiting admin approval.",
+      }
     }
     if (error.message === "BUSINESS_CODE_EXISTS") {
-      return { error: "This business code is already taken in the selected tenant." };
+      return {
+        error: "This business code is already taken in the selected tenant.",
+      }
     }
     if (error.message === "EMAIL_IN_USE") {
-      return { error: "This email is already in use." };
+      return { error: "This email is already in use." }
     }
     if (error.message === "LINE_USER_IN_USE") {
-      return { error: "This LINE account is already linked to another profile." };
+      return {
+        error: "This LINE account is already linked to another profile.",
+      }
+    }
+    if (error.message === "CITIZEN_ID_REQUIRED") {
+      return {
+        fieldErrors: {
+          citizenIdFile: ["Citizen ID document is required."],
+        },
+      }
+    }
+    if (error.message === "COMPANY_DOCUMENT_REQUIRED") {
+      return {
+        fieldErrors: {
+          companyDocumentFile: ["Store Document is required."],
+        },
+      }
     }
   }
-  return { error: "Unable to complete onboarding. Please try again." };
+  return { error: "Unable to complete onboarding. Please try again." }
+}
+
+/** Same LINE user cannot claim the same store again (any prior claim) or if already a member. */
+async function assertCanClaimServiceStore(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  serviceStoreId: string,
+) {
+  const existingClaim = await tx.serviceStoreClaim.findFirst({
+    where: {
+      serviceStoreId,
+      userId,
+    },
+    select: { id: true },
+  })
+  if (existingClaim) {
+    throw new Error("CLAIM_EXISTS")
+  }
+
+  const membership = await tx.serviceStoreMember.findUnique({
+    where: {
+      serviceStoreId_userId: {
+        serviceStoreId,
+        userId,
+      },
+    },
+    select: { id: true },
+  })
+  if (membership) {
+    throw new Error("ALREADY_MEMBER")
+  }
+}
+
+/** Create name must not collide with pending claims or pending create requests. */
+async function assertCreateNameNotPendingClaim(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  businessName: string,
+) {
+  const name = businessName.trim()
+  if (!name) return
+
+  const [byProposedName, byStoreName, byPendingRequest] = await Promise.all([
+    tx.serviceStoreClaim.findFirst({
+      where: {
+        status: "PENDING",
+        proposedName: { equals: name, mode: "insensitive" },
+        serviceStore: { tenantId },
+      },
+      select: { id: true },
+    }),
+    tx.serviceStoreClaim.findFirst({
+      where: {
+        status: "PENDING",
+        serviceStore: {
+          tenantId,
+          name: { equals: name, mode: "insensitive" },
+        },
+      },
+      select: { id: true },
+    }),
+    tx.serviceStoreOnboardingRequest.findFirst({
+      where: {
+        status: "PENDING",
+        tenantId,
+        businessName: { equals: name, mode: "insensitive" },
+      },
+      select: { id: true },
+    }),
+  ])
+
+  if (byProposedName || byStoreName || byPendingRequest) {
+    throw new Error("NAME_PENDING_CLAIM")
+  }
 }
 
 export async function submitServiceStoreClaim(
@@ -185,8 +380,30 @@ export async function submitServiceStoreClaim(
 
   const input = parsed.data;
 
+  const files = requireUploadFiles(formData)
+  if (!files.ok) {
+    return files.state
+  }
+
+  const claimId = randomUUID()
+  let citizenUpload: Awaited<ReturnType<typeof uploadClaimDocumentFile>> | null =
+    null
+  let companyUpload: Awaited<ReturnType<typeof uploadClaimDocumentFile>> | null =
+    null
+
   try {
     await assertTenantExists(input.tenantId);
+
+    citizenUpload = await uploadClaimDocumentFile({
+      claimId,
+      kind: "citizen-id",
+      file: files.citizenIdFile,
+    })
+    companyUpload = await uploadClaimDocumentFile({
+      claimId,
+      kind: "company-document",
+      file: files.companyDocumentFile,
+    })
 
     const domainUserId = await resolveDomainUserIdForServiceStoreOnboarding(session.user.id, {
       tenantId: input.tenantId,
@@ -203,24 +420,14 @@ export async function submitServiceStoreClaim(
       });
 
       if (!serviceStore) {
-        throw new Error("MERCHANT_NOT_FOUND");
+        throw new Error("MERCHANT_NOT_FOUND")
       }
 
-      const existingClaim = await tx.serviceStoreClaim.findFirst({
-        where: {
-          serviceStoreId: input.serviceStoreId,
-          userId: domainUserId,
-          status: "PENDING",
-        },
-        select: { id: true },
-      });
-
-      if (existingClaim) {
-        throw new Error("CLAIM_EXISTS");
-      }
+      await assertCanClaimServiceStore(tx, domainUserId, input.serviceStoreId)
 
       await tx.serviceStoreClaim.create({
         data: {
+          id: claimId,
           serviceStoreId: input.serviceStoreId,
           userId: domainUserId,
           googlePlaceId: input.googlePlaceId,
@@ -233,14 +440,30 @@ export async function submitServiceStoreClaim(
           proposedAddress: input.proposedAddress,
           proposedLatitude: input.proposedLatitude,
           proposedLongitude: input.proposedLongitude,
+          citizenIdKey: citizenUpload!.key,
+          citizenIdUrl: citizenUpload!.url,
+          citizenIdFileName: citizenUpload!.fileName,
+          citizenIdFileSize: citizenUpload!.fileSize,
+          citizenIdMimeType: citizenUpload!.mimeType,
+          companyDocumentKey: companyUpload!.key,
+          companyDocumentUrl: companyUpload!.url,
+          companyDocumentFileName: companyUpload!.fileName,
+          companyDocumentFileSize: companyUpload!.fileSize,
+          companyDocumentMimeType: companyUpload!.mimeType,
         },
-      });
-    });
+      })
+    })
   } catch (error) {
-    return mapOnboardingError(error);
+    if (citizenUpload?.key) {
+      await deleteStoredFile(citizenUpload.key).catch(() => undefined)
+    }
+    if (companyUpload?.key) {
+      await deleteStoredFile(companyUpload.key).catch(() => undefined)
+    }
+    return mapOnboardingError(error)
   }
 
-  redirect("/app");
+  redirect("/app")
 }
 
 export async function createServiceStoreDirect(
@@ -259,77 +482,104 @@ export async function createServiceStoreDirect(
 
   const input = parsed.data;
 
+  const files = requireUploadFiles(formData)
+  if (!files.ok) {
+    return files.state
+  }
+
+  const requestId = randomUUID()
+  let citizenUpload: Awaited<
+    ReturnType<typeof uploadOnboardingRequestDocumentFile>
+  > | null = null
+  let companyUpload: Awaited<
+    ReturnType<typeof uploadOnboardingRequestDocumentFile>
+  > | null = null
+
   try {
     await assertTenantExists(input.tenantId);
 
-    const domainUserId = await resolveDomainUserIdForServiceStoreOnboarding(session.user.id, {
-      tenantId: input.tenantId,
-      firstName: input.firstName,
-      lastName: input.lastName,
-      phone: input.phone,
-      email: input.email,
-    });
+    citizenUpload = await uploadOnboardingRequestDocumentFile({
+      requestId,
+      kind: "citizen-id",
+      file: files.citizenIdFile,
+    })
+    companyUpload = await uploadOnboardingRequestDocumentFile({
+      requestId,
+      kind: "company-document",
+      file: files.companyDocumentFile,
+    })
 
-    const businessCode = await generateUniqueBusinessCode(input.tenantId, input.businessName);
-    const { getDefaultOperatingHours } = await import("@/lib/booking/engine/time");
+    const domainUserId = await resolveDomainUserIdForServiceStoreOnboarding(
+      session.user.id,
+      {
+        tenantId: input.tenantId,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        phone: input.phone,
+      },
+    );
+
+    const businessCode = await generateUniqueBusinessCode(
+      input.tenantId,
+      input.businessName,
+    );
+    const coordinates = parseGoogleMapsCoordinates(input.googleMapsUrl);
 
     await prisma.$transaction(async (tx) => {
-      const serviceStore = await tx.serviceStore.create({
-        data: {
-          tenantId: input.tenantId,
-          code: businessCode,
-          name: input.businessName,
-          phone: input.businessPhone,
-          email: input.businessEmail,
-          website: input.website,
-          description: input.description,
-          googlePlaceId: input.googlePlaceId,
-          businessCategory: input.businessCategory,
-          status: "ONBOARDING",
-          bookingEnabled: false,
-        },
-      });
+      await assertCreateNameNotPendingClaim(
+        tx,
+        input.tenantId,
+        input.businessName,
+      )
 
-      const branch = await tx.branch.create({
-        data: {
-          serviceStoreId: serviceStore.id,
-          code: "main",
-          name: input.businessName,
-          phone: input.businessPhone,
-          address: input.address,
-          latitude: input.latitude,
-          longitude: input.longitude,
-        },
-      });
-
-      await tx.branchOperatingHours.createMany({
-        data: getDefaultOperatingHours().map((hours) => ({
-          branchId: branch.id,
-          ...hours,
-        })),
-      });
-
-      await tx.serviceStoreMember.create({
-        data: {
-          serviceStoreId: serviceStore.id,
+      const existingPending = await tx.serviceStoreOnboardingRequest.findFirst({
+        where: {
           userId: domainUserId,
-          role: "OWNER",
+          status: "PENDING",
         },
-      });
+        select: { id: true },
+      })
+      if (existingPending) {
+        throw new Error("PENDING_CREATE_EXISTS")
+      }
 
-      await tx.user.update({
-        where: { id: domainUserId },
+      await tx.serviceStoreOnboardingRequest.create({
         data: {
-          serviceStoreId: serviceStore.id,
+          id: requestId,
+          userId: domainUserId,
           tenantId: input.tenantId,
+          businessName: input.businessName,
+          businessCode,
+          description: input.description,
+          phone: input.phone,
+          website: input.googleMapsUrl,
+          address: input.address,
+          latitude: coordinates?.latitude,
+          longitude: coordinates?.longitude,
+          citizenIdKey: citizenUpload!.key,
+          citizenIdUrl: citizenUpload!.url,
+          citizenIdFileName: citizenUpload!.fileName,
+          citizenIdFileSize: citizenUpload!.fileSize,
+          citizenIdMimeType: citizenUpload!.mimeType,
+          companyDocumentKey: companyUpload!.key,
+          companyDocumentUrl: companyUpload!.url,
+          companyDocumentFileName: companyUpload!.fileName,
+          companyDocumentFileSize: companyUpload!.fileSize,
+          companyDocumentMimeType: companyUpload!.mimeType,
         },
-      });
+      })
     });
   } catch (error) {
+    if (citizenUpload?.key) {
+      await deleteStoredFile(citizenUpload.key).catch(() => undefined)
+    }
+    if (companyUpload?.key) {
+      await deleteStoredFile(companyUpload.key).catch(() => undefined)
+    }
     return mapOnboardingError(error);
   }
 
-  redirect("/app/setup");
+  redirect("/app");
 }
 
 export async function completeCustomerOnboarding(
@@ -462,39 +712,34 @@ export async function completeServiceStoreOnboarding(
         });
 
         if (!serviceStore) {
-          throw new Error("MERCHANT_NOT_FOUND");
+          throw new Error("MERCHANT_NOT_FOUND")
         }
 
-        const existingClaim = await tx.serviceStoreClaim.findFirst({
-          where: {
-            serviceStoreId: input.serviceStoreId,
-            userId: domainUserId,
-            status: "PENDING",
-          },
-          select: { id: true },
-        });
-
-        if (existingClaim) {
-          throw new Error("CLAIM_EXISTS");
-        }
+        await assertCanClaimServiceStore(tx, domainUserId, input.serviceStoreId)
 
         await tx.serviceStoreClaim.create({
           data: {
             serviceStoreId: input.serviceStoreId,
             userId: domainUserId,
           },
-        });
+        })
       } else {
+        await assertCreateNameNotPendingClaim(
+          tx,
+          input.tenantId,
+          input.businessName,
+        )
+
         const existingServiceStoreCode = await tx.serviceStore.findFirst({
           where: {
             tenantId: input.tenantId,
             code: input.businessCode,
           },
           select: { id: true },
-        });
+        })
 
         if (existingServiceStoreCode) {
-          throw new Error("BUSINESS_CODE_EXISTS");
+          throw new Error("BUSINESS_CODE_EXISTS")
         }
 
         await tx.serviceStoreOnboardingRequest.create({
@@ -507,33 +752,25 @@ export async function completeServiceStoreOnboarding(
             phone: input.businessPhone,
             email: input.businessEmail,
             website: input.website,
+            citizenIdKey: "legacy/missing-citizen-id",
+            citizenIdUrl: "",
+            citizenIdFileName: "missing",
+            citizenIdFileSize: 0,
+            citizenIdMimeType: "application/octet-stream",
+            companyDocumentKey: "legacy/missing-store-document",
+            companyDocumentUrl: "",
+            companyDocumentFileName: "missing",
+            companyDocumentFileSize: 0,
+            companyDocumentMimeType: "application/octet-stream",
           },
-        });
+        })
       }
-    });
+    })
   } catch (error) {
-    if (error instanceof Error) {
-      if (error.message === "MERCHANT_NOT_FOUND") {
-        return { error: "The selected business could not be found." };
-      }
-      if (error.message === "CLAIM_EXISTS") {
-        return { error: "You already have a pending claim for this business." };
-      }
-      if (error.message === "BUSINESS_CODE_EXISTS") {
-        return { error: "This business code is already taken in the selected tenant." };
-      }
-      if (error.message === "EMAIL_IN_USE") {
-        return { error: "This email is already in use." };
-      }
-      if (error.message === "LINE_USER_IN_USE") {
-        return { error: "This LINE account is already linked to another profile." };
-      }
-    }
-
-    return { error: "Unable to complete serviceStore onboarding. Please try again." };
+    return mapOnboardingError(error)
   }
 
-  redirect("/app");
+  redirect("/app")
 }
 
 export async function searchServiceStoresAction(tenantId: string, query: string) {

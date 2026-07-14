@@ -56,7 +56,7 @@ export async function loadReadinessInput(
     (total, branch) => total + branch.services.length,
     0,
   );
-  const branchesWithOpenHoursCount = branchesWithServices.filter((branch) =>
+  const branchesWithOpenHoursCount = store.branches.filter((branch) =>
     branch.operatingHours.some((hour) => !hour.isClosed),
   ).length;
 

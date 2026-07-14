@@ -3,13 +3,13 @@ export const PORTALS = {
   marketing: {
     home: "/",
     openInLine: "/open-in-line",
-    // Sign In goes straight to LINE login — the intermediate portal-picker page was removed.
-    signIn: "/app/login",
+    // Sign In is the marketing home — service-store LINE OAuth starts there.
+    signIn: "/",
   },
   customer: {
     home: "/browse",
     liffEntry: "/browse",
-    // Customers have no web login page — LINE OA / LIFF is the only entry point.
+    // Customer LINE OAuth entry (independent session cookie from Service Store).
     openInLine: "/open-in-line",
   },
   serviceStore: {

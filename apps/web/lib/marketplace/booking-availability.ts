@@ -12,6 +12,7 @@ export type MarketplaceBookingStatus =
 
 export type MarketplaceServiceStoreFacts = {
   status: "DRAFT" | "PENDING_VERIFICATION" | "ONBOARDING" | "ACTIVE" | "READY_FOR_BOOKING" | "SUSPENDED";
+  bookingEnabled: boolean;
   hasApprovedClaim: boolean;
   hasPendingClaim: boolean;
   hasOwnerMember: boolean;
@@ -67,7 +68,7 @@ const PRESENTATION: Record<
 export function resolveMarketplaceBookingStatus(
   facts: MarketplaceServiceStoreFacts,
 ): MarketplaceBookingStatus {
-  if (facts.readinessStatus === READINESS_STATUS.READY) {
+  if (facts.readinessStatus === READINESS_STATUS.READY && facts.bookingEnabled) {
     return MarketplaceBookingStatus.BOOKABLE;
   }
 
@@ -95,6 +96,7 @@ export function toMarketplaceBookingPresentation(
 
 export function isServiceStoreBookable(facts: MarketplaceServiceStoreFacts): boolean {
   return (
+    facts.bookingEnabled &&
     facts.readinessStatus === READINESS_STATUS.READY &&
     (facts.status === "READY_FOR_BOOKING" || facts.status === "ACTIVE")
   );

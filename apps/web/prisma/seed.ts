@@ -650,10 +650,11 @@ async function seedBookingsAndBilling(prisma: PrismaClient, tenantId: string) {
     });
     const bookingCount = completedBookings.length;
     const bookingFee = new Prisma.Decimal(10);
-    const subtotal = bookingFee.mul(bookingCount);
     const vatRate = new Prisma.Decimal(7);
-    const vat = subtotal.mul(vatRate).div(100);
-    const total = subtotal.add(vat);
+    // Booking fee is VAT-inclusive.
+    const total = bookingFee.mul(bookingCount);
+    const vat = total.mul(vatRate).div(vatRate.add(100));
+    const subtotal = total.sub(vat);
 
     const billing = await prisma.billing.upsert({
       where: {
@@ -671,8 +672,7 @@ async function seedBookingsAndBilling(prisma: PrismaClient, tenantId: string) {
         vat,
         discount: new Prisma.Decimal(0),
         total,
-        status: "SUBMITTED",
-        submittedAt: new Date(),
+        status: "PENDING",
       },
       create: {
         serviceStoreId,
@@ -685,8 +685,7 @@ async function seedBookingsAndBilling(prisma: PrismaClient, tenantId: string) {
         vat,
         discount: new Prisma.Decimal(0),
         total,
-        status: "SUBMITTED",
-        submittedAt: new Date(),
+        status: "PENDING",
       },
       select: { id: true },
     });

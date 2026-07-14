@@ -1,4 +1,10 @@
 import type { BillingStatus } from "@/lib/generated/prisma/client";
+import { BILLING_STATUS_LABELS } from "@/lib/billing/domain";
+import {
+  formatBillingPeriod,
+  parseBillingPeriodKey,
+  toBillingPeriodKey,
+} from "@/lib/billing/format";
 import { prisma } from "@/lib/prisma";
 
 export async function getServiceStoreBillings(serviceStoreId: string) {
@@ -13,8 +19,7 @@ export async function getServiceStoreBillings(serviceStoreId: string) {
       status: true,
       invoiceNumber: true,
       receiptNumber: true,
-      submittedAt: true,
-      approvedAt: true,
+      paymentSubmittedAt: true,
       paidAt: true,
     },
     orderBy: { periodStart: "desc" },
@@ -22,7 +27,7 @@ export async function getServiceStoreBillings(serviceStoreId: string) {
 }
 
 type ServiceStoreBillingListParams = {
-  q?: string;
+  period?: string;
   status?: BillingStatus;
   page: number;
   pageSize: number;
@@ -33,16 +38,16 @@ export async function getServiceStoreBillingsPaginated(
   serviceStoreId: string,
   params: ServiceStoreBillingListParams,
 ) {
-  const keyword = params.q?.trim();
+  const periodRange = parseBillingPeriodKey(params.period);
   const where = {
     serviceStoreId,
     ...(params.status ? { status: params.status } : {}),
-    ...(keyword
+    ...(periodRange
       ? {
-          OR: [
-            { invoiceNumber: { contains: keyword, mode: "insensitive" as const } },
-            { receiptNumber: { contains: keyword, mode: "insensitive" as const } },
-          ],
+          periodStart: {
+            gte: periodRange.gte,
+            lt: periodRange.lt,
+          },
         }
       : {}),
   };
@@ -70,12 +75,59 @@ export async function getServiceStoreBillingsPaginated(
   return { totalCount, rows };
 }
 
-export async function getServiceStoreBilling(billingId: string, serviceStoreId: string) {
+export async function getServiceStoreBillingPeriodOptions(
+  serviceStoreId: string,
+) {
+  const rows = await prisma.billing.findMany({
+    where: { serviceStoreId },
+    select: { periodStart: true },
+    orderBy: { periodStart: "desc" },
+  });
+
+  const seen = new Set<string>();
+  const options: Array<{ value: string; label: string }> = [];
+
+  for (const row of rows) {
+    const value = toBillingPeriodKey(row.periodStart);
+    if (seen.has(value)) continue;
+    seen.add(value);
+    options.push({
+      value,
+      label: formatBillingPeriod(row.periodStart),
+    });
+  }
+
+  return options;
+}
+
+export async function getServiceStoreBilling(
+  billingId: string,
+  serviceStoreId: string,
+) {
   return prisma.billing.findFirst({
     where: { id: billingId, serviceStoreId },
     include: {
       items: {
         orderBy: { bookingDate: "asc" },
+        include: {
+          booking: {
+            select: {
+              customer: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  lineDisplayName: true,
+                },
+              },
+              items: {
+                select: {
+                  service: { select: { name: true } },
+                },
+                take: 3,
+              },
+            },
+          },
+        },
       },
       payments: {
         orderBy: { createdAt: "desc" },
@@ -90,9 +142,7 @@ export async function getServiceStoreBilling(billingId: string, serviceStoreId: 
 export async function getAdminBillingsForReview() {
   return prisma.billing.findMany({
     where: {
-      status: {
-        in: ["SUBMITTED", "PAYMENT_SUBMITTED"],
-      },
+      status: "PAYMENT_SUBMITTED",
     },
     select: {
       id: true,
@@ -101,11 +151,10 @@ export async function getAdminBillingsForReview() {
       periodEnd: true,
       bookingCount: true,
       total: true,
-      submittedAt: true,
       paymentSubmittedAt: true,
       serviceStore: { select: { name: true, code: true } },
     },
-    orderBy: [{ status: "asc" }, { periodStart: "desc" }],
+    orderBy: [{ paymentSubmittedAt: "asc" }, { periodStart: "desc" }],
   });
 }
 
@@ -126,17 +175,28 @@ export async function getAdminBillingsForReviewPaginated(
     ...(params.status
       ? { status: params.status }
       : {
-          status: {
-            in: ["SUBMITTED", "PAYMENT_SUBMITTED"] as BillingStatus[],
-          },
+          status: "PAYMENT_SUBMITTED" as BillingStatus,
         }),
     ...(params.serviceStoreId ? { serviceStoreId: params.serviceStoreId } : {}),
     ...(keyword
       ? {
           OR: [
-            { invoiceNumber: { contains: keyword, mode: "insensitive" as const } },
-            { serviceStore: { name: { contains: keyword, mode: "insensitive" as const } } },
-            { serviceStore: { code: { contains: keyword, mode: "insensitive" as const } } },
+            {
+              invoiceNumber: {
+                contains: keyword,
+                mode: "insensitive" as const,
+              },
+            },
+            {
+              serviceStore: {
+                name: { contains: keyword, mode: "insensitive" as const },
+              },
+            },
+            {
+              serviceStore: {
+                code: { contains: keyword, mode: "insensitive" as const },
+              },
+            },
           ],
         }
       : {}),
@@ -153,7 +213,6 @@ export async function getAdminBillingsForReviewPaginated(
         periodEnd: true,
         bookingCount: true,
         total: true,
-        submittedAt: true,
         paymentSubmittedAt: true,
         serviceStore: { select: { id: true, name: true, code: true } },
       },
@@ -182,5 +241,5 @@ export async function getAdminBillingDetail(billingId: string) {
 }
 
 export function billingStatusLabel(status: BillingStatus): string {
-  return status.replaceAll("_", " ");
+  return BILLING_STATUS_LABELS[status] ?? status.replaceAll("_", " ");
 }

@@ -36,7 +36,7 @@ export type BookingValidationResult =
   | { ok: false; errors: string[] };
 
 const MERCHANT_NOT_JOINED_MESSAGE =
-  "This service shop has not joined AutoHub yet.";
+  "This Service Store has not finished setup and is not open for online booking yet.";
 
 async function loadBookingCatalog(
   branchId: string,
@@ -79,15 +79,21 @@ async function loadBookingCatalog(
     return { errors, context: null };
   }
 
+  const storeStatus = branch.serviceStore.status;
+
   if (requireMarketplaceBookable) {
+    // Online: require marketplace bookability (includes bookingEnabled + READY/ACTIVE).
     const marketplaceFacts = await getServiceStoreBookingFactsByBranchId(branchId);
     if (!marketplaceFacts || !isServiceStoreBookable(marketplaceFacts)) {
       errors.push(MERCHANT_NOT_JOINED_MESSAGE);
     }
-  }
-
-  if (branch.serviceStore.status !== "ACTIVE") {
-    errors.push("Service shop is not active.");
+  } else if (
+    // Walk-in: allowed during ONBOARDING setup; block only clearly unavailable states.
+    storeStatus === "SUSPENDED" ||
+    storeStatus === "DRAFT" ||
+    storeStatus === "PENDING_VERIFICATION"
+  ) {
+    errors.push("Service shop is not available for bookings.");
   }
 
   const service = branch.services[0];

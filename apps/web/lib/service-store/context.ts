@@ -27,41 +27,61 @@ export type ServiceStoreContext = {
   };
 };
 
-async function resolveActiveServiceStoreId(userId: string, preferredId: string | null) {
-  const memberships = await listUserServiceStoreMemberships(userId);
+async function resolveActiveServiceStoreId(
+  userId: string,
+  preferredId: string | null,
+) {
+  const memberships = await listUserServiceStoreMemberships(userId)
   if (memberships.length === 0) {
-    return null;
+    return null
   }
 
+  // Single store: always use it (auto-select).
+  if (memberships.length === 1) {
+    return memberships[0]!.serviceStore.id
+  }
+
+  // Multi-store: only an explicitly persisted preference enters the portal.
   if (preferredId) {
-    const match = memberships.find((row) => row.serviceStore.id === preferredId);
+    const match = memberships.find((row) => row.serviceStore.id === preferredId)
     if (match) {
-      return preferredId;
+      return preferredId
     }
   }
 
-  return memberships[0]!.serviceStore.id;
+  return null
 }
+
+export type RequireServiceStoreContextOptions = {
+  /** Allow access while store is still in ONBOARDING setup (setup wizard / team invite). */
+  allowOnboarding?: boolean;
+};
 
 export async function requireServiceStoreContext(
   permission?: ServiceStorePermission,
+  options?: RequireServiceStoreContextOptions,
 ): Promise<ServiceStoreContext> {
   const { session, identity, user } = await requireServiceStoreDomainUser();
 
   const activeServiceStoreId = await resolveActiveServiceStoreId(user.id, user.serviceStoreId);
 
   if (!activeServiceStoreId) {
+    const memberships = await listUserServiceStoreMemberships(user.id)
+    if (memberships.length > 1) {
+      redirect(PORTALS.serviceStore.chooseStore)
+    }
+
     const pendingClaim = await prisma.serviceStoreClaim.count({
       where: { userId: user.id, status: "PENDING" },
-    });
+    })
     const pendingRequest = await prisma.serviceStoreOnboardingRequest.count({
       where: { userId: user.id, status: "PENDING" },
-    });
+    })
 
     if (pendingClaim > 0 || pendingRequest > 0) {
-      redirect(PORTALS.serviceStore.waiting);
+      redirect(PORTALS.serviceStore.waiting)
     }
-    redirect(PORTALS.serviceStore.onboarding);
+    redirect(PORTALS.serviceStore.onboarding)
   }
 
   if (user.serviceStoreId !== activeServiceStoreId) {

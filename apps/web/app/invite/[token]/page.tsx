@@ -62,7 +62,7 @@ export default async function StaffInvitePage({ params }: PageProps) {
             title="Continue with LINE"
             description="Use the same LINE account you want to use for this store."
             defaultCallbackUrl={callbackUrl}
-            errorCallbackURL={`/app/login?error=auth&callbackUrl=${encodeURIComponent(callbackUrl)}`}
+            errorCallbackURL={`/?error=auth&callbackUrl=${encodeURIComponent(callbackUrl)}`}
           />
         </div>
       </ServiceStorePublicLayout>
@@ -93,7 +93,7 @@ export default async function StaffInvitePage({ params }: PageProps) {
         <p className="text-xs text-muted-foreground">
           Not you?{" "}
           <Link
-            href={`/app/login?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+            href={`/?callbackUrl=${encodeURIComponent(callbackUrl)}`}
             className="font-medium text-foreground underline"
           >
             Switch LINE account

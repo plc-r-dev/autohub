@@ -1,7 +1,7 @@
-import Link from "next/link";
-import { LogIn, Store, Building2 } from "lucide-react";
+import { LogIn } from "lucide-react";
 import { buttonVariants } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
+import { LineOAuthButton } from "@/components/auth/line-oauth-button";
 import { MarketingSection } from "@/components/marketing/section-container";
 import { PORTALS } from "@/lib/auth/portals";
 
@@ -18,27 +18,16 @@ export function ForServiceStores() {
         Manage bookings, customers, staff, payments and daily operations with AutoHub.
       </p>
       <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-        <Link
-          href={PORTALS.marketing.signIn}
-          className={cn(buttonVariants({ size: "lg" }), "h-12 gap-2 px-10 text-base")}
+        <LineOAuthButton
+          callbackUrl={PORTALS.serviceStore.home}
+          className={cn(
+            buttonVariants({ size: "lg" }),
+            "inline-flex h-12 items-center gap-2 px-10 text-base",
+          )}
         >
           <LogIn className="size-5" />
           Sign In
-        </Link>
-        <Link
-          href="/claim"
-          className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-12 gap-2 px-10 text-base")}
-        >
-          <Store className="size-5" />
-          Claim Store
-        </Link>
-        <Link
-          href="/create-store"
-          className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-12 gap-2 px-10 text-base")}
-        >
-          <Building2 className="size-5" />
-          Create Store
-        </Link>
+        </LineOAuthButton>
       </div>
     </MarketingSection>
   );

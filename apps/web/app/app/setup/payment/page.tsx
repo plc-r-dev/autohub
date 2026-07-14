@@ -6,7 +6,7 @@ import { getOnboardingSetupProgress } from "@/lib/service-store/application/onbo
 import { requireServiceStoreContext } from "@/lib/service-store/context";
 
 export default async function ServiceStoreSetupPaymentPage() {
-  const ctx = await requireServiceStoreContext();
+  const ctx = await requireServiceStoreContext(undefined, { allowOnboarding: true });
   const progress = await getOnboardingSetupProgress(ctx.serviceStore.id);
 
   if (!progress) {

@@ -18,10 +18,10 @@ export async function runBillingDueReminderService(now = new Date()) {
 
   const overdueBillings = await prisma.billing.findMany({
     where: {
-      status: { in: ["APPROVED", "PAYMENT_REJECTED"] },
-      approvedAt: { lt: threshold },
+      status: { in: ["PENDING", "REJECTED"] },
+      createdAt: { lt: threshold },
     },
-    select: { id: true, approvedAt: true },
+    select: { id: true, createdAt: true },
     take: 5000,
   });
 
@@ -33,7 +33,9 @@ export async function runBillingDueReminderService(now = new Date()) {
     data: overdueBillings.map((billing) => ({
       billingId: billing.id,
       reminderDate,
-      dueDate: new Date((billing.approvedAt ?? threshold).getTime() + dueDays * 24 * 60 * 60 * 1000),
+      dueDate: new Date(
+        billing.createdAt.getTime() + dueDays * 24 * 60 * 60 * 1000,
+      ),
     })),
     skipDuplicates: true,
   });

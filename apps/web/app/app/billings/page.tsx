@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { Receipt } from "lucide-react"
+import { Eye, Receipt } from "lucide-react"
 import { PageShell, serviceStoreNav } from "@/components/layout/page-shell"
 import { BillingsPageFilters } from "@/components/listing/management/filters/billings-page-filters"
 import {
@@ -11,10 +11,11 @@ import { ServiceStoreStatusBadge } from "@/components/service-store/ui"
 import { requireApprovedServiceStoreUser } from "@/lib/auth/domain-user"
 import {
   formatBillingCurrency,
-  formatBillingDate,
+  formatBillingPeriod,
 } from "@/lib/billing/format"
 import {
   billingStatusLabel,
+  getServiceStoreBillingPeriodOptions,
   getServiceStoreBillingsPaginated,
 } from "@/lib/billing/queries"
 import type { BillingStatus } from "@/lib/generated/prisma/client"
@@ -22,7 +23,7 @@ import { parseListPaging, parseSortOrder } from "@/lib/listing/search-params"
 
 type PageProps = {
   searchParams: Promise<{
-    q?: string
+    period?: string
     status?: string
     sort?: string
     page?: string
@@ -40,7 +41,7 @@ const columns: ManagementTableColumn<BillingRow>[] = [
     header: "Period",
     render: (billing) => (
       <span className="font-medium text-foreground">
-        {formatBillingDate(billing.periodStart)} – {formatBillingDate(billing.periodEnd)}
+        {formatBillingPeriod(billing.periodStart)}
       </span>
     ),
   },
@@ -77,21 +78,28 @@ export default async function ServiceStoreBillingsPage({ searchParams }: PagePro
   const params = await searchParams
   const { page, pageSize } = parseListPaging(params)
   const sort = parseSortOrder(params.sort)
-  const { totalCount, rows } = await getServiceStoreBillingsPaginated(serviceStore.id, {
-    q: params.q,
-    status: params.status as BillingStatus | undefined,
-    page,
-    pageSize,
-    sort,
-  })
+  const [listResult, periodOptions] = await Promise.all([
+    getServiceStoreBillingsPaginated(serviceStore.id, {
+      period: params.period,
+      status: params.status as BillingStatus | undefined,
+      page,
+      pageSize,
+      sort,
+    }),
+    getServiceStoreBillingPeriodOptions(serviceStore.id),
+  ])
+  const { totalCount, rows } = listResult
 
-  const hasFilters = Boolean(params.q || params.status)
+  const hasFilters = Boolean(params.period || params.status)
 
   return (
     <PageShell title="Billings" nav={serviceStoreNav}>
       <div className="space-y-5">
         <Suspense fallback={null}>
-          <BillingsPageFilters hasActiveFilters={hasFilters} />
+          <BillingsPageFilters
+            hasActiveFilters={hasFilters}
+            periodOptions={periodOptions}
+          />
         </Suspense>
 
         <ManagementDataTable
@@ -110,7 +118,12 @@ export default async function ServiceStoreBillingsPage({ searchParams }: PagePro
           itemLabel="billings"
           actionColumn={{
             render: (billing) => (
-              <ManagementRowLink href={`/app/billings/${billing.id}`}>View</ManagementRowLink>
+              <ManagementRowLink
+                href={`/app/billings/${billing.id}`}
+                aria-label={`View billing ${formatBillingPeriod(billing.periodStart)}`}
+              >
+                <Eye className="size-4" />
+              </ManagementRowLink>
             ),
           }}
         />

@@ -23,6 +23,8 @@ const callButtonClassName =
 export function ServiceStoreCard({ serviceStore }: { serviceStore: ServiceStoreCardData }) {
   const isOpen = serviceStore.openingStatus !== "closed";
   const hasApprovedClaim = serviceStore.hasApprovedClaim ?? false;
+  const canBook = serviceStore.canBook === true;
+  const detailHref = `/browse/${serviceStore.id}`;
   const phone = serviceStore.phone?.trim();
 
   return (
@@ -47,14 +49,14 @@ export function ServiceStoreCard({ serviceStore }: { serviceStore: ServiceStoreC
             >
               {isOpen ? "Open" : "Closed"}
             </span>
-            {hasApprovedClaim ? (
+            {canBook || hasApprovedClaim ? (
               <span className="rounded-full bg-[#062C21] px-2.5 py-1 text-[11px] font-semibold text-white">
                 Partner
               </span>
             ) : null}
           </div>
         </div>
-      <Link href={`/browse/${serviceStore.id}`} className="block">
+      <Link href={detailHref} className="block">
         <div className="p-6">
           <h3 className="text-[18px] font-semibold tracking-tight text-[#0F172A]">{serviceStore.name}</h3>
           <p className="mt-1 text-[14px] text-[#64748B]">{serviceStore.distance ?? "1.2 km away"}</p>
@@ -66,9 +68,13 @@ export function ServiceStoreCard({ serviceStore }: { serviceStore: ServiceStoreC
         </div>
       </Link>
       <div className="px-6 pb-6">
-        {hasApprovedClaim ? (
-          <ButtonLink href={`/browse/${serviceStore.id}`} size="md" className="w-full">
+        {canBook ? (
+          <ButtonLink href={serviceStore.bookHref} size="md" className="w-full">
             Book Now
+          </ButtonLink>
+        ) : hasApprovedClaim ? (
+          <ButtonLink href={detailHref} variant="secondary" size="md" className="w-full">
+            View Details
           </ButtonLink>
         ) : phone ? (
           <a href={`tel:${phone}`} className={callButtonClassName}>

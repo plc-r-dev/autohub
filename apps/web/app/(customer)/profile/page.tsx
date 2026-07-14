@@ -4,12 +4,12 @@ import { CustomerShell } from "@/components/customer/customer-shell";
 import { Card } from "@/components/customer/ui";
 import { requireDomainUser } from "@/lib/auth/domain-user";
 import { PORTALS } from "@/lib/auth/portals";
-import { getServerSession } from "@/lib/auth/session";
+import { getCustomerSession } from "@/lib/auth/session";
 import { requireCustomerForUser } from "@/lib/customer/context";
 
 export default async function ProfilePage() {
   const { user } = await requireDomainUser();
-  const session = await getServerSession();
+  const session = await getCustomerSession();
   const customer = await requireCustomerForUser(user.id);
   if (!customer) {
     redirect("/browse");
@@ -70,7 +70,10 @@ export default async function ProfilePage() {
           <p className="mb-4 text-[13px] font-medium tracking-wide text-[#94A3B8] uppercase">
             Account
           </p>
-          <LogoutButton redirectTo={PORTALS.customer.openInLine} />
+          <LogoutButton
+            portal="customer"
+            redirectTo={PORTALS.customer.openInLine}
+          />
         </Card>
       </div>
     </CustomerShell>

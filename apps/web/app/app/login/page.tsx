@@ -1,24 +1,44 @@
-import { ServiceStorePublicLayout } from "@/components/service-store/service-store-public-layout";
-import { PortalLoginScreen } from "@/components/auth/portal-login-screen";
+import { connection } from "next/server"
+import { redirect } from "next/navigation"
+import { ServicePortalLogin } from "@/components/auth/service-portal-login"
+import { getServerSession } from "@/lib/auth/session"
+import { PORTALS } from "@/lib/auth/portals"
 
-export default function ServiceStoreLoginPage() {
+export const dynamic = "force-dynamic"
+
+type PageProps = {
+  searchParams: Promise<{ error?: string; callbackUrl?: string }>
+}
+
+export default async function ServiceStoreLoginPage({ searchParams }: PageProps) {
+  await connection()
+  const params = await searchParams
+  const session = await getServerSession()
+
+  // No session → marketing landing (not /app).
+  if (!session?.user) {
+    const destination = new URL(PORTALS.marketing.home, "http://localhost")
+    if (params.error) {
+      destination.searchParams.set("error", params.error)
+    }
+    redirect(`${destination.pathname}${destination.search}`)
+  }
+
+  const callbackUrl =
+    params.callbackUrl &&
+    params.callbackUrl.startsWith("/app") &&
+    params.callbackUrl !== "/"
+      ? params.callbackUrl
+      : PORTALS.serviceStore.home
+
   return (
-    <ServiceStorePublicLayout
-      title="Sign in with LINE"
-      description="Access your serviceStore dashboard to manage bookings, branches, services, and billing."
-      backHref="/app"
-      maxWidth="md"
-    >
-      <div className="rounded-[28px] border border-[#dce5ee] bg-white p-6 shadow-sm">
-        <PortalLoginScreen
-          embedded
-          portal="serviceStore"
-          title="Service Store Portal"
-          description="Use your LINE account to continue."
-          defaultCallbackUrl="/app/dashboard"
-          errorCallbackURL="/app/login?error=auth"
-        />
-      </div>
-    </ServiceStorePublicLayout>
-  );
+    <ServicePortalLogin
+      account={{
+        name: session.user.name?.trim() || "LINE User",
+        image: session.user.image ?? null,
+      }}
+      defaultCallbackUrl={callbackUrl}
+      errorCallbackURL="/?error=auth"
+    />
+  )
 }

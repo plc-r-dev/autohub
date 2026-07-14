@@ -1,8 +1,6 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
-import { cn } from "@workspace/ui/lib/utils";
-import { GooglePlacesAutocomplete } from "@/components/onboarding/google-places-autocomplete";
+import { useActionState, useRef, useState, useTransition } from "react";
 import {
   ServiceStoreButton,
   ServiceStoreFormField,
@@ -38,22 +36,20 @@ export function ServiceStoreOnboardingWizard({
   tenants,
   defaultFirstName,
   defaultLastName,
-  defaultEmail,
   defaultMode = "claim",
 }: {
   tenants: TenantOption[];
   defaultFirstName: string;
   defaultLastName: string;
-  defaultEmail: string;
+  defaultEmail?: string;
   defaultMode?: "claim" | "create";
 }) {
   const [mode, setMode] = useState<"claim" | "create">(defaultMode === "create" ? "create" : "claim");
-  const [tenantId, setTenantId] = useState(tenants[0]?.id ?? "");
+  const [tenantId] = useState(tenants[0]?.id ?? "");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ServiceStoreResult[]>([]);
   const [selectedServiceStoreId, setSelectedServiceStoreId] = useState("");
   const [claimPrefill, setClaimPrefill] = useState<ClaimPrefill>(null);
-  const [createPlaceId, setCreatePlaceId] = useState("");
   const [isSearching, startSearchTransition] = useTransition();
   const [claimState, claimAction, claimPending] = useActionState(submitServiceStoreClaim, initialState);
   const [createState, createAction, createPending] = useActionState(createServiceStoreDirect, initialState);
@@ -73,205 +69,298 @@ export function ServiceStoreOnboardingWizard({
     });
   }
 
-  async function handleSelectStore(serviceStoreId: string) {
-    setSelectedServiceStoreId(serviceStoreId);
-    const prefill = await fetchClaimPrefillAction(serviceStoreId);
-    setClaimPrefill(prefill);
+  async function handleSelectStore(store: ServiceStoreResult) {
+    const prefill = await fetchClaimPrefillAction(store.id)
+    setSelectedServiceStoreId(store.id)
+    setSearchQuery(store.name)
+    setSearchResults([])
+    setClaimPrefill(prefill)
+  }
+
+  function handleClearSelectedStore() {
+    setSelectedServiceStoreId("")
+    setClaimPrefill(null)
+    setSearchQuery("")
+    setSearchResults([])
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       {state.error ? (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{state.error}</p>
+        <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+          {state.error}
+        </p>
       ) : null}
 
-      <div className="flex flex-wrap gap-2">
-        <ServiceStoreButton
+      <div
+        role="tablist"
+        aria-label="Add store mode"
+        className="flex border-b border-[#E2E8F0]"
+      >
+        <button
           type="button"
-          variant={mode === "claim" ? "primary" : "secondary"}
+          role="tab"
+          aria-selected={mode === "claim"}
           onClick={() => setMode("claim")}
+          className={
+            mode === "claim"
+              ? "border-b-2 border-[#16A34A] px-4 py-2.5 text-sm font-semibold text-[#15803D]"
+              : "border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-[#64748B] hover:text-[#0F172A]"
+          }
         >
-          Claim existing store
-        </ServiceStoreButton>
-        <ServiceStoreButton
+          Claim existing
+        </button>
+        <button
           type="button"
-          variant={mode === "create" ? "primary" : "secondary"}
+          role="tab"
+          aria-selected={mode === "create"}
           onClick={() => setMode("create")}
+          className={
+            mode === "create"
+              ? "border-b-2 border-[#16A34A] px-4 py-2.5 text-sm font-semibold text-[#15803D]"
+              : "border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-[#64748B] hover:text-[#0F172A]"
+          }
         >
-          Create new store
-        </ServiceStoreButton>
+          Create new
+        </button>
       </div>
 
       {mode === "claim" ? (
-        <form action={claimAction} className="flex flex-col gap-6">
-          <ProfileFields
-            tenants={tenants}
-            tenantId={tenantId}
-            onTenantChange={setTenantId}
-            defaultFirstName={defaultFirstName}
-            defaultLastName={defaultLastName}
-            defaultEmail={defaultEmail}
-            fieldErrors={claimState.fieldErrors}
-          />
+        <form action={claimAction} className="flex flex-col gap-8">
+          <input type="hidden" name="tenantId" value={tenantId} />
 
-          <section className="flex flex-col gap-4">
-            <h2 className="text-base font-semibold text-[#0F172A]">Find your business</h2>
-            <ServiceStoreFormField
-              id="serviceStoreSearch"
-              label="Search AutoHub directory"
-              error={claimState.fieldErrors?.serviceStoreId?.[0]}
-            >
-              <input
-                id="serviceStoreSearch"
-                value={searchQuery}
-                onChange={(event) => handleSearchQueryChange(event.target.value)}
-                placeholder="Search by name or code"
-                className={serviceStoreInputClassName}
-                disabled={!tenantId}
-              />
-            </ServiceStoreFormField>
-            {isSearching ? <p className="text-sm text-[#8a97a5]">Searching…</p> : null}
-            {searchResults.length > 0 ? (
-              <ul className="flex flex-col gap-2">
-                {searchResults.map((store) => (
-                  <li key={store.id}>
-                    <button
-                      type="button"
-                      onClick={() => handleSelectStore(store.id)}
-                      className={cn(
-                        "w-full rounded-xl border p-4 text-left text-sm",
-                        selectedServiceStoreId === store.id
-                          ? "border-[#16A34A] bg-[#F0FDF4]"
-                          : "border-[#dce5ee] bg-white hover:bg-[#f4f7fa]",
-                      )}
-                    >
-                      <div className="font-semibold text-[#0F172A]">{store.name}</div>
-                      <div className="mt-1 text-[#8a97a5]">
-                        {store.code} · {store.status}
-                      </div>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+          <section className="flex flex-col gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-[#0F172A]">
+                Find your business
+              </h2>
+              <p className="mt-1 text-sm text-[#64748B]">
+                Search the AutoHub directory, then review the details before
+                submitting.
+              </p>
+            </div>
+
+            {selectedServiceStoreId ? (
+              <>
+                <input
+                  type="hidden"
+                  name="serviceStoreId"
+                  value={selectedServiceStoreId}
+                />
+                <div className="flex items-center justify-between gap-4 rounded-lg border border-[#BBF7D0] bg-[#F0FDF4] px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-[#0F172A]">
+                      {claimPrefill?.proposedName || searchQuery}
+                    </p>
+                    {claimPrefill?.proposedAddress ? (
+                      <p className="mt-0.5 truncate text-sm text-[#64748B]">
+                        {claimPrefill.proposedAddress}
+                      </p>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleClearSelectedStore}
+                    className="shrink-0 text-sm font-medium text-[#15803D] hover:underline"
+                  >
+                    Change
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="relative max-w-xl">
+                <ServiceStoreFormField
+                  id="serviceStoreSearch"
+                  label="Search AutoHub directory"
+                  error={claimState.fieldErrors?.serviceStoreId?.[0]}
+                >
+                  <input
+                    id="serviceStoreSearch"
+                    value={searchQuery}
+                    onChange={(event) =>
+                      handleSearchQueryChange(event.target.value)
+                    }
+                    placeholder="Search by name or code"
+                    className={serviceStoreInputClassName}
+                    disabled={!tenantId}
+                    autoComplete="off"
+                  />
+                </ServiceStoreFormField>
+                {isSearching ? (
+                  <p className="absolute top-full z-10 mt-1 text-sm text-[#64748B]">
+                    Searching…
+                  </p>
+                ) : null}
+                {searchResults.length > 0 ? (
+                  <ul className="absolute top-full z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-[#E2E8F0] bg-white py-1 shadow-lg">
+                    {searchResults.map((store) => (
+                      <li key={store.id}>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectStore(store)}
+                          className="flex w-full flex-col px-3 py-2.5 text-left hover:bg-[#F8FAFC]"
+                        >
+                          <span className="text-sm font-medium text-[#0F172A]">
+                            {store.name}
+                          </span>
+                          <span className="text-xs text-[#64748B]">
+                            {store.code} · {store.status}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            )}
           </section>
 
-          {selectedServiceStoreId ? (
-            <>
-              <input type="hidden" name="serviceStoreId" value={selectedServiceStoreId} />
-              <GooglePlacesAutocomplete
-                label="Link Google Places listing (optional)"
-                onSelect={(place) => {
-                  setClaimPrefill((current) => ({
-                    ...(current ?? { serviceStoreId: selectedServiceStoreId }),
-                    googlePlaceId: place.placeId,
-                    proposedName: place.name,
-                    proposedPhone: place.phone ?? current?.proposedPhone ?? "",
-                    proposedAddress: place.formattedAddress ?? current?.proposedAddress ?? "",
-                    proposedLatitude: place.latitude,
-                    proposedLongitude: place.longitude,
-                    proposedWebsite: place.website ?? current?.proposedWebsite ?? "",
-                    proposedDescription: place.description ?? current?.proposedDescription ?? "",
-                    businessCategory: current?.businessCategory ?? null,
-                    proposedEmail: current?.proposedEmail ?? "",
-                  }));
-                }}
+          {selectedServiceStoreId && claimPrefill ? (
+            <div className="grid gap-8 lg:grid-cols-2">
+              <ClaimReviewFields
+                key={selectedServiceStoreId}
+                prefill={claimPrefill}
+                fieldErrors={claimState.fieldErrors}
               />
+              <div className="flex flex-col gap-8">
+                <ClaimProfileFields
+                  defaultFirstName={defaultFirstName}
+                  defaultLastName={defaultLastName}
+                  fieldErrors={claimState.fieldErrors}
+                />
+                <ClaimDocumentFields fieldErrors={claimState.fieldErrors} />
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-8 lg:grid-cols-2">
+              <ClaimProfileFields
+                defaultFirstName={defaultFirstName}
+                defaultLastName={defaultLastName}
+                fieldErrors={claimState.fieldErrors}
+              />
+              <ClaimDocumentFields fieldErrors={claimState.fieldErrors} />
+            </div>
+          )}
 
-              <ClaimReviewFields prefill={claimPrefill} fieldErrors={claimState.fieldErrors} />
-            </>
-          ) : null}
-
-          <ServiceStoreButton type="submit" disabled={isPending || !selectedServiceStoreId}>
-            {isPending ? "Submitting…" : "Submit claim for approval"}
-          </ServiceStoreButton>
+          <div className="flex items-center justify-end gap-3 border-t border-[#E2E8F0] pt-6">
+            <ServiceStoreButton
+              type="submit"
+              disabled={isPending || !selectedServiceStoreId}
+            >
+              {isPending ? "Submitting…" : "Submit claim for approval"}
+            </ServiceStoreButton>
+          </div>
         </form>
       ) : (
-        <form action={createAction} id="create-business-form" className="flex flex-col gap-6">
-          <ProfileFields
-            tenants={tenants}
-            tenantId={tenantId}
-            onTenantChange={setTenantId}
-            defaultFirstName={defaultFirstName}
-            defaultLastName={defaultLastName}
-            defaultEmail={defaultEmail}
-            fieldErrors={createState.fieldErrors}
-          />
+        <form action={createAction} className="flex flex-col gap-8">
+          <input type="hidden" name="tenantId" value={tenantId} />
 
-          <section className="flex flex-col gap-4">
-            <h2 className="text-base font-semibold text-[#0F172A]">Business details</h2>
-            <GooglePlacesAutocomplete
-              onSelect={(place) => {
-                setCreatePlaceId(place.placeId);
-                const form = document.getElementById("create-business-form") as HTMLFormElement | null;
-                if (!form) return;
-                setInput(form, "businessName", place.name);
-                setInput(form, "businessPhone", place.phone ?? "");
-                setInput(form, "address", place.formattedAddress ?? "");
-                setInput(form, "latitude", place.latitude?.toString() ?? "");
-                setInput(form, "longitude", place.longitude?.toString() ?? "");
-                setInput(form, "description", place.description ?? "");
-                setInput(form, "website", place.website ?? "");
-              }}
-            />
-            <input type="hidden" name="googlePlaceId" value={createPlaceId} />
-            <CreateMinimumFields fieldErrors={createState.fieldErrors} />
-          </section>
+          <div className="grid gap-8 lg:grid-cols-2">
+            <section className="flex flex-col gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-[#0F172A]">
+                  Store details
+                </h2>
+                <p className="mt-1 text-sm text-[#64748B]">
+                  Basic information for your new Service Store.
+                </p>
+              </div>
+              <ServiceStoreFormField
+                id="businessName"
+                label="Store name"
+                error={createState.fieldErrors?.businessName?.[0]}
+              >
+                <input
+                  id="businessName"
+                  name="businessName"
+                  required
+                  className={serviceStoreInputClassName}
+                />
+              </ServiceStoreFormField>
+              <ServiceStoreFormField
+                id="address"
+                label="Address"
+                error={createState.fieldErrors?.address?.[0]}
+              >
+                <input
+                  id="address"
+                  name="address"
+                  required
+                  className={serviceStoreInputClassName}
+                />
+              </ServiceStoreFormField>
+              <ServiceStoreFormField
+                id="googleMapsUrl"
+                label="Google Maps link"
+                error={createState.fieldErrors?.googleMapsUrl?.[0]}
+              >
+                <input
+                  id="googleMapsUrl"
+                  name="googleMapsUrl"
+                  type="url"
+                  required
+                  placeholder="https://maps.google.com/..."
+                  className={serviceStoreInputClassName}
+                />
+              </ServiceStoreFormField>
+              <ServiceStoreFormField
+                id="description"
+                label="Description (optional)"
+                error={createState.fieldErrors?.description?.[0]}
+              >
+                <textarea
+                  id="description"
+                  name="description"
+                  rows={4}
+                  className={serviceStoreTextareaClassName}
+                />
+              </ServiceStoreFormField>
+            </section>
 
-          <ServiceStoreButton type="submit" disabled={isPending}>
-            {isPending ? "Creating…" : "Create Service Store"}
-          </ServiceStoreButton>
+            <div className="flex flex-col gap-8">
+              <CreateProfileFields
+                defaultFirstName={defaultFirstName}
+                defaultLastName={defaultLastName}
+                fieldErrors={createState.fieldErrors}
+              />
+              <ClaimDocumentFields fieldErrors={createState.fieldErrors} />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 border-t border-[#E2E8F0] pt-6">
+            <ServiceStoreButton type="submit" disabled={isPending}>
+              {isPending ? "Submitting…" : "Submit for approval"}
+            </ServiceStoreButton>
+          </div>
         </form>
       )}
     </div>
   );
 }
 
-function setInput(form: HTMLFormElement, name: string, value: string) {
-  const input = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null;
-  if (input) {
-    input.value = value;
-  }
-}
-
-function ProfileFields({
-  tenants,
-  tenantId,
-  onTenantChange,
+function ClaimProfileFields({
   defaultFirstName,
   defaultLastName,
-  defaultEmail,
   fieldErrors,
 }: {
-  tenants: TenantOption[];
-  tenantId: string;
-  onTenantChange: (value: string) => void;
-  defaultFirstName: string;
-  defaultLastName: string;
-  defaultEmail: string;
-  fieldErrors?: Record<string, string[]>;
+  defaultFirstName: string
+  defaultLastName: string
+  fieldErrors?: Record<string, string[]>
 }) {
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-[#0F172A]">Your profile</h2>
-      <ServiceStoreFormField id="tenantId" label="Tenant" error={fieldErrors?.tenantId?.[0]}>
-        <select
-          id="tenantId"
-          name="tenantId"
-          required
-          className={serviceStoreSelectClassName}
-          value={tenantId}
-          onChange={(event) => onTenantChange(event.target.value)}
-        >
-          {tenants.map((tenant) => (
-            <option key={tenant.id} value={tenant.id}>
-              {tenant.name} ({tenant.code})
-            </option>
-          ))}
-        </select>
-      </ServiceStoreFormField>
+      <div>
+        <h2 className="text-lg font-semibold text-[#0F172A]">Your profile</h2>
+        <p className="mt-1 text-sm text-[#64748B]">
+          Contact details for this claim.
+        </p>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <ServiceStoreFormField id="firstName" label="First name" error={fieldErrors?.firstName?.[0]}>
+        <ServiceStoreFormField
+          id="firstName"
+          label="First name"
+          error={fieldErrors?.firstName?.[0]}
+        >
           <input
             id="firstName"
             name="firstName"
@@ -280,7 +369,11 @@ function ProfileFields({
             className={serviceStoreInputClassName}
           />
         </ServiceStoreFormField>
-        <ServiceStoreFormField id="lastName" label="Last name" error={fieldErrors?.lastName?.[0]}>
+        <ServiceStoreFormField
+          id="lastName"
+          label="Last name"
+          error={fieldErrors?.lastName?.[0]}
+        >
           <input
             id="lastName"
             name="lastName"
@@ -293,36 +386,199 @@ function ProfileFields({
       <ServiceStoreFormField id="phone" label="Phone" error={fieldErrors?.phone?.[0]}>
         <input id="phone" name="phone" className={serviceStoreInputClassName} />
       </ServiceStoreFormField>
-      <ServiceStoreFormField id="email" label="Email" error={fieldErrors?.email?.[0]}>
+    </section>
+  )
+}
+
+function CreateProfileFields({
+  defaultFirstName,
+  defaultLastName,
+  fieldErrors,
+}: {
+  defaultFirstName: string
+  defaultLastName: string
+  fieldErrors?: Record<string, string[]>
+}) {
+  return (
+    <section className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-lg font-semibold text-[#0F172A]">Your profile</h2>
+        <p className="mt-1 text-sm text-[#64748B]">
+          Owner contact details for the new store.
+        </p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <ServiceStoreFormField
+          id="createFirstName"
+          label="First name"
+          error={fieldErrors?.firstName?.[0]}
+        >
+          <input
+            id="createFirstName"
+            name="firstName"
+            required
+            defaultValue={defaultFirstName}
+            className={serviceStoreInputClassName}
+          />
+        </ServiceStoreFormField>
+        <ServiceStoreFormField
+          id="createLastName"
+          label="Last name"
+          error={fieldErrors?.lastName?.[0]}
+        >
+          <input
+            id="createLastName"
+            name="lastName"
+            required
+            defaultValue={defaultLastName}
+            className={serviceStoreInputClassName}
+          />
+        </ServiceStoreFormField>
+      </div>
+      <ServiceStoreFormField
+        id="createPhone"
+        label="Phone"
+        error={fieldErrors?.phone?.[0]}
+      >
         <input
-          id="email"
-          name="email"
-          type="email"
-          defaultValue={defaultEmail}
+          id="createPhone"
+          name="phone"
+          required
           className={serviceStoreInputClassName}
         />
       </ServiceStoreFormField>
     </section>
-  );
+  )
+}
+
+function ClaimDocumentFields({
+  fieldErrors,
+}: {
+  fieldErrors?: Record<string, string[]>
+}) {
+  return (
+    <section className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-lg font-semibold text-[#0F172A]">
+          Supporting documents
+        </h2>
+        <p className="mt-1 text-sm text-[#64748B]">
+          JPG, PNG, or PDF — max 5 MB each.
+        </p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <RemovableFileField
+          id="citizenIdFile"
+          name="citizenIdFile"
+          label="Citizen ID"
+          error={fieldErrors?.citizenIdFile?.[0]}
+        />
+        <RemovableFileField
+          id="companyDocumentFile"
+          name="companyDocumentFile"
+          label="Store Document"
+          error={fieldErrors?.companyDocumentFile?.[0]}
+        />
+      </div>
+    </section>
+  )
+}
+
+function RemovableFileField({
+  id,
+  name,
+  label,
+  error,
+}: {
+  id: string
+  name: string
+  label: string
+  error?: string
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [fileName, setFileName] = useState<string | null>(null)
+
+  function clearFile() {
+    if (inputRef.current) {
+      inputRef.current.value = ""
+    }
+    setFileName(null)
+  }
+
+  return (
+    <ServiceStoreFormField id={id} label={label} error={error}>
+      <div className="flex flex-col gap-2">
+        <input
+          ref={inputRef}
+          id={id}
+          name={name}
+          type="file"
+          required={!fileName}
+          accept="image/jpeg,image/jpg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf"
+          className={serviceStoreInputClassName}
+          onChange={(event) => {
+            const file = event.target.files?.[0]
+            setFileName(file?.name ?? null)
+          }}
+        />
+        {fileName ? (
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm">
+            <span className="truncate text-[#0F172A]">{fileName}</span>
+            <button
+              type="button"
+              onClick={clearFile}
+              className="shrink-0 text-[#dc2626] hover:underline"
+            >
+              Remove
+            </button>
+          </div>
+        ) : null}
+      </div>
+    </ServiceStoreFormField>
+  )
 }
 
 function ClaimReviewFields({
   prefill,
   fieldErrors,
 }: {
-  prefill: ClaimPrefill;
-  fieldErrors?: Record<string, string[]>;
+  prefill: ClaimPrefill
+  fieldErrors?: Record<string, string[]>
 }) {
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-base font-semibold text-[#0F172A]">Review business information</h2>
-      <p className="text-sm text-[#5b6b7a]">
-        We prefilled details from Google Places where available. Edit any missing fields before
-        submitting.
-      </p>
-      <input type="hidden" name="googlePlaceId" value={prefill?.googlePlaceId ?? ""} />
-      <CategoryField defaultValue={prefill?.businessCategory ?? ""} error={fieldErrors?.businessCategory?.[0]} />
-      <ServiceStoreFormField id="proposedName" label="Store name" error={fieldErrors?.proposedName?.[0]}>
+      <div>
+        <h2 className="text-lg font-semibold text-[#0F172A]">
+          Business details
+        </h2>
+        <p className="mt-1 text-sm text-[#64748B]">
+          Prefilled from the directory. Edit anything that looks wrong.
+        </p>
+      </div>
+      <input
+        type="hidden"
+        name="googlePlaceId"
+        value={prefill?.googlePlaceId ?? ""}
+      />
+      <input
+        type="hidden"
+        name="proposedLatitude"
+        value={prefill?.proposedLatitude?.toString() ?? ""}
+      />
+      <input
+        type="hidden"
+        name="proposedLongitude"
+        value={prefill?.proposedLongitude?.toString() ?? ""}
+      />
+      <CategoryField
+        defaultValue={prefill?.businessCategory ?? ""}
+        error={fieldErrors?.businessCategory?.[0]}
+      />
+      <ServiceStoreFormField
+        id="proposedName"
+        label="Store name"
+        error={fieldErrors?.proposedName?.[0]}
+      >
         <input
           id="proposedName"
           name="proposedName"
@@ -331,7 +587,11 @@ function ClaimReviewFields({
           className={serviceStoreInputClassName}
         />
       </ServiceStoreFormField>
-      <ServiceStoreFormField id="proposedPhone" label="Phone" error={fieldErrors?.proposedPhone?.[0]}>
+      <ServiceStoreFormField
+        id="proposedPhone"
+        label="Phone"
+        error={fieldErrors?.proposedPhone?.[0]}
+      >
         <input
           id="proposedPhone"
           name="proposedPhone"
@@ -340,7 +600,11 @@ function ClaimReviewFields({
           className={serviceStoreInputClassName}
         />
       </ServiceStoreFormField>
-      <ServiceStoreFormField id="proposedAddress" label="Address" error={fieldErrors?.proposedAddress?.[0]}>
+      <ServiceStoreFormField
+        id="proposedAddress"
+        label="Address"
+        error={fieldErrors?.proposedAddress?.[0]}
+      >
         <input
           id="proposedAddress"
           name="proposedAddress"
@@ -349,36 +613,11 @@ function ClaimReviewFields({
           className={serviceStoreInputClassName}
         />
       </ServiceStoreFormField>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <ServiceStoreFormField id="proposedLatitude" label="Latitude" error={fieldErrors?.proposedLatitude?.[0]}>
-          <input
-            id="proposedLatitude"
-            name="proposedLatitude"
-            required
-            defaultValue={prefill?.proposedLatitude?.toString() ?? ""}
-            className={serviceStoreInputClassName}
-          />
-        </ServiceStoreFormField>
-        <ServiceStoreFormField id="proposedLongitude" label="Longitude" error={fieldErrors?.proposedLongitude?.[0]}>
-          <input
-            id="proposedLongitude"
-            name="proposedLongitude"
-            required
-            defaultValue={prefill?.proposedLongitude?.toString() ?? ""}
-            className={serviceStoreInputClassName}
-          />
-        </ServiceStoreFormField>
-      </div>
-      <ServiceStoreFormField id="proposedEmail" label="Email" error={fieldErrors?.proposedEmail?.[0]}>
-        <input
-          id="proposedEmail"
-          name="proposedEmail"
-          type="email"
-          defaultValue={prefill?.proposedEmail ?? ""}
-          className={serviceStoreInputClassName}
-        />
-      </ServiceStoreFormField>
-      <ServiceStoreFormField id="proposedWebsite" label="Website" error={fieldErrors?.proposedWebsite?.[0]}>
+      <ServiceStoreFormField
+        id="proposedWebsite"
+        label="Website"
+        error={fieldErrors?.proposedWebsite?.[0]}
+      >
         <input
           id="proposedWebsite"
           name="proposedWebsite"
@@ -387,50 +626,28 @@ function ClaimReviewFields({
           className={serviceStoreInputClassName}
         />
       </ServiceStoreFormField>
-      <ServiceStoreFormField id="proposedDescription" label="Description" error={fieldErrors?.proposedDescription?.[0]}>
+      <ServiceStoreFormField
+        id="proposedDescription"
+        label="Description"
+        error={fieldErrors?.proposedDescription?.[0]}
+      >
         <textarea
           id="proposedDescription"
           name="proposedDescription"
+          rows={4}
           defaultValue={prefill?.proposedDescription ?? ""}
           className={serviceStoreTextareaClassName}
         />
       </ServiceStoreFormField>
+      {(fieldErrors?.proposedLatitude?.[0] ||
+        fieldErrors?.proposedLongitude?.[0]) && (
+        <p className="text-sm text-red-600">
+          Location coordinates are missing for this store. Ask support to update
+          the directory entry, or choose another store.
+        </p>
+      )}
     </section>
-  );
-}
-
-function CreateMinimumFields({ fieldErrors }: { fieldErrors?: Record<string, string[]> }) {
-  return (
-    <>
-      <CategoryField error={fieldErrors?.businessCategory?.[0]} />
-      <ServiceStoreFormField id="businessName" label="Store name" error={fieldErrors?.businessName?.[0]}>
-        <input id="businessName" name="businessName" required className={serviceStoreInputClassName} />
-      </ServiceStoreFormField>
-      <ServiceStoreFormField id="businessPhone" label="Phone" error={fieldErrors?.businessPhone?.[0]}>
-        <input id="businessPhone" name="businessPhone" required className={serviceStoreInputClassName} />
-      </ServiceStoreFormField>
-      <ServiceStoreFormField id="address" label="Address" error={fieldErrors?.address?.[0]}>
-        <input id="address" name="address" required className={serviceStoreInputClassName} />
-      </ServiceStoreFormField>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <ServiceStoreFormField id="latitude" label="Latitude" error={fieldErrors?.latitude?.[0]}>
-          <input id="latitude" name="latitude" required className={serviceStoreInputClassName} />
-        </ServiceStoreFormField>
-        <ServiceStoreFormField id="longitude" label="Longitude" error={fieldErrors?.longitude?.[0]}>
-          <input id="longitude" name="longitude" required className={serviceStoreInputClassName} />
-        </ServiceStoreFormField>
-      </div>
-      <ServiceStoreFormField id="description" label="Description (optional)" error={fieldErrors?.description?.[0]}>
-        <textarea id="description" name="description" className={serviceStoreTextareaClassName} />
-      </ServiceStoreFormField>
-      <ServiceStoreFormField id="businessEmail" label="Email (optional)" error={fieldErrors?.businessEmail?.[0]}>
-        <input id="businessEmail" name="businessEmail" type="email" className={serviceStoreInputClassName} />
-      </ServiceStoreFormField>
-      <ServiceStoreFormField id="website" label="Website (optional)" error={fieldErrors?.website?.[0]}>
-        <input id="website" name="website" type="url" className={serviceStoreInputClassName} />
-      </ServiceStoreFormField>
-    </>
-  );
+  )
 }
 
 function CategoryField({ defaultValue = "", error }: { defaultValue?: string; error?: string }) {

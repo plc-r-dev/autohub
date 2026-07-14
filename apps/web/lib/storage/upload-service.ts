@@ -2,9 +2,20 @@ import { randomUUID } from "crypto";
 import { getStorageProvider } from "@/lib/storage";
 import { buildSignedStorageUrl } from "@/lib/storage/signed-url";
 import {
+  buildClaimDocumentKey,
+  buildOnboardingRequestDocumentKey,
   buildPaymentSlipKey,
+  buildStoreDocumentKey,
   validateUploadFile,
 } from "@/lib/storage/validation";
+
+type UploadedFileMeta = {
+  key: string;
+  url: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+};
 
 export async function uploadPaymentSlipFile(input: {
   billingId: string;
@@ -37,6 +48,96 @@ export async function uploadPaymentSlipFile(input: {
   return {
     slipKey: result.key,
     slipUrl: result.url,
+    fileName: input.file.name,
+    fileSize: result.fileSize,
+    mimeType: input.file.type || "application/octet-stream",
+  };
+}
+
+export async function uploadClaimDocumentFile(input: {
+  claimId: string;
+  kind: "citizen-id" | "company-document";
+  file: File;
+}): Promise<UploadedFileMeta> {
+  validateUploadFile(input.file);
+
+  const key = buildClaimDocumentKey(
+    input.claimId,
+    input.kind,
+    input.file.name,
+  );
+  const body = new Uint8Array(await input.file.arrayBuffer());
+  const provider = await getStorageProvider();
+  const result = await provider.upload({
+    key,
+    body,
+    contentType: input.file.type || "application/octet-stream",
+    fileName: input.file.name,
+  });
+
+  return {
+    key: result.key,
+    url: result.url,
+    fileName: input.file.name,
+    fileSize: result.fileSize,
+    mimeType: input.file.type || "application/octet-stream",
+  };
+}
+
+export async function uploadStoreDocumentFile(input: {
+  serviceStoreId: string;
+  kind: "citizen-id" | "company-document";
+  file: File;
+}): Promise<UploadedFileMeta> {
+  validateUploadFile(input.file);
+
+  const key = buildStoreDocumentKey(
+    input.serviceStoreId,
+    input.kind,
+    input.file.name,
+  );
+  const body = new Uint8Array(await input.file.arrayBuffer());
+  const provider = await getStorageProvider();
+  const result = await provider.upload({
+    key,
+    body,
+    contentType: input.file.type || "application/octet-stream",
+    fileName: input.file.name,
+  });
+
+  return {
+    key: result.key,
+    url: result.url,
+    fileName: input.file.name,
+    fileSize: result.fileSize,
+    mimeType: input.file.type || "application/octet-stream",
+  };
+}
+
+export async function uploadOnboardingRequestDocumentFile(input: {
+  requestId: string;
+  kind: "citizen-id" | "company-document";
+  file: File;
+}): Promise<UploadedFileMeta> {
+  validateUploadFile(input.file);
+
+  const key = buildOnboardingRequestDocumentKey(
+    input.requestId,
+    input.kind,
+    input.file.name,
+  );
+  const body = new Uint8Array(await input.file.arrayBuffer());
+  const provider = await getStorageProvider();
+  const result = await provider.upload({
+    key,
+    body,
+    contentType: input.file.type || "application/octet-stream",
+    fileName: input.file.name,
+  });
+
+  return {
+    key: result.key,
+    url: result.url,
     fileName: input.file.name,
     fileSize: result.fileSize,
     mimeType: input.file.type || "application/octet-stream",

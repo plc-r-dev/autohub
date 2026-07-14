@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { requireServiceStoreDomainUser } from "@/lib/auth/domain-user";
 import { requireServiceStoreContext } from "@/lib/service-store/context";
 import { SERVICE_STORE_PERMISSION } from "@/lib/service-store/domain";
 import { countServiceStoreOwners } from "@/lib/service-store/application/member-queries";
@@ -46,7 +47,9 @@ export async function inviteServiceStoreMember(
   _prev: MemberActionState,
   formData: FormData,
 ): Promise<MemberActionState> {
-  const ctx = await requireServiceStoreContext(SERVICE_STORE_PERMISSION.MEMBERS_INVITE);
+  const ctx = await requireServiceStoreContext(SERVICE_STORE_PERMISSION.MEMBERS_INVITE, {
+    allowOnboarding: true,
+  });
   const parsed = inviteSchema.safeParse({
     phone: formData.get("phone"),
     role: formData.get("role"),
@@ -106,7 +109,9 @@ export async function updateServiceStoreMemberRole(
   _prev: MemberActionState,
   formData: FormData,
 ): Promise<MemberActionState> {
-  const ctx = await requireServiceStoreContext(SERVICE_STORE_PERMISSION.MEMBERS_CHANGE_ROLE);
+  const ctx = await requireServiceStoreContext(SERVICE_STORE_PERMISSION.MEMBERS_CHANGE_ROLE, {
+    allowOnboarding: true,
+  });
   const parsed = roleSchema.safeParse({
     memberId: formData.get("memberId"),
     role: formData.get("role"),
@@ -148,7 +153,9 @@ export async function removeServiceStoreMember(
   _prev: MemberActionState,
   formData: FormData,
 ): Promise<MemberActionState> {
-  const ctx = await requireServiceStoreContext(SERVICE_STORE_PERMISSION.MEMBERS_REMOVE);
+  const ctx = await requireServiceStoreContext(SERVICE_STORE_PERMISSION.MEMBERS_REMOVE, {
+    allowOnboarding: true,
+  });
   const parsed = memberIdSchema.safeParse({
     memberId: formData.get("memberId"),
   });
@@ -207,7 +214,9 @@ export async function transferServiceStoreOwnership(
   _prev: MemberActionState,
   formData: FormData,
 ): Promise<MemberActionState> {
-  const ctx = await requireServiceStoreContext(SERVICE_STORE_PERMISSION.OWNERSHIP_TRANSFER);
+  const ctx = await requireServiceStoreContext(SERVICE_STORE_PERMISSION.OWNERSHIP_TRANSFER, {
+    allowOnboarding: true,
+  });
 
   if (ctx.membership.role !== "OWNER") {
     return { error: "Only Owners can transfer ownership." };
@@ -251,27 +260,35 @@ export async function transferServiceStoreOwnership(
   return { success: "Ownership transferred. You are now a Manager." };
 }
 
-export async function switchActiveServiceStore(serviceStoreId: string) {
-  const ctx = await requireServiceStoreContext(SERVICE_STORE_PERMISSION.STORE_VIEW);
+export async function switchActiveServiceStore(
+  serviceStoreId: string,
+): Promise<void> {
+  const { user } = await requireServiceStoreDomainUser()
 
   const membership = await prisma.serviceStoreMember.findUnique({
     where: {
       serviceStoreId_userId: {
         serviceStoreId,
-        userId: ctx.user.id,
+        userId: user.id,
       },
     },
-  });
+    select: {
+      id: true,
+      serviceStore: { select: { status: true } },
+    },
+  })
 
   if (!membership) {
-    return { error: "You are not a member of this Service Store." };
+    redirect("/app")
   }
 
   await prisma.user.update({
-    where: { id: ctx.user.id },
+    where: { id: user.id },
     data: { serviceStoreId },
-  });
+  })
 
-  revalidatePath("/app");
-  redirect("/app/dashboard");
+  revalidatePath("/app")
+  revalidatePath("/app/dashboard")
+
+  redirect("/app/dashboard")
 }

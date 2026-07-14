@@ -1,11 +1,15 @@
-export default function LoadingAdminReports() {
+import Skeleton from "@mui/material/Skeleton"
+import Stack from "@mui/material/Stack"
+import { AdminLayout } from "@/components/admin/admin-layout"
+
+export default function AdminReportsLoading() {
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-6">
-      <div className="h-8 w-64 animate-pulse rounded bg-muted" />
-      <div className="h-20 animate-pulse rounded-md border bg-muted/40" />
-      {Array.from({ length: 3 }).map((_, idx) => (
-        <div key={idx} className="h-56 animate-pulse rounded-md border bg-muted/40" />
-      ))}
-    </div>
-  );
+    <AdminLayout title="Reports" description="Loading reports...">
+      <Stack spacing={2}>
+        <Skeleton variant="rounded" height={80} />
+        <Skeleton variant="rounded" height={220} />
+        <Skeleton variant="rounded" height={220} />
+      </Stack>
+    </AdminLayout>
+  )
 }

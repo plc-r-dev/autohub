@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { resolveMediaPreviewUrl } from "@/lib/storage/media-upload";
 import type { ServiceStoreMemberRole } from "@/lib/generated/prisma/client";
 
 export type ServiceStoreMembershipSummary = {
@@ -27,68 +28,146 @@ export async function listUserServiceStoreMemberships(userId: string) {
 }
 
 export type ServiceStoreWorkspaceSummary = {
-  role: ServiceStoreMemberRole;
+  role: ServiceStoreMemberRole
   serviceStore: {
-    id: string;
-    name: string;
-    code: string;
-    status: string;
-  };
-  primaryBranchName: string | null;
-  todaysBookings: number;
-  todaysRevenue: number;
-};
+    id: string
+    name: string
+    code: string
+    status: string
+    logoUrl: string | null
+  }
+  primaryBranchName: string | null
+  branchCount: number
+  todaysBookings: number
+  todaysRevenue: number
+}
 
-/** Per-membership summary for the Workspace Home store grid — today's bookings/revenue snapshot. */
+/** Per-membership summary for the store selection grid. */
 export async function listServiceStoreWorkspaceSummaries(
   userId: string,
 ): Promise<ServiceStoreWorkspaceSummary[]> {
-  const memberships = await listUserServiceStoreMemberships(userId);
+  const memberships = await listUserServiceStoreMemberships(userId)
   if (memberships.length === 0) {
-    return [];
+    return []
   }
 
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const todayEnd = new Date()
+  todayEnd.setHours(23, 59, 59, 999)
 
   return Promise.all(
     memberships.map(async (membership) => {
-      const serviceStoreId = membership.serviceStore.id;
-      const [primaryBranch, todaysBookings, todaysRevenueRaw] = await Promise.all([
-        prisma.branch.findFirst({
-          where: { serviceStoreId },
-          orderBy: { createdAt: "asc" },
-          select: { name: true },
-        }),
-        prisma.booking.count({
-          where: {
-            branch: { serviceStoreId },
-            bookingDate: { gte: todayStart, lte: todayEnd },
-          },
-        }),
-        prisma.bookingItem.aggregate({
-          where: {
-            booking: {
+      const serviceStoreId = membership.serviceStore.id
+      const [store, primaryBranch, branchCount, todaysBookings, todaysRevenueRaw] =
+        await Promise.all([
+          prisma.serviceStore.findUnique({
+            where: { id: serviceStoreId },
+            select: { logoKey: true },
+          }),
+          prisma.branch.findFirst({
+            where: { serviceStoreId },
+            orderBy: { createdAt: "asc" },
+            select: { name: true },
+          }),
+          prisma.branch.count({ where: { serviceStoreId } }),
+          prisma.booking.count({
+            where: {
               branch: { serviceStoreId },
-              status: "COMPLETED",
-              completedAt: { gte: todayStart, lte: todayEnd },
+              bookingDate: { gte: todayStart, lte: todayEnd },
             },
-          },
-          _sum: { unitPrice: true },
-        }),
-      ]);
+          }),
+          prisma.bookingItem.aggregate({
+            where: {
+              booking: {
+                branch: { serviceStoreId },
+                status: "COMPLETED",
+                completedAt: { gte: todayStart, lte: todayEnd },
+              },
+            },
+            _sum: { unitPrice: true },
+          }),
+        ])
 
       return {
         role: membership.role,
-        serviceStore: membership.serviceStore,
+        serviceStore: {
+          ...membership.serviceStore,
+          logoUrl: await resolveMediaPreviewUrl(store?.logoKey),
+        },
         primaryBranchName: primaryBranch?.name ?? null,
+        branchCount,
         todaysBookings,
         todaysRevenue: Number(todaysRevenueRaw._sum.unitPrice ?? 0),
-      };
+      }
     }),
-  );
+  )
+}
+
+/** Pending claim / create applications shown on the store selection grid. */
+export type PendingServiceStoreApplication = {
+  id: string
+  type: "claim" | "create"
+  name: string
+  code: string | null
+  branchCount: number
+  logoUrl: string | null
+}
+
+export async function listPendingServiceStoreApplications(
+  userId: string,
+): Promise<PendingServiceStoreApplication[]> {
+  const [claims, requests] = await Promise.all([
+    prisma.serviceStoreClaim.findMany({
+      where: { userId, status: "PENDING" },
+      select: {
+        id: true,
+        proposedName: true,
+        serviceStore: {
+          select: {
+            name: true,
+            code: true,
+            logoKey: true,
+            _count: { select: { branches: true } },
+          },
+        },
+      },
+      orderBy: { submittedAt: "desc" },
+    }),
+    prisma.serviceStoreOnboardingRequest.findMany({
+      where: { userId, status: "PENDING" },
+      select: {
+        id: true,
+        businessName: true,
+        businessCode: true,
+      },
+      orderBy: { submittedAt: "desc" },
+    }),
+  ])
+
+  const claimCards = await Promise.all(
+    claims.map(async (claim) => ({
+      id: claim.id,
+      type: "claim" as const,
+      name: claim.proposedName?.trim() || claim.serviceStore.name,
+      code: claim.serviceStore.code,
+      branchCount: claim.serviceStore._count.branches,
+      logoUrl: await resolveMediaPreviewUrl(claim.serviceStore.logoKey),
+    })),
+  )
+
+  const createCards: PendingServiceStoreApplication[] = requests.map(
+    (request) => ({
+      id: request.id,
+      type: "create",
+      name: request.businessName,
+      code: request.businessCode,
+      branchCount: 0,
+      logoUrl: null,
+    }),
+  )
+
+  return [...claimCards, ...createCards]
 }
 
 export async function getServiceStoreMembership(userId: string, serviceStoreId: string) {

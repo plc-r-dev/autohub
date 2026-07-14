@@ -1,58 +1,32 @@
-"use client";
+"use client"
 
-import { switchActiveServiceStore } from "@/lib/service-store/member-actions";
-import { roleLabel } from "@/lib/service-store/domain";
-import type { ServiceStoreMemberRole } from "@/lib/generated/prisma/client";
+import Link from "next/link"
+import { ChevronDown } from "lucide-react"
+import { cn } from "@workspace/ui/lib/utils"
 
-type MembershipOption = {
-  role: ServiceStoreMemberRole;
-  serviceStore: {
-    id: string;
-    name: string;
-    code: string;
-  };
-};
-
-/** Current Store selector — a header pill when there's one store, a compact dropdown when there are several. */
+/** Header control — opens the dedicated Store Selection page (no dropdown). */
 export function ServiceStoreSwitcher({
-  memberships,
-  activeServiceStoreId,
+  storeName,
+  roleLabel: role,
 }: {
-  memberships: MembershipOption[];
-  activeServiceStoreId: string;
+  storeName: string
+  roleLabel?: string
 }) {
-  if (memberships.length <= 1) {
-    if (memberships.length === 1) {
-      const row = memberships[0]!;
-      return (
-        <span className="hidden rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground sm:inline-flex">
-          {row.serviceStore.name} · {roleLabel(row.role)}
-        </span>
-      );
-    }
-    return null;
-  }
-
   return (
-    <select
-      id="serviceStoreId"
-      name="serviceStoreId"
-      aria-label="Current Service Store"
-      defaultValue={activeServiceStoreId}
-      className="hidden max-w-40 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground outline-none sm:inline-flex"
-      onChange={async (event) => {
-        const nextId = event.target.value;
-        if (!nextId || nextId === activeServiceStoreId) {
-          return;
-        }
-        await switchActiveServiceStore(nextId);
-      }}
+    <Link
+      href="/app"
+      aria-label="Switch Service Store"
+      title="Switch Service Store"
+      className={cn(
+        "inline-flex max-w-[220px] items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5",
+        "text-xs font-medium text-foreground transition-colors hover:bg-accent",
+      )}
     >
-      {memberships.map((row) => (
-        <option key={row.serviceStore.id} value={row.serviceStore.id}>
-          {row.serviceStore.name} ({roleLabel(row.role)})
-        </option>
-      ))}
-    </select>
-  );
+      <span className="truncate">
+        {storeName}
+        {role ? ` · ${role}` : ""}
+      </span>
+      <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+    </Link>
+  )
 }

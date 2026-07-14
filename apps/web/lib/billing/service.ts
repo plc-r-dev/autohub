@@ -1,4 +1,5 @@
 import { Prisma } from "@/lib/generated/prisma/client";
+import { generateInvoiceNumber } from "@/lib/billing/numbering";
 import { getBillingSettingsSnapshot } from "@/lib/platform-settings/queries";
 import { prisma } from "@/lib/prisma";
 
@@ -80,34 +81,42 @@ export async function generateBillingsForPeriod(
     }
 
     const bookingCount = bookings.length;
-    const subtotal = feeDecimal.mul(bookingCount);
-    const vat = subtotal.mul(vatRateDecimal).div(100);
+    // Platform booking fee is VAT-inclusive.
+    const total = feeDecimal.mul(bookingCount);
+    const vat =
+      vatRateDecimal.gt(0)
+        ? total.mul(vatRateDecimal).div(vatRateDecimal.add(100))
+        : new Prisma.Decimal(0);
+    const subtotal = total.sub(vat);
     const discount = new Prisma.Decimal(0);
-    const total = subtotal.add(vat).sub(discount);
 
-    const created = await prisma.billing.create({
-      data: {
-        serviceStoreId,
-        periodStart: input.periodStart,
-        periodEnd: input.periodEnd,
-        bookingFee: feeDecimal,
-        vatRate: vatRateDecimal,
-        bookingCount,
-        subtotal,
-        vat,
-        discount,
-        total,
-        status: "DRAFT",
-        items: {
-          create: bookings.map((booking) => ({
-            bookingId: booking.id,
-            bookingNumber: booking.bookingNumber,
-            bookingDate: booking.bookingDate,
-            fee: feeDecimal,
-            amount: feeDecimal,
-          })),
+    const created = await prisma.$transaction(async (tx) => {
+      const invoiceNumber = await generateInvoiceNumber(tx, input.periodEnd);
+      return tx.billing.create({
+        data: {
+          serviceStoreId,
+          periodStart: input.periodStart,
+          periodEnd: input.periodEnd,
+          bookingFee: feeDecimal,
+          vatRate: vatRateDecimal,
+          bookingCount,
+          subtotal,
+          vat,
+          discount,
+          total,
+          status: "PENDING",
+          invoiceNumber,
+          items: {
+            create: bookings.map((booking) => ({
+              bookingId: booking.id,
+              bookingNumber: booking.bookingNumber,
+              bookingDate: booking.bookingDate,
+              fee: feeDecimal,
+              amount: feeDecimal,
+            })),
+          },
         },
-      },
+      });
     });
 
     createdCount += 1;

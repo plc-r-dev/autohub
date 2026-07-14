@@ -135,7 +135,9 @@ export function BookingWizard({
   initialVehicleId,
   backHref,
 }: BookingWizardProps) {
-  const [selectedServiceId, setSelectedServiceId] = useState(initialServiceId ?? "");
+  const [selectedServiceId, setSelectedServiceId] = useState(
+    initialServiceId ?? services[0]?.id ?? "",
+  );
   const [selectedVehicleId, setSelectedVehicleId] = useState(initialVehicleId ?? vehicles[0]?.id ?? "");
   const [vehicleMode, setVehicleMode] = useState<"existing" | "new">(
     vehicles.length === 0 ? "new" : "existing",
@@ -160,19 +162,43 @@ export function BookingWizard({
     if (!resolvedBranchId || !selectedServiceId) return;
 
     let cancelled = false;
+
+    async function fetchSlotsForDate(date: string): Promise<AvailableSlot[]> {
+      const params = new URLSearchParams({ serviceId: selectedServiceId, date });
+      const response = await fetch(
+        `/api/branches/${resolvedBranchId}/available-slots?${params.toString()}`,
+      );
+      if (!response.ok) throw new Error("slots");
+      const data = (await response.json()) as { slots: AvailableSlot[] };
+      return data.slots;
+    }
+
     async function loadSlots() {
       setSlotsLoading(true);
       setSlotsError(null);
       setSelectedSlot(null);
       setSelectedSlotLabel(null);
       try {
-        const params = new URLSearchParams({ serviceId: selectedServiceId, date: calendarDate });
-        const response = await fetch(
-          `/api/branches/${resolvedBranchId}/available-slots?${params.toString()}`,
-        );
-        if (!response.ok) throw new Error("slots");
-        const data = (await response.json()) as { slots: AvailableSlot[] };
-        if (!cancelled) setSlots(data.slots);
+        let nextSlots = await fetchSlotsForDate(calendarDate);
+
+        // After shop close time, today returns []. Jump to the next day with slots
+        // so Book Now does not land on an empty times grid.
+        if (nextSlots.length === 0 && calendarDate === todayDateValue()) {
+          for (let offset = 1; offset <= 14; offset += 1) {
+            const candidate = dateValueFromOffset(offset);
+            const candidateSlots = await fetchSlotsForDate(candidate);
+            if (cancelled) return;
+            if (candidateSlots.length > 0) {
+              if (!cancelled) {
+                setCalendarDate(candidate);
+                setSlots(candidateSlots);
+              }
+              return;
+            }
+          }
+        }
+
+        if (!cancelled) setSlots(nextSlots);
       } catch {
         if (!cancelled) {
           setSlots([]);
@@ -313,6 +339,17 @@ export function BookingWizard({
           {/* Service */}
           <Card className="space-y-4">
             <SectionTitle title="Service" />
+            {services.length === 0 ? (
+              <EmptyState
+                title="No services available"
+                description="This shop has not published services yet. Try another store."
+                action={
+                  <ButtonLink href={backHref} variant="secondary">
+                    Back to shop
+                  </ButtonLink>
+                }
+              />
+            ) : null}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {services.map((service) => (
                 <button
@@ -377,7 +414,11 @@ export function BookingWizard({
                   ) : slotsError ? (
                     <p className="text-[14px] text-red-600">{slotsError}</p>
                   ) : slots.length === 0 ? (
-                    <p className="text-[14px] text-[#64748B]">No slots available. Try another date.</p>
+                    <p className="text-[14px] text-[#64748B]">
+                      {calendarDate === todayDateValue()
+                        ? "No more times left today. Pick another date on the calendar."
+                        : "No slots available on this date. Try another day."}
+                    </p>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {slots.map((slot) => (

@@ -6,7 +6,6 @@ export { EmptyState } from "@/components/dashboard/empty-state";
 export { LiveActivity } from "@/components/dashboard/live-activity";
 export { MiniSparkline } from "@/components/dashboard/mini-sparkline";
 export { QuickActions } from "@/components/dashboard/quick-actions";
-export { ReadinessNotice } from "@/components/dashboard/readiness-notice";
 export { RecentBookings } from "@/components/dashboard/recent-bookings";
 export { RecentCustomers } from "@/components/dashboard/recent-customers";
 export { RevenueTrendChart } from "@/components/dashboard/revenue-trend-chart";

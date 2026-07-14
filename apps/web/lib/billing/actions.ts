@@ -2,10 +2,13 @@
 
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
-import { Prisma } from "@/lib/generated/prisma/client";
 import { requireApprovedServiceStoreUser } from "@/lib/auth/domain-user";
 import { requireAdminSession } from "@/lib/auth/require-admin";
-import { generateInvoiceNumber, generateReceiptNumber } from "@/lib/billing/numbering";
+import {
+  canReviewBillingPayment,
+  canSubmitBillingPayment,
+} from "@/lib/billing/domain";
+import { generateReceiptNumber } from "@/lib/billing/numbering";
 import {
   billingGenerationSchema,
   rejectBillingSchema,
@@ -13,10 +16,10 @@ import {
 } from "@/lib/billing/schemas";
 import { generateBillingsForPeriod } from "@/lib/billing/service";
 import {
-  sendBillingApproved,
   sendBillingGenerated,
   sendPaymentApproved,
 } from "@/lib/line/line-notification-service";
+import { getPlatformSettings } from "@/lib/platform-settings/queries";
 import { prisma } from "@/lib/prisma";
 import { uploadPaymentSlipFile } from "@/lib/storage/upload-service";
 import { UploadValidationError } from "@/lib/storage/validation";
@@ -78,7 +81,9 @@ export async function generateMonthlyBilling(
   revalidatePath("/app/billings");
 
   if (result.createdBillings.length > 0) {
-    const serviceStoreIds = [...new Set(result.createdBillings.map((row) => row.serviceStoreId))];
+    const serviceStoreIds = [
+      ...new Set(result.createdBillings.map((row) => row.serviceStoreId)),
+    ];
     const [users, billings] = await Promise.all([
       prisma.user.findMany({
         where: {
@@ -130,37 +135,6 @@ export async function generateMonthlyBilling(
   };
 }
 
-export async function submitBillingAsServiceStore(
-  billingId: string,
-): Promise<BillingActionState> {
-  const { serviceStore } = await requireApprovedServiceStoreUser();
-
-  const billing = await prisma.billing.findFirst({
-    where: { id: billingId, serviceStoreId: serviceStore.id },
-    select: { id: true, status: true },
-  });
-
-  if (!billing) {
-    return { error: "Billing not found." };
-  }
-
-  if (billing.status !== "DRAFT") {
-    return { error: "Only draft billings can be submitted." };
-  }
-
-  await prisma.billing.update({
-    where: { id: billing.id },
-    data: {
-      status: "SUBMITTED",
-      submittedAt: new Date(),
-      rejectReason: null,
-    },
-  });
-
-  revalidateBillingPaths(billing.id);
-  return { success: "Billing submitted for review." };
-}
-
 export async function uploadBillingPaymentSlip(
   billingId: string,
   _prev: BillingActionState,
@@ -170,16 +144,22 @@ export async function uploadBillingPaymentSlip(
 
   const billing = await prisma.billing.findFirst({
     where: { id: billingId, serviceStoreId: serviceStore.id },
-    select: { id: true, status: true },
+    select: {
+      id: true,
+      status: true,
+      total: true,
+      bookingFee: true,
+      bookingCount: true,
+    },
   });
 
   if (!billing) {
     return { error: "Billing not found." };
   }
 
-  if (!["APPROVED", "PAYMENT_REJECTED"].includes(billing.status)) {
+  if (!canSubmitBillingPayment(billing.status)) {
     return {
-      error: "Payment slip can only be uploaded for approved or payment-rejected billings.",
+      error: "Payment can only be submitted for pending or rejected billings.",
     };
   }
 
@@ -198,7 +178,14 @@ export async function uploadBillingPaymentSlip(
     return { fieldErrors: { paymentDate: ["Payment date is invalid."] } };
   }
 
+  const platformSettings = await getPlatformSettings();
+  const bank =
+    platformSettings.bankName.trim() ||
+    platformSettings.companyName.trim() ||
+    "AutoHub";
+
   const paymentId = randomUUID();
+  const amountDue = billing.bookingFee.mul(billing.bookingCount);
 
   let uploadResult;
   try {
@@ -214,16 +201,16 @@ export async function uploadBillingPaymentSlip(
     throw error;
   }
 
+  // Platform booking fee is VAT-inclusive — due amount is fee × bookings.
   await prisma.$transaction(async (tx) => {
     await tx.billingPayment.create({
       data: {
         id: paymentId,
         billingId: billing.id,
         paymentDate,
-        amount: new Prisma.Decimal(parsed.data.amount),
-        bank: parsed.data.bank,
+        amount: amountDue,
+        bank,
         referenceNumber: parsed.data.referenceNumber,
-        note: parsed.data.note,
         slipKey: uploadResult.slipKey,
         slipUrl: uploadResult.slipUrl,
         fileName: uploadResult.fileName,
@@ -238,131 +225,15 @@ export async function uploadBillingPaymentSlip(
       data: {
         status: "PAYMENT_SUBMITTED",
         paymentSubmittedAt: new Date(),
-        rejectReason: null,
-      },
-    });
-  });
-
-  revalidateBillingPaths(billing.id);
-  return { success: "Payment slip submitted for review." };
-}
-
-export async function approveBillingAsAdmin(
-  billingId: string,
-): Promise<BillingActionState> {
-  try {
-    await assertAdminReviewer();
-  } catch {
-    return { error: "Unauthorized." };
-  }
-
-  const billing = await prisma.billing.findUnique({
-    where: { id: billingId },
-    select: { id: true, status: true, approvedAt: true, invoiceNumber: true },
-  });
-
-  if (!billing) {
-    return { error: "Billing not found." };
-  }
-
-  if (billing.status !== "SUBMITTED") {
-    return { error: "Only submitted billings can be approved." };
-  }
-
-  await prisma.$transaction(async (tx) => {
-    const invoiceNumber =
-      billing.invoiceNumber ?? (await generateInvoiceNumber(tx, new Date()));
-    await tx.billing.update({
-      where: { id: billing.id },
-      data: {
-        status: "APPROVED",
-        approvedAt: billing.approvedAt ?? new Date(),
         rejectedAt: null,
         rejectReason: null,
-        invoiceNumber,
+        total: amountDue,
       },
     });
   });
 
-  const billingWithServiceStore = await prisma.billing.findUnique({
-    where: { id: billing.id },
-    select: {
-      id: true,
-      status: true,
-      invoiceNumber: true,
-      serviceStore: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
-  });
-
   revalidateBillingPaths(billing.id);
-  if (billingWithServiceStore) {
-    const users = await prisma.user.findMany({
-      where: {
-        serviceStoreId: billingWithServiceStore.serviceStore.id,
-        lineUserId: { not: null },
-      },
-      select: { lineUserId: true },
-    });
-    for (const user of users) {
-      if (!user.lineUserId) {
-        continue;
-      }
-      await sendBillingApproved({
-        recipientLineUserId: user.lineUserId,
-        billingId: billingWithServiceStore.id,
-        billingNumber: billingWithServiceStore.invoiceNumber ?? billingWithServiceStore.id,
-        serviceStoreName: billingWithServiceStore.serviceStore.name,
-        status: billingWithServiceStore.status.replaceAll("_", " "),
-      });
-    }
-  }
-  return { success: "Billing approved." };
-}
-
-export async function rejectBillingAsAdmin(
-  billingId: string,
-  _prev: BillingActionState,
-  formData: FormData,
-): Promise<BillingActionState> {
-  try {
-    await assertAdminReviewer();
-  } catch {
-    return { error: "Unauthorized." };
-  }
-
-  const parsed = rejectBillingSchema.safeParse(formDataToObject(formData));
-  if (!parsed.success) {
-    return { fieldErrors: parsed.error.flatten().fieldErrors };
-  }
-
-  const billing = await prisma.billing.findUnique({
-    where: { id: billingId },
-    select: { id: true, status: true },
-  });
-
-  if (!billing) {
-    return { error: "Billing not found." };
-  }
-  if (billing.status !== "SUBMITTED") {
-    return { error: "Only submitted billings can be rejected." };
-  }
-
-  await prisma.billing.update({
-    where: { id: billing.id },
-    data: {
-      status: "REJECTED",
-      rejectedAt: new Date(),
-      rejectReason: parsed.data.reason,
-    },
-  });
-
-  revalidateBillingPaths(billing.id);
-  return { success: "Billing rejected." };
+  return { success: "Payment submitted for review." };
 }
 
 export async function approveBillingPaymentAsAdmin(
@@ -382,8 +253,8 @@ export async function approveBillingPaymentAsAdmin(
   if (!billing) {
     return { error: "Billing not found." };
   }
-  if (billing.status !== "PAYMENT_SUBMITTED") {
-    return { error: "Only payment-submitted billings can be paid." };
+  if (!canReviewBillingPayment(billing.status)) {
+    return { error: "Only payment-submitted billings can be approved." };
   }
 
   const payment = await prisma.billingPayment.findFirst({
@@ -414,6 +285,8 @@ export async function approveBillingPaymentAsAdmin(
         status: "PAID",
         paidAt: billing.paidAt ?? new Date(),
         receiptNumber,
+        rejectReason: null,
+        rejectedAt: null,
       },
     });
   });
@@ -449,7 +322,8 @@ export async function approveBillingPaymentAsAdmin(
       await sendPaymentApproved({
         recipientLineUserId: user.lineUserId,
         billingId: billingWithServiceStore.id,
-        billingNumber: billingWithServiceStore.receiptNumber ?? billingWithServiceStore.id,
+        billingNumber:
+          billingWithServiceStore.receiptNumber ?? billingWithServiceStore.id,
         serviceStoreName: billingWithServiceStore.serviceStore.name,
         status: billingWithServiceStore.status.replaceAll("_", " "),
       });
@@ -482,8 +356,8 @@ export async function rejectBillingPaymentAsAdmin(
   if (!billing) {
     return { error: "Billing not found." };
   }
-  if (billing.status !== "PAYMENT_SUBMITTED") {
-    return { error: "Only payment-submitted billings can be reviewed." };
+  if (!canReviewBillingPayment(billing.status)) {
+    return { error: "Only payment-submitted billings can be rejected." };
   }
 
   const payment = await prisma.billingPayment.findFirst({
@@ -509,7 +383,8 @@ export async function rejectBillingPaymentAsAdmin(
     await tx.billing.update({
       where: { id: billing.id },
       data: {
-        status: "PAYMENT_REJECTED",
+        status: "REJECTED",
+        rejectedAt: new Date(),
         rejectReason: parsed.data.reason,
       },
     });

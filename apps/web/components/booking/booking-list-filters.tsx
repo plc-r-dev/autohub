@@ -35,7 +35,7 @@ export function BookingListFilters({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const currentRange = (searchParams.get("range") ?? "today") as BookingDateRangePreset;
+  const currentRange = (searchParams.get("range") ?? "all") as BookingDateRangePreset;
   const currentStatus = searchParams.get("status") ?? "";
   const isCustomRange = currentRange === "custom";
 
@@ -45,7 +45,7 @@ export function BookingListFilters({
         searchParams.get("q") ||
           searchParams.get("status") ||
           (showBranchFilter && searchParams.get("branchId")) ||
-          (searchParams.get("range") ?? "today") !== "today" ||
+          (searchParams.get("range") ?? "all") !== "all" ||
           searchParams.get("from") ||
           searchParams.get("to"),
       ),
@@ -79,7 +79,7 @@ export function BookingListFilters({
               type="button"
               onClick={() =>
                 updateParams((params) => {
-                  if (option.value === "today") {
+                  if (option.value === "all") {
                     params.delete("range");
                   } else {
                     params.set("range", option.value);
@@ -93,7 +93,7 @@ export function BookingListFilters({
               className={cn(
                 pillBase,
                 currentRange === option.value ||
-                  (option.value === "today" && !searchParams.get("range"))
+                  (option.value === "all" && !searchParams.get("range"))
                   ? pillActive
                   : pillInactive,
               )}

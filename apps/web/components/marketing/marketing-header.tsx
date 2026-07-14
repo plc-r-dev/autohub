@@ -6,8 +6,10 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { buttonVariants } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
-import { PORTALS } from "@/lib/auth/portals";
+import { AutohubLogo } from "@/components/brand/autohub-logo";
+import { MarketingSignInButton } from "@/components/marketing/marketing-sign-in-button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PORTALS } from "@/lib/auth/portals";
 
 const SECTION_LINKS = [
   { href: "#features", label: "Features" },
@@ -47,9 +49,7 @@ export function MarketingHeader() {
       )}
     >
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5 md:px-10">
-        <Link href="/" className="font-serif text-2xl font-semibold tracking-tight text-foreground">
-          AutoHub
-        </Link>
+        <AutohubLogo href="/" heightClassName="h-8" priority />
 
         <nav className="hidden items-center gap-8 lg:flex">
           {SECTION_LINKS.map((link) => (
@@ -64,12 +64,9 @@ export function MarketingHeader() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <Link
-            href={PORTALS.marketing.signIn}
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
+          <MarketingSignInButton className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             Sign In
-          </Link>
+          </MarketingSignInButton>
           <Link href={PORTALS.marketing.openInLine} className={cn(buttonVariants({ size: "sm" }))}>
             Open LINE
           </Link>
@@ -100,13 +97,9 @@ export function MarketingHeader() {
                 {link.label}
               </a>
             ))}
-            <Link
-              href={PORTALS.marketing.signIn}
-              onClick={() => setMenuOpen(false)}
-              className="rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
-            >
+            <MarketingSignInButton className="rounded-lg px-3 py-2.5 text-left text-sm font-medium text-foreground hover:bg-muted">
               Sign In
-            </Link>
+            </MarketingSignInButton>
             <div className="flex items-center justify-between rounded-lg px-3 py-2.5">
               <span className="text-sm font-medium text-foreground">Theme</span>
               <ThemeToggle />

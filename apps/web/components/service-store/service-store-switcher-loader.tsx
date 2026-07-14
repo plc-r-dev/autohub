@@ -1,14 +1,14 @@
-import { ServiceStoreSwitcher } from "@/components/service-store/service-store-switcher";
-import { listAccessibleServiceStores, requireServiceStoreContext } from "@/lib/service-store/context";
+import { ServiceStoreSwitcher } from "@/components/service-store/service-store-switcher"
+import { roleLabel } from "@/lib/service-store/domain"
+import { requireServiceStoreContext } from "@/lib/service-store/context"
 
 export async function ServiceStoreSwitcherLoader() {
-  const ctx = await requireServiceStoreContext();
-  const memberships = await listAccessibleServiceStores(ctx.user.id);
+  const ctx = await requireServiceStoreContext(undefined, { allowOnboarding: true })
 
   return (
     <ServiceStoreSwitcher
-      memberships={memberships}
-      activeServiceStoreId={ctx.serviceStore.id}
+      storeName={ctx.serviceStore.name}
+      roleLabel={roleLabel(ctx.membership.role)}
     />
-  );
+  )
 }

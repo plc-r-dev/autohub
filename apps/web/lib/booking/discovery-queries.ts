@@ -20,6 +20,7 @@ const marketplaceListSelect = {
   phone: true,
   email: true,
   status: true,
+  bookingEnabled: true,
   tenant: {
     select: { name: true, code: true },
   },
@@ -49,9 +50,13 @@ const marketplaceListSelect = {
   },
 } as const;
 
-/** Customer browse: all active serviceStores (claimed and unclaimed). */
+/** Customer browse: discoverable shops (incl. claimed stores still finishing catalog). */
 const browseServiceStoreWhere = {
-  status: { in: ["ACTIVE", "READY_FOR_BOOKING"] as Array<"ACTIVE" | "READY_FOR_BOOKING"> },
+  status: {
+    in: ["ACTIVE", "READY_FOR_BOOKING", "ONBOARDING"] as Array<
+      "ACTIVE" | "READY_FOR_BOOKING" | "ONBOARDING"
+    >,
+  },
 };
 
 type MarketplaceServiceStoreRow = {
@@ -62,6 +67,7 @@ type MarketplaceServiceStoreRow = {
   phone: string | null;
   email: string | null;
   status: MarketplaceServiceStoreFacts["status"];
+  bookingEnabled: boolean;
   tenant: { name: string; code?: string };
   claims: Array<{ status: "PENDING" | "APPROVED" | "REJECTED" }>;
   members: Array<{ id: string }>;
@@ -84,7 +90,7 @@ function toFacts(row: MarketplaceServiceStoreRow): MarketplaceServiceStoreFacts 
     (total, branch) => total + branch.services.length,
     0,
   );
-  const branchesWithOpenHoursCount = branchesWithServices.filter((branch) =>
+  const branchesWithOpenHoursCount = row.branches.filter((branch) =>
     branch.operatingHours.some((hour) => !hour.isClosed),
   ).length;
 
@@ -104,6 +110,7 @@ function toFacts(row: MarketplaceServiceStoreRow): MarketplaceServiceStoreFacts 
 
   return {
     status: row.status,
+    bookingEnabled: row.bookingEnabled,
     hasApprovedClaim: row.claims.some((claim) => claim.status === "APPROVED"),
     hasPendingClaim: row.claims.some((claim) => claim.status === "PENDING"),
     hasOwnerMember: row.members.length > 0,

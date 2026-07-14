@@ -90,26 +90,35 @@ export default async function BookingWizardPage({ searchParams }: PageProps) {
         ? services.find((service) => service.id === resolvedServiceId)?.branchId
         : undefined;
 
-  if (resolvedBranchId && resolvedServiceId) {
-    const facts = await getServiceStoreBookingFactsByBranchId(resolvedBranchId);
-    if (!facts || !isServiceStoreBookable(facts)) {
-      const presentation = facts ? toMarketplaceBookingPresentation(facts) : null;
-      return (
-        <CustomerShell backHref={`/browse/${serviceStoreId}`} backLabel="Service shop">
-          <Card className="py-10 text-center">
-            <p className="text-[15px] text-[#0F172A]">
-              {presentation?.unavailableMessage ?? "This service shop is not available for booking."}
-            </p>
-            <div className="mt-6">
-              <ButtonLink href="/browse" variant="secondary">
-                Browse stores
-              </ButtonLink>
-            </div>
-          </Card>
-        </CustomerShell>
-      );
-    }
+  const gateBranchId =
+    resolvedBranchId ??
+    store.branches.find((branch) => branch.services.length > 0)?.id ??
+    store.branches[0]?.id;
 
+  const facts = gateBranchId
+    ? await getServiceStoreBookingFactsByBranchId(gateBranchId)
+    : null;
+
+  if (!facts || !isServiceStoreBookable(facts)) {
+    const presentation = facts ? toMarketplaceBookingPresentation(facts) : null;
+    return (
+      <CustomerShell backHref={`/browse/${serviceStoreId}`} backLabel="Service shop">
+        <Card className="py-10 text-center">
+          <p className="text-[15px] text-[#0F172A]">
+            {presentation?.unavailableMessage ??
+              "This service shop is not available for booking."}
+          </p>
+          <div className="mt-6">
+            <ButtonLink href="/browse" variant="secondary">
+              Browse stores
+            </ButtonLink>
+          </div>
+        </Card>
+      </CustomerShell>
+    );
+  }
+
+  if (resolvedBranchId && resolvedServiceId) {
     const catalog = await resolveBookingCatalog(resolvedBranchId, resolvedServiceId);
     if (!catalog.ok) redirect(`/browse/${serviceStoreId}`);
   }

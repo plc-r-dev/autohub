@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { PORTALS } from "@/lib/auth/portals";
+import { AutohubLogo } from "@/components/brand/autohub-logo";
+import { MarketingSignInButton } from "@/components/marketing/marketing-sign-in-button";
 
 const FOOTER_LINKS = [
   { href: "#features", label: "Features" },
@@ -15,9 +15,7 @@ export function SiteFooter() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-12 md:px-10">
         <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
           <div>
-            <Link href="/" className="font-serif text-xl font-semibold tracking-tight text-foreground">
-              AutoHub
-            </Link>
+            <AutohubLogo href="/" heightClassName="h-8" />
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
               Customer booking is available through the AutoHub LINE Official Account.
             </p>
@@ -33,12 +31,9 @@ export function SiteFooter() {
                 {link.label}
               </a>
             ))}
-            <Link
-              href={PORTALS.marketing.signIn}
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
+            <MarketingSignInButton className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
               Sign In
-            </Link>
+            </MarketingSignInButton>
           </nav>
         </div>
 

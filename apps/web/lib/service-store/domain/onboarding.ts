@@ -1,7 +1,6 @@
 import type { ServiceStoreStatus } from "@/lib/generated/prisma/client";
 
 export const ONBOARDING_SETUP_STEP = {
-  VERIFY_BUSINESS: "verify-business",
   SERVICES: "services",
   HOURS: "hours",
   PAYMENT: "payment",
@@ -12,7 +11,6 @@ export type OnboardingSetupStep =
   (typeof ONBOARDING_SETUP_STEP)[keyof typeof ONBOARDING_SETUP_STEP];
 
 export const ONBOARDING_SETUP_STEPS: OnboardingSetupStep[] = [
-  ONBOARDING_SETUP_STEP.VERIFY_BUSINESS,
   ONBOARDING_SETUP_STEP.SERVICES,
   ONBOARDING_SETUP_STEP.HOURS,
   ONBOARDING_SETUP_STEP.PAYMENT,
@@ -20,7 +18,6 @@ export const ONBOARDING_SETUP_STEPS: OnboardingSetupStep[] = [
 ];
 
 export const REQUIRED_SETUP_STEPS: OnboardingSetupStep[] = [
-  ONBOARDING_SETUP_STEP.VERIFY_BUSINESS,
   ONBOARDING_SETUP_STEP.SERVICES,
   ONBOARDING_SETUP_STEP.HOURS,
   ONBOARDING_SETUP_STEP.PAYMENT,
@@ -61,7 +58,6 @@ export type OnboardingSetupProgress = {
 
 export function setupStepLabel(step: OnboardingSetupStep): string {
   const labels: Record<OnboardingSetupStep, string> = {
-    "verify-business": "Verify business information",
     services: "Configure services",
     hours: "Configure operating hours",
     payment: "Configure payment account",
@@ -71,12 +67,6 @@ export function setupStepLabel(step: OnboardingSetupStep): string {
 }
 
 export function evaluateOnboardingSetup(input: OnboardingSetupInput): OnboardingSetupProgress {
-  const hasBusinessInfo = Boolean(
-    input.name.trim() &&
-      input.phone?.trim() &&
-      input.businessCategory?.trim() &&
-      (input.email?.trim() || input.phone?.trim()),
-  );
   const hasServices = input.activeServiceCount > 0;
   const hasHours = input.branchesWithOpenHoursCount > 0;
   const hasPayment = Boolean(
@@ -86,14 +76,6 @@ export function evaluateOnboardingSetup(input: OnboardingSetupInput): Onboarding
   );
 
   const steps: OnboardingSetupStepState[] = [
-    {
-      id: ONBOARDING_SETUP_STEP.VERIFY_BUSINESS,
-      label: setupStepLabel(ONBOARDING_SETUP_STEP.VERIFY_BUSINESS),
-      description: "Confirm your store name, contact details, and business category.",
-      required: true,
-      met: hasBusinessInfo && input.branchCount > 0,
-      href: "/app/setup/verify-business",
-    },
     {
       id: ONBOARDING_SETUP_STEP.SERVICES,
       label: setupStepLabel(ONBOARDING_SETUP_STEP.SERVICES),

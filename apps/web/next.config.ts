@@ -1,7 +1,17 @@
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@workspace/ui"],
+  transpilePackages: [
+    "@workspace/ui",
+    "@mui/material",
+    "@mui/material-nextjs",
+    "@mui/icons-material",
+    "@mui/system",
+    "@mui/utils",
+    "@emotion/react",
+    "@emotion/styled",
+    "@emotion/cache",
+  ],
   async redirects() {
     return [
       {
@@ -41,7 +51,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/sign-in",
-        destination: "/app/login",
+        destination: "/",
         permanent: false,
       },
       {

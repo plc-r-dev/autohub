@@ -25,6 +25,15 @@ export async function searchServiceStores(tenantId: string, query: string) {
   return prisma.serviceStore.findMany({
     where: {
       tenantId,
+      // Claim directory: only stores that are still unclaimed.
+      claims: {
+        none: {
+          status: { in: ["APPROVED", "PENDING"] },
+        },
+      },
+      members: {
+        none: {},
+      },
       OR: [
         { name: { contains: trimmedQuery, mode: "insensitive" } },
         { code: { contains: trimmedQuery, mode: "insensitive" } },

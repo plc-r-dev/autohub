@@ -1,43 +1,18 @@
-import { redirect } from "next/navigation";
-import { isIdentityLinked, resolveIdentityLink } from "@/lib/auth/identity";
-import { getServerSession } from "@/lib/auth/session";
+import { redirect } from "next/navigation"
+import { isIdentityLinked, resolveIdentityLink } from "@/lib/auth/identity"
+import { getServerSession } from "@/lib/auth/session"
 import {
   getServiceStoreAccessState,
-  isApprovedServiceStore,
   isPendingServiceStore,
-} from "@/lib/service-store/access";
-import { prisma } from "@/lib/prisma";
-
-async function resolveApprovedRedirect(domainUserId: string) {
-  const access = await getServiceStoreAccessState(domainUserId);
-  if (!isApprovedServiceStore(access) || !access.serviceStoreId) {
-    return null;
-  }
-
-  // Multi-store owners can still claim/create another store from the
-  // workspace — don't bounce them away from the wizard.
-  if (access.membershipCount > 1) {
-    return null;
-  }
-
-  const store = await prisma.serviceStore.findUnique({
-    where: { id: access.serviceStoreId },
-    select: { status: true },
-  });
-
-  if (store?.status === "ONBOARDING") {
-    return "/app/setup";
-  }
-
-  return "/app/dashboard";
-}
+} from "@/lib/service-store/access"
+import { prisma } from "@/lib/prisma"
 
 export type OnboardingContext = {
-  authUserId: string;
-  authUserName: string;
-  authUserEmail: string;
-  lineUserId: string | null;
-};
+  authUserId: string
+  authUserName: string
+  authUserEmail: string
+  lineUserId: string | null
+}
 
 export async function getLineUserId(authUserId: string): Promise<string | null> {
   const account = await prisma.authAccount.findFirst({
@@ -48,62 +23,59 @@ export async function getLineUserId(authUserId: string): Promise<string | null> 
     select: {
       accountId: true,
     },
-  });
+  })
 
-  return account?.accountId ?? null;
+  return account?.accountId ?? null
 }
 
 export async function requireOnboardingContext(): Promise<OnboardingContext> {
-  const session = await getServerSession();
+  const session = await getServerSession()
   if (!session) {
-    redirect("/login");
+    redirect("/login")
   }
 
-  const identity = await resolveIdentityLink(session.user.id);
+  const identity = await resolveIdentityLink(session.user.id)
   if (isIdentityLinked(identity)) {
-    redirect("/browse");
+    redirect("/browse")
   }
 
-  const lineUserId = await getLineUserId(session.user.id);
+  const lineUserId = await getLineUserId(session.user.id)
 
   return {
     authUserId: session.user.id,
     authUserName: session.user.name,
     authUserEmail: session.user.email,
     lineUserId,
-  };
+  }
 }
 
-/** ServiceStore portal onboarding — uses the same domain user as the customer profile when present. */
+/** ServiceStore portal onboarding — claim/create wizard entry. */
 export async function requireServiceStoreOnboardingContext(
   callbackPath: string = "/app",
 ): Promise<OnboardingContext> {
-  const session = await getServerSession();
+  const session = await getServerSession()
   if (!session) {
-    redirect(`/app/login?callbackUrl=${encodeURIComponent(callbackPath)}`);
+    redirect(`/?callbackUrl=${encodeURIComponent(callbackPath)}`)
   }
 
-  const identity = await resolveIdentityLink(session.user.id);
+  const identity = await resolveIdentityLink(session.user.id)
   if (isIdentityLinked(identity) && identity.domainUserId) {
-    const serviceStoreAccess = await getServiceStoreAccessState(identity.domainUserId);
-    if (isApprovedServiceStore(serviceStoreAccess)) {
-      const target = await resolveApprovedRedirect(identity.domainUserId);
-      if (target) {
-        redirect(target);
-      }
-    }
+    const serviceStoreAccess = await getServiceStoreAccessState(
+      identity.domainUserId,
+    )
+    // Pending approval: send back to workspace. Approved users may still
+    // claim/create another store — never bounce them to the dashboard here.
     if (isPendingServiceStore(serviceStoreAccess)) {
-      redirect("/app");
+      redirect("/app")
     }
-    // Linked customer without serviceStore profile — continue onboarding on same identity.
   }
 
-  const lineUserId = await getLineUserId(session.user.id);
+  const lineUserId = await getLineUserId(session.user.id)
 
   return {
     authUserId: session.user.id,
     authUserName: session.user.name,
     authUserEmail: session.user.email,
     lineUserId,
-  };
+  }
 }

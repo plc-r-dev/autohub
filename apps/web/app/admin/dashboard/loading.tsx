@@ -1,17 +1,22 @@
-export default function LoadingAdminDashboard() {
+import Skeleton from "@mui/material/Skeleton"
+import Stack from "@mui/material/Stack"
+import { AdminLayout } from "@/components/admin/admin-layout"
+
+export default function AdminDashboardLoading() {
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-6">
-      <div className="h-8 w-64 animate-pulse rounded bg-muted" />
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 9 }).map((_, idx) => (
-          <div key={idx} className="h-24 animate-pulse rounded-md border bg-muted/40" />
-        ))}
-      </div>
-      <div className="grid gap-4 lg:grid-cols-2">
-        {Array.from({ length: 5 }).map((_, idx) => (
-          <div key={idx} className="h-56 animate-pulse rounded-md border bg-muted/40" />
-        ))}
-      </div>
-    </div>
-  );
+    <AdminLayout title="Platform dashboard" description="Loading workspace...">
+      <Stack spacing={2}>
+        <Skeleton variant="rounded" height={40} width={280} />
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+          <Skeleton variant="rounded" height={96} sx={{ flex: 1 }} />
+          <Skeleton variant="rounded" height={96} sx={{ flex: 1 }} />
+          <Skeleton variant="rounded" height={96} sx={{ flex: 1 }} />
+        </Stack>
+        <Stack direction={{ xs: "column", lg: "row" }} spacing={2}>
+          <Skeleton variant="rounded" height={220} sx={{ flex: 1 }} />
+          <Skeleton variant="rounded" height={220} sx={{ flex: 1 }} />
+        </Stack>
+      </Stack>
+    </AdminLayout>
+  )
 }

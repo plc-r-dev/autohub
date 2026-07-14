@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader } from "@workspace/ui/components/card";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { SectionHeader } from "@/components/dashboard/section-header";
 import { portalCardClassName } from "@/components/service-store/ui/portal-surfaces";
-import { formatBookingTime } from "@/lib/booking/format";
+import { formatBookingDate, formatBookingTime } from "@/lib/booking/format";
 import type { getServiceStoreDashboardMetrics } from "@/lib/reporting/queries";
+import { isToday } from "@/lib/reporting/dashboard-date";
 import { cn } from "@workspace/ui/lib/utils";
 
 type Metrics = Awaited<ReturnType<typeof getServiceStoreDashboardMetrics>>;
@@ -19,10 +20,17 @@ function formatVehicleSummary(booking: Metrics["upcomingBookings"][number]) {
   return `${booking.customer.firstName} ${booking.customer.lastName}`.trim();
 }
 
+function formatScheduleTime(bookingDate: Date) {
+  if (isToday(bookingDate)) {
+    return formatBookingTime(bookingDate);
+  }
+  return `${formatBookingDate(bookingDate)} · ${formatBookingTime(bookingDate)}`;
+}
+
 /** Next confirmed/pending bookings as a vertical timeline, soonest first. */
 export function UpcomingSchedule({
   bookings,
-  title = "Today's schedule",
+  title = "Upcoming schedule",
 }: UpcomingScheduleProps) {
   return (
     <Card className={portalCardClassName}>
@@ -52,7 +60,7 @@ export function UpcomingSchedule({
                   className="min-w-0 flex-1 pb-1"
                 >
                   <p className="text-xs font-semibold text-[#166534] dark:text-emerald-400">
-                    {formatBookingTime(booking.bookingDate)}
+                    {formatScheduleTime(booking.bookingDate)}
                   </p>
                   <p className="text-sm font-semibold text-foreground">
                     {formatVehicleSummary(booking)}

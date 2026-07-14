@@ -35,7 +35,9 @@ export default async function StoreSettingsPage({ searchParams }: PageProps) {
   const tab = resolveTab(params.tab)
 
   if (tab === "staff") {
-    const ctx = await requireServiceStoreContext(SERVICE_STORE_PERMISSION.MEMBERS_VIEW)
+    const ctx = await requireServiceStoreContext(SERVICE_STORE_PERMISSION.MEMBERS_VIEW, {
+      allowOnboarding: true,
+    })
     const members = await listServiceStoreMembers(ctx.serviceStore.id)
 
     return (

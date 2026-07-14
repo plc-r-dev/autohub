@@ -45,7 +45,7 @@ export async function loadOnboardingSetupInput(
     (total, branch) => total + branch.services.length,
     0,
   );
-  const branchesWithOpenHoursCount = branchesWithServices.filter((branch) =>
+  const branchesWithOpenHoursCount = store.branches.filter((branch) =>
     branch.operatingHours.some((hour) => !hour.isClosed),
   ).length;
 

@@ -29,7 +29,9 @@ function revalidateStaffPaths() {
 }
 
 export async function getOrCreateStaffInviteLink(): Promise<StaffInviteActionResult> {
-  const ctx = await requireServiceStoreContext(SERVICE_STORE_PERMISSION.MEMBERS_INVITE)
+  const ctx = await requireServiceStoreContext(SERVICE_STORE_PERMISSION.MEMBERS_INVITE, {
+    allowOnboarding: true,
+  })
 
   try {
     const invite = await ensureStaffInviteLink(ctx.serviceStore.id, ctx.user.id)
@@ -40,7 +42,9 @@ export async function getOrCreateStaffInviteLink(): Promise<StaffInviteActionRes
 }
 
 export async function regenerateStaffInviteLinkAction(): Promise<StaffInviteActionResult> {
-  const ctx = await requireServiceStoreContext(SERVICE_STORE_PERMISSION.MEMBERS_INVITE)
+  const ctx = await requireServiceStoreContext(SERVICE_STORE_PERMISSION.MEMBERS_INVITE, {
+    allowOnboarding: true,
+  })
 
   try {
     const invite = await regenerateStaffInviteLink(ctx.serviceStore.id, ctx.user.id)

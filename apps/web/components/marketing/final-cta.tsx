@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { MessageCircle, Store } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { buttonVariants } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 import { MarketingSection } from "@/components/marketing/section-container";
@@ -19,20 +18,16 @@ export function FinalCta() {
         Customers book through LINE. Service Stores manage their business through AutoHub.
       </p>
       <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-        <Link
+        <a
           href={PORTALS.marketing.openInLine}
-          className={cn(buttonVariants({ size: "lg" }), "h-12 gap-2 px-10 text-base")}
+          className={cn(
+            buttonVariants({ size: "lg" }),
+            "inline-flex h-12 items-center gap-2 px-10 text-base",
+          )}
         >
           <MessageCircle className="size-5" />
           Open LINE
-        </Link>
-        <Link
-          href={`${PORTALS.serviceStore.onboarding}?mode=claim`}
-          className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-12 gap-2 px-10 text-base")}
-        >
-          <Store className="size-5" />
-          Claim or Create a Store
-        </Link>
+        </a>
       </div>
     </MarketingSection>
   );

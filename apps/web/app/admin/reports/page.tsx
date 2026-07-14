@@ -1,26 +1,35 @@
-import Link from "next/link";
-import { AdminLayout } from "@/components/admin/admin-layout";
-import { requireAdminSession } from "@/lib/auth/require-admin";
-import { formatBillingCurrency, formatBillingDate } from "@/lib/billing/format";
-import { getReportData } from "@/lib/reporting/queries";
-import { prisma } from "@/lib/prisma";
+import Button from "@mui/material/Button"
+import MenuItem from "@mui/material/MenuItem"
+import Stack from "@mui/material/Stack"
+import Table from "@mui/material/Table"
+import TableBody from "@mui/material/TableBody"
+import TableCell from "@mui/material/TableCell"
+import TableContainer from "@mui/material/TableContainer"
+import TableHead from "@mui/material/TableHead"
+import TableRow from "@mui/material/TableRow"
+import TextField from "@mui/material/TextField"
+import Typography from "@mui/material/Typography"
+import { AdminLayout } from "@/components/admin/admin-layout"
+import { AdminSectionCard } from "@/components/admin/ui/admin-section-card"
+import { requireAdminSession } from "@/lib/auth/require-admin"
+import { formatBillingCurrency, formatBillingDate } from "@/lib/billing/format"
+import { getReportData } from "@/lib/reporting/queries"
+import { prisma } from "@/lib/prisma"
 
 type PageProps = {
   searchParams: Promise<{
-    from?: string;
-    to?: string;
-    serviceStoreId?: string;
-    branchId?: string;
-    bookingStatus?: string;
-  }>;
-};
+    from?: string
+    to?: string
+    serviceStoreId?: string
+    branchId?: string
+    bookingStatus?: string
+  }>
+}
 
 function parseDate(value?: string): Date | undefined {
-  if (!value) {
-    return undefined;
-  }
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? undefined : date;
+  if (!value) return undefined
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? undefined : date
 }
 
 function buildExportLink(
@@ -28,20 +37,18 @@ function buildExportLink(
   format: "csv" | "excel",
   params: Record<string, string | undefined>,
 ): string {
-  const query = new URLSearchParams();
-  query.set("type", reportType);
-  query.set("format", format);
+  const query = new URLSearchParams()
+  query.set("type", reportType)
+  query.set("format", format)
   for (const [key, value] of Object.entries(params)) {
-    if (value) {
-      query.set(key, value);
-    }
+    if (value) query.set(key, value)
   }
-  return `/admin/reports/export?${query.toString()}`;
+  return `/admin/reports/export?${query.toString()}`
 }
 
 export default async function AdminReportsPage({ searchParams }: PageProps) {
-  await requireAdminSession();
-  const params = await searchParams;
+  await requireAdminSession()
+  const params = await searchParams
 
   const filters = {
     from: parseDate(params.from),
@@ -49,7 +56,7 @@ export default async function AdminReportsPage({ searchParams }: PageProps) {
     serviceStoreId: params.serviceStoreId,
     branchId: params.branchId,
     bookingStatus: params.bookingStatus,
-  };
+  }
 
   const [reportData, serviceStores, branches] = await Promise.all([
     getReportData(filters),
@@ -61,76 +68,94 @@ export default async function AdminReportsPage({ searchParams }: PageProps) {
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
-  ]);
+  ])
 
   return (
     <AdminLayout
       title="Reports"
       description="Export booking, billing, settlement, customer, and vehicle reports."
     >
-      <form className="grid gap-3 rounded-md border p-4 sm:grid-cols-2 lg:grid-cols-5">
-        <input
-          type="date"
-          name="from"
-          defaultValue={params.from}
-          className="border-input h-9 rounded-md border px-3 text-sm"
-        />
-        <input
-          type="date"
-          name="to"
-          defaultValue={params.to}
-          className="border-input h-9 rounded-md border px-3 text-sm"
-        />
-        <select
-          name="serviceStoreId"
-          defaultValue={params.serviceStoreId}
-          className="border-input h-9 rounded-md border px-3 text-sm"
-        >
-          <option value="">All Service Stores</option>
-          {serviceStores.map((serviceStore) => (
-            <option key={serviceStore.id} value={serviceStore.id}>
-              {serviceStore.name}
-            </option>
-          ))}
-        </select>
-        <select
-          name="branchId"
-          defaultValue={params.branchId}
-          className="border-input h-9 rounded-md border px-3 text-sm"
-        >
-          <option value="">All branches</option>
-          {branches.map((branch) => (
-            <option key={branch.id} value={branch.id}>
-              {branch.name}
-            </option>
-          ))}
-        </select>
-        <select
-          name="bookingStatus"
-          defaultValue={params.bookingStatus}
-          className="border-input h-9 rounded-md border px-3 text-sm"
-        >
-          <option value="">All statuses</option>
-          {[
-            "PENDING",
-            "CONFIRMED",
-            "IN_PROGRESS",
-            "COMPLETED",
-            "CANCELLED",
-            "NO_SHOW",
-          ].map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-        <button
-          type="submit"
-          className="border-input hover:bg-muted h-9 rounded-md border px-3 text-sm sm:col-span-2 lg:col-span-5"
-        >
-          Apply filters
-        </button>
-      </form>
+      <AdminSectionCard title="Filters">
+        <form>
+          <Stack spacing={2}>
+            <Stack
+              direction={{ xs: "column", md: "row" }}
+              spacing={1.5}
+              useFlexGap
+              sx={{ flexWrap: "wrap" }}
+            >
+              <TextField
+                type="date"
+                name="from"
+                label="From"
+                defaultValue={params.from}
+                slotProps={{ inputLabel: { shrink: true } }}
+                sx={{ minWidth: { md: 160 }, flex: 1 }}
+              />
+              <TextField
+                type="date"
+                name="to"
+                label="To"
+                defaultValue={params.to}
+                slotProps={{ inputLabel: { shrink: true } }}
+                sx={{ minWidth: { md: 160 }, flex: 1 }}
+              />
+              <TextField
+                select
+                name="serviceStoreId"
+                label="Service Store"
+                defaultValue={params.serviceStoreId ?? ""}
+                sx={{ minWidth: { md: 180 }, flex: 1 }}
+              >
+                <MenuItem value="">All Service Stores</MenuItem>
+                {serviceStores.map((serviceStore) => (
+                  <MenuItem key={serviceStore.id} value={serviceStore.id}>
+                    {serviceStore.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                select
+                name="branchId"
+                label="Branch"
+                defaultValue={params.branchId ?? ""}
+                sx={{ minWidth: { md: 160 }, flex: 1 }}
+              >
+                <MenuItem value="">All branches</MenuItem>
+                {branches.map((branch) => (
+                  <MenuItem key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                select
+                name="bookingStatus"
+                label="Booking status"
+                defaultValue={params.bookingStatus ?? ""}
+                sx={{ minWidth: { md: 160 }, flex: 1 }}
+              >
+                <MenuItem value="">All statuses</MenuItem>
+                {[
+                  "PENDING",
+                  "CONFIRMED",
+                  "IN_PROGRESS",
+                  "COMPLETED",
+                  "CANCELLED",
+                  "NO_SHOW",
+                ].map((status) => (
+                  <MenuItem key={status} value={status}>
+                    {status}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Stack>
+            <Button type="submit" variant="contained" sx={{ alignSelf: "flex-start" }}>
+              Apply filters
+            </Button>
+          </Stack>
+        </form>
+      </AdminSectionCard>
 
       {(
         [
@@ -141,52 +166,50 @@ export default async function AdminReportsPage({ searchParams }: PageProps) {
           ["vehicle", "Vehicle Report"],
         ] as const
       ).map(([type, title]) => {
-        const rows = reportData[type];
+        const rows = reportData[type]
+        const firstRow = rows[0]
         return (
-          <section key={type} className="flex flex-col gap-3 rounded-md border p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="font-medium">{title}</h2>
-              <div className="flex gap-2 text-sm">
-                <Link
+          <AdminSectionCard
+            key={type}
+            title={title}
+            action={
+              <Stack direction="row" spacing={1}>
+                <Button
                   href={buildExportLink(type, "csv", params)}
-                  className="border-input hover:bg-muted rounded-md border px-3 py-1.5"
+                  size="small"
+                  variant="outlined"
                 >
                   Export CSV
-                </Link>
-                <Link
+                </Button>
+                <Button
                   href={buildExportLink(type, "excel", params)}
-                  className="border-input hover:bg-muted rounded-md border px-3 py-1.5"
+                  size="small"
+                  variant="outlined"
                 >
                   Export Excel
-                </Link>
-              </div>
-            </div>
-
-            {rows.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No records.</p>
+                </Button>
+              </Stack>
+            }
+          >
+            {rows.length === 0 || !firstRow ? (
+              <Typography variant="body2" color="text.secondary">
+                No records.
+              </Typography>
             ) : (
-              <div className="overflow-auto">
-                {(() => {
-                  const firstRow = rows[0];
-                  if (!firstRow) {
-                    return null;
-                  }
-                  return (
-                <table className="w-full min-w-[900px] text-left text-sm">
-                  <thead className="text-muted-foreground">
-                    <tr>
+              <TableContainer sx={{ overflowX: "auto" }}>
+                <Table size="small" sx={{ minWidth: 900 }}>
+                  <TableHead>
+                    <TableRow>
                       {Object.keys(firstRow).map((key) => (
-                        <th key={key} className="border-b px-2 py-2 font-medium">
-                          {key}
-                        </th>
+                        <TableCell key={key}>{key}</TableCell>
                       ))}
-                    </tr>
-                  </thead>
-                  <tbody>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {rows.slice(0, 50).map((row, idx) => (
-                      <tr key={idx}>
+                      <TableRow key={idx} hover>
                         {Object.entries(row).map(([key, value]) => (
-                          <td key={key} className="border-b px-2 py-2">
+                          <TableCell key={key}>
                             {value instanceof Date
                               ? formatBillingDate(value)
                               : typeof value === "number" &&
@@ -194,19 +217,17 @@ export default async function AdminReportsPage({ searchParams }: PageProps) {
                                     key.toLowerCase().includes("total"))
                                 ? formatBillingCurrency(value)
                                 : String(value)}
-                          </td>
+                          </TableCell>
                         ))}
-                      </tr>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
-                  );
-                })()}
-              </div>
+                  </TableBody>
+                </Table>
+              </TableContainer>
             )}
-          </section>
-        );
+          </AdminSectionCard>
+        )
       })}
     </AdminLayout>
-  );
+  )
 }

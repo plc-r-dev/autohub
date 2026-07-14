@@ -49,7 +49,7 @@ export function getDashboardKpiLabels(date: Date) {
     return {
       bookings: "Today's bookings",
       revenue: "Revenue today",
-      schedule: "Today's schedule",
+      schedule: "Upcoming schedule",
     };
   }
 
@@ -62,6 +62,6 @@ export function getDashboardKpiLabels(date: Date) {
   return {
     bookings: `Bookings · ${label}`,
     revenue: `Revenue · ${label}`,
-    schedule: `Schedule · ${label}`,
+    schedule: "Upcoming schedule",
   };
 }

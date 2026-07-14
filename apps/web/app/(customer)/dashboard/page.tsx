@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
-import { requireLinkedIdentity } from "@/lib/auth/require-identity";
+import { PORTALS } from "@/lib/auth/portals";
 
-/** Legacy entry — customer marketplace home. */
-export default async function DashboardPage() {
-  await requireLinkedIdentity();
-  redirect("/browse");
+/** Legacy /dashboard entry — always land on the marketing home. */
+export default function DashboardPage() {
+  redirect(PORTALS.marketing.home);
 }

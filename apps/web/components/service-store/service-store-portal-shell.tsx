@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Bell } from "lucide-react";
 import { ServiceStoreHeaderBrand } from "@/components/service-store/service-store-header-brand";
-import { ServiceStoreMobileNav } from "@/components/service-store/service-store-sidebar-nav";
+import { ServiceStoreMobileNavLoader } from "@/components/service-store/service-store-mobile-nav-loader";
 import { ServiceStoreSidebar } from "@/components/service-store/service-store-sidebar";
 import { ServiceStorePortalUserMenuLoader } from "@/components/service-store/service-store-portal-user-menu-loader";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 import { portalPageMainClassName } from "@/components/service-store/ui/portal-surfaces";
+import { Suspense } from "react";
 
 type ServiceStorePortalShellProps = {
   title: string;
@@ -52,7 +53,7 @@ export function ServiceStorePortalShell({
 
         <main
           className={cn(
-            "min-w-0 flex-1 overflow-y-auto px-6 py-6 xl:px-8 2xl:px-10",
+            "min-w-0 flex-1 overflow-y-auto px-6 py-6 md:px-8 xl:px-10 2xl:px-12",
             portalPageMainClassName,
             className,
           )}
@@ -79,7 +80,9 @@ export function ServiceStorePortalShell({
                 <p className="mt-1 text-sm text-muted-foreground md:text-base">{description}</p>
               ) : null}
             </div>
-            <ServiceStoreMobileNav />
+            <Suspense fallback={null}>
+              <ServiceStoreMobileNavLoader />
+            </Suspense>
           </div>
 
           <div className="flex flex-col gap-6">{children}</div>

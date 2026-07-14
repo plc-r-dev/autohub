@@ -69,7 +69,7 @@ export async function saveVerifyBusinessStep(
   _prev: SetupActionState,
   formData: FormData,
 ): Promise<SetupActionState> {
-  const ctx = await requireServiceStoreContext();
+  const ctx = await requireServiceStoreContext(undefined, { allowOnboarding: true });
   const name = String(formData.get("name") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
@@ -150,7 +150,7 @@ export async function savePaymentAccountStep(
   _prev: SetupActionState,
   formData: FormData,
 ): Promise<SetupActionState> {
-  const ctx = await requireServiceStoreContext();
+  const ctx = await requireServiceStoreContext(undefined, { allowOnboarding: true });
   const payoutBankName = String(formData.get("payoutBankName") ?? "").trim();
   const payoutAccountName = String(formData.get("payoutAccountName") ?? "").trim();
   const payoutAccountNumber = String(formData.get("payoutAccountNumber") ?? "").trim();
@@ -179,7 +179,7 @@ export async function savePaymentAccountStep(
 }
 
 export async function completeOnboardingSetup() {
-  const ctx = await requireServiceStoreContext();
+  const ctx = await requireServiceStoreContext(undefined, { allowOnboarding: true });
   const input = await loadOnboardingSetupInput(ctx.serviceStore.id);
   if (!input || !canTransitionToReadyForBooking(input)) {
     redirect("/app/setup");
@@ -198,7 +198,7 @@ export async function completeOnboardingSetup() {
 }
 
 export async function skipTeamSetupStep() {
-  await requireServiceStoreContext();
+  await requireServiceStoreContext(undefined, { allowOnboarding: true });
   redirect("/app/setup/payment");
 }
 

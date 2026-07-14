@@ -19,7 +19,7 @@ import { toCustomerBookingCardData } from "@/lib/booking/customer-booking-displa
 import { getCustomerBookingsPaginated } from "@/lib/booking/queries";
 import { resolveIdentityLink } from "@/lib/auth/identity";
 import { getCustomerForUser } from "@/lib/customer/context";
-import { getServerSession } from "@/lib/auth/session";
+import { getCustomerSession } from "@/lib/auth/session";
 import { parseListPaging, parseSortOrder } from "@/lib/listing/search-params";
 
 type PageProps = {
@@ -50,10 +50,8 @@ function toServiceStoreCard(row: MarketplaceServiceStoreListItem): ServiceStoreC
 }
 
 export default async function BrowsePage({ searchParams }: PageProps) {
-  // Browsing is public — no customer login page exists. Personalized sections
-  // (upcoming/recent bookings) only appear when a LINE-authenticated session
-  // already exists; anonymous visitors just see the public listing.
-  const session = await getServerSession();
+  // Browse requires the customer portal session (independent from Service Store).
+  const session = await getCustomerSession();
   const identity = session ? await resolveIdentityLink(session.user.id) : null;
   const customer = identity?.domainUserId
     ? await getCustomerForUser(identity.domainUserId)

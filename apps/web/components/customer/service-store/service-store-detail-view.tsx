@@ -77,10 +77,10 @@ export function ServiceStoreDetailView({
   const showGroupLabels = grouped.length > 1;
 
   return (
-    <div className="flex flex-col gap-6 pb-28 lg:pb-10">
+    <div className="flex flex-col gap-6 pb-10">
       {/* Identity banner — full width, compact on mobile, roomier on desktop */}
       <section className="relative overflow-hidden rounded-[20px] bg-[#062C21] shadow-lg">
-        <div className="relative h-[180px] md:h-[240px]">
+        <div className="relative h-[200px] md:h-[260px]">
           <button type="button" onClick={() => setPreviewOpen(true)} className="absolute inset-0">
             <ServiceShopImage
               serviceStoreId={serviceStoreId}
@@ -90,9 +90,9 @@ export function ServiceStoreDetailView({
               priority
             />
           </button>
-          <div className="absolute inset-0 bg-gradient-to-t from-[#062C21] via-[#062C21]/10 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#062C21] via-[#062C21]/25 to-transparent" />
 
-          <div className="absolute right-0 bottom-0 left-0 flex flex-wrap items-end justify-between gap-3 p-4 md:p-6">
+          <div className="absolute right-0 bottom-0 left-0 flex flex-col gap-3 p-4 md:flex-row md:items-end md:justify-between md:gap-4 md:p-6">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-semibold text-[#9A3412]">
@@ -117,11 +117,11 @@ export function ServiceStoreDetailView({
               ) : null}
             </div>
 
-            <div className="hidden shrink-0 gap-2 md:flex">
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
               {phone ? (
                 <a
                   href={`tel:${phone}`}
-                  className="flex h-10 items-center gap-2 rounded-full bg-white/95 px-4 text-[13px] font-semibold text-[#0F172A] hover:bg-white"
+                  className="hidden h-10 items-center gap-2 rounded-full bg-white/95 px-4 text-[13px] font-semibold text-[#0F172A] hover:bg-white md:inline-flex"
                 >
                   <Phone className="size-4" />
                   Call
@@ -131,11 +131,21 @@ export function ServiceStoreDetailView({
                 href={`https://maps.google.com/?q=${encodeURIComponent(mapsQuery)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-10 items-center gap-2 rounded-full bg-white/95 px-4 text-[13px] font-semibold text-[#0F172A] hover:bg-white"
+                className="hidden h-10 items-center gap-2 rounded-full bg-white/95 px-4 text-[13px] font-semibold text-[#0F172A] hover:bg-white md:inline-flex"
               >
                 <Navigation className="size-4" />
                 Directions
               </a>
+              {canBook ? (
+                <ButtonLink
+                  href={primaryBookHref}
+                  className="min-w-[7.5rem] shadow-md md:min-w-0"
+                  variant="primary"
+                  size="sm"
+                >
+                  Book Now
+                </ButtonLink>
+              ) : null}
             </div>
           </div>
         </div>
@@ -257,14 +267,6 @@ export function ServiceStoreDetailView({
           </div>
         </aside>
       </div>
-
-      {canBook ? (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#E8EDF2] bg-white/95 px-4 py-3 backdrop-blur-md lg:hidden">
-          <ButtonLink href={primaryBookHref} className="w-full" variant="primary" size="lg">
-            Book Now
-          </ButtonLink>
-        </div>
-      ) : null}
 
       <ImagePreviewLightbox
         images={[heroImage, ...galleryImages]}

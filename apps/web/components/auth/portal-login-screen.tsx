@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { OAUTH_PORTAL_COOKIE } from "@/lib/auth/oauth-portal";
 import { Button } from "@workspace/ui/components/button";
 
 type PortalLoginFormProps = {
@@ -38,6 +39,7 @@ function PortalLoginForm({
   async function handleLineSignIn() {
     setError(null);
     setIsLoading(true);
+    document.cookie = `${OAUTH_PORTAL_COOKIE}=serviceStore; Path=/; Max-Age=${60 * 10}; SameSite=Lax`;
 
     const { error: signInError } = await authClient.signIn.oauth2({
       providerId: "line",
@@ -57,13 +59,30 @@ function PortalLoginForm({
       <div className="text-center">
         <div className="mx-auto mb-3 flex items-center justify-center gap-2">
           <span className="size-2 rounded-full bg-[#16A34A]" aria-hidden />
-          <span className="text-xs font-medium text-[#6b7c8c]">LINE Official Account</span>
+          <span className="text-xs font-medium text-[#6b7c8c]">
+            LINE Official Account
+          </span>
         </div>
-        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-[#16A34A] text-2xl font-bold text-white">
-          {portal === "admin" ? "A" : "S"}
-        </div>
-        <h1 className="text-xl font-semibold text-[#111]">{title}</h1>
-        <p className="mt-2 text-sm leading-relaxed text-[#6b7c8c]">{description}</p>
+        {portal === "serviceStore" ? (
+          <div className="mx-auto mb-4 flex justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/autohub-wordmark.png"
+              alt="AutoHub"
+              width={909}
+              height={156}
+              className="h-11 w-auto bg-transparent"
+            />
+          </div>
+        ) : (
+          <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-[#16A34A] text-2xl font-bold text-white">
+            A
+          </div>
+        )}
+        <h1 className="text-xl font-semibold text-[#0F172A]">{title}</h1>
+        <p className="mt-2 text-sm leading-relaxed text-[#6b7c8c]">
+          {description}
+        </p>
       </div>
       {error ? <p className="text-center text-sm text-red-600">{error}</p> : null}
       <Button

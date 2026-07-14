@@ -90,7 +90,7 @@ export function evaluateServiceStoreReadiness(input: ReadinessInput): ServiceSto
       label: "Payment account",
       description: "Add a bank account for AutoHub payouts.",
       met: Boolean(input.hasPaymentAccount),
-      actionHref: "/app/setup/payment",
+      actionHref: "/app/settings",
     },
   ];
 

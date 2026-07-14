@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftRight, LogOut, Settings, User } from "lucide-react";
+import { ArrowLeftRight, LogOut } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar";
 import {
@@ -52,17 +52,9 @@ export function ServiceStorePortalUserMenu({
         }
       />
       <DropdownMenuContent align="end">
-        <DropdownMenuItem render={<Link href="/app/settings" />}>
-          <User />
-          My Profile
-        </DropdownMenuItem>
         <DropdownMenuItem render={<Link href="/app" />}>
           <ArrowLeftRight />
-          Switch Store
-        </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/app/settings" />}>
-          <Settings />
-          Settings
+          Choose a Service Store
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
@@ -71,7 +63,7 @@ export function ServiceStorePortalUserMenu({
             void authClient.signOut({
               fetchOptions: {
                 onSuccess: () => {
-                  router.push("/app/login");
+                  router.push("/");
                   router.refresh();
                 },
               },

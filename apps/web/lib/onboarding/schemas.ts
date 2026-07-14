@@ -69,26 +69,25 @@ export const serviceStoreClaimSchema = profileFieldsSchema.extend({
   proposedWebsite: optionalUrl,
 });
 
-export const serviceStoreCreateSchema = profileFieldsSchema.extend({
-  googlePlaceId: z
+export const serviceStoreCreateSchema = z.object({
+  tenantId: z.string().uuid("Select a tenant"),
+  firstName: z.string().trim().min(1, "First name is required").max(100),
+  lastName: z.string().trim().min(1, "Last name is required").max(100),
+  phone: z.string().trim().min(1, "Phone is required").max(30),
+  businessName: z.string().trim().min(1, "Store name is required").max(200),
+  address: z.string().trim().min(1, "Address is required").max(500),
+  googleMapsUrl: z
     .string()
     .trim()
-    .optional()
-    .transform((value) => (value === "" ? undefined : value)),
-  businessName: z.string().trim().min(1, "Store name is required").max(200),
-  businessPhone: z.string().trim().min(1, "Phone is required").max(30),
-  businessCategory: z.enum(categoryIds, { message: "Select a business category" }),
-  address: z.string().trim().min(1, "Address is required").max(500),
-  latitude: z.coerce.number().min(-90).max(90),
-  longitude: z.coerce.number().min(-180).max(180),
+    .url("Enter a valid Google Maps link")
+    .max(2000),
   description: z
     .string()
     .trim()
     .max(1000)
     .optional()
+    .or(z.literal(""))
     .transform((value) => (value === "" ? undefined : value)),
-  businessEmail: optionalEmail,
-  website: optionalUrl,
 });
 
 /** @deprecated Legacy single-form schema */

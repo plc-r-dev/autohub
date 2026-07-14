@@ -6,6 +6,10 @@ export async function listPendingServiceStoreClaims() {
     select: {
       id: true,
       submittedAt: true,
+      citizenIdFileName: true,
+      citizenIdKey: true,
+      companyDocumentFileName: true,
+      companyDocumentKey: true,
       serviceStore: {
         select: {
           id: true,
@@ -52,7 +56,12 @@ export async function listPendingServiceStoreOnboardingRequests() {
       phone: true,
       email: true,
       website: true,
+      address: true,
       submittedAt: true,
+      citizenIdFileName: true,
+      citizenIdKey: true,
+      companyDocumentFileName: true,
+      companyDocumentKey: true,
       tenant: {
         select: {
           id: true,

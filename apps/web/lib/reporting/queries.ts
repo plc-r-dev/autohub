@@ -19,6 +19,7 @@ export type ReportFilters = {
 export type DashboardCardMetrics = {
   totalServiceStores: number;
   activeServiceStores: number;
+  suspendedServiceStores: number;
   totalCustomers: number;
   totalVehicles: number;
   totalBookings: number;
@@ -122,14 +123,21 @@ function buildBookingFilterSql(filters: ReportFilters): Prisma.Sql {
 }
 
 export async function getPlatformDashboardCardMetrics(): Promise<DashboardCardMetrics> {
-  const [totalServiceStores, activeServiceStores, totalCustomers, totalVehicles, totalBookings] =
-    await Promise.all([
-      prisma.serviceStore.count(),
-      prisma.serviceStore.count({ where: { status: "ACTIVE" } }),
-      prisma.customer.count(),
-      prisma.vehicle.count(),
-      prisma.booking.count(),
-    ]);
+  const [
+    totalServiceStores,
+    activeServiceStores,
+    suspendedServiceStores,
+    totalCustomers,
+    totalVehicles,
+    totalBookings,
+  ] = await Promise.all([
+    prisma.serviceStore.count(),
+    prisma.serviceStore.count({ where: { status: "ACTIVE" } }),
+    prisma.serviceStore.count({ where: { status: "SUSPENDED" } }),
+    prisma.customer.count(),
+    prisma.vehicle.count(),
+    prisma.booking.count(),
+  ]);
 
   const todayStart = startOfToday();
   const todayEnd = endOfToday();
@@ -156,7 +164,7 @@ export async function getPlatformDashboardCardMetrics(): Promise<DashboardCardMe
       }),
       prisma.serviceStoreClaim.count({ where: { status: "PENDING" } }),
       prisma.serviceStoreOnboardingRequest.count({ where: { status: "PENDING" } }),
-      prisma.billing.count({ where: { status: "SUBMITTED" } }),
+      prisma.billing.count({ where: { status: "PENDING" } }),
       prisma.billingPayment.count({
         where: {
           reviewStatus: "PENDING",
@@ -168,6 +176,7 @@ export async function getPlatformDashboardCardMetrics(): Promise<DashboardCardMe
   return {
     totalServiceStores,
     activeServiceStores,
+    suspendedServiceStores,
     totalCustomers,
     totalVehicles,
     totalBookings,
@@ -306,7 +315,6 @@ export async function getServiceStoreDashboardMetrics(
       prisma.booking.findMany({
         where: {
           branch: { serviceStoreId },
-          bookingDate: { gte: dayStart, lte: dayEnd },
         },
         select: {
           bookingNumber: true,
@@ -328,7 +336,7 @@ export async function getServiceStoreDashboardMetrics(
       prisma.booking.findMany({
         where: {
           branch: { serviceStoreId },
-          bookingDate: { gte: dayStart, lte: dayEnd },
+          bookingDate: { gte: startOfDay(new Date()) },
           status: { in: ["PENDING", "CONFIRMED", "IN_PROGRESS"] },
         },
         select: {
@@ -341,7 +349,7 @@ export async function getServiceStoreDashboardMetrics(
           branch: { select: { name: true } },
         },
         orderBy: { bookingDate: "asc" },
-        take: 8,
+        take: 15,
       }),
       prisma.$queryRaw<Array<{ serviceName: string; qty: bigint }>>(Prisma.sql`
         SELECT s."name" AS "serviceName",

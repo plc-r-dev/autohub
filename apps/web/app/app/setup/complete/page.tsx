@@ -7,7 +7,7 @@ import { completeOnboardingSetup } from "@/lib/service-store/setup-actions";
 import { requireServiceStoreContext } from "@/lib/service-store/context";
 
 export default async function ServiceStoreSetupCompletePage() {
-  const ctx = await requireServiceStoreContext();
+  const ctx = await requireServiceStoreContext(undefined, { allowOnboarding: true });
   const progress = await getOnboardingSetupProgress(ctx.serviceStore.id);
 
   if (!progress) {

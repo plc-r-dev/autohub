@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, CircleHelp, User } from "lucide-react";
+import { Bell, CircleHelp } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar";
 import { Button } from "@workspace/ui/components/button";
@@ -58,10 +58,6 @@ export function ServiceStoreWorkspaceHeaderMenu({
           }
         />
         <DropdownMenuContent align="end">
-          <DropdownMenuItem render={<Link href="/app/settings" />}>
-            <User />
-            My Profile
-          </DropdownMenuItem>
           <DropdownMenuItem render={<Link href="#" />}>
             <CircleHelp />
             Help
@@ -73,8 +69,8 @@ export function ServiceStoreWorkspaceHeaderMenu({
               void authClient.signOut({
                 fetchOptions: {
                   onSuccess: () => {
-                    router.push("/app/login");
-                    router.refresh();
+                  router.push("/");
+                  router.refresh();
                   },
                 },
               });

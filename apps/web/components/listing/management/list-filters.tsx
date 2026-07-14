@@ -10,15 +10,17 @@ import {
 import { cn } from "@workspace/ui/lib/utils"
 
 type ManagementListFiltersProps = {
-  searchPlaceholder: string
+  searchPlaceholder?: string
   searchAriaLabel?: string
+  showSearch?: boolean
   children?: ReactNode
   hasActiveFilters?: boolean
 }
 
 export function ManagementListFilters({
-  searchPlaceholder,
+  searchPlaceholder = "Search",
   searchAriaLabel,
+  showSearch = true,
   children,
   hasActiveFilters = false,
 }: ManagementListFiltersProps) {
@@ -26,10 +28,12 @@ export function ManagementListFilters({
 
   return (
     <div className="space-y-3">
-      <ManagementListSearch
-        placeholder={searchPlaceholder}
-        ariaLabel={searchAriaLabel}
-      />
+      {showSearch ? (
+        <ManagementListSearch
+          placeholder={searchPlaceholder}
+          ariaLabel={searchAriaLabel}
+        />
+      ) : null}
 
       {children || hasActiveFilters ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

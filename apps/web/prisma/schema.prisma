@@ -71,13 +71,11 @@ enum BookingStatus {
 }
 
 enum BillingStatus {
-  DRAFT
-  SUBMITTED
-  APPROVED
-  REJECTED
+  PENDING
   PAYMENT_SUBMITTED
-  PAYMENT_REJECTED
   PAID
+  REJECTED
+  CANCELLED
 }
 
 enum BillingPaymentReviewStatus {
@@ -190,6 +188,18 @@ model ServiceStore {
   googlePlaceId     String?
   businessCategory  String?
 
+  citizenIdKey      String?
+  citizenIdUrl      String?
+  citizenIdFileName String?
+  citizenIdFileSize Int?
+  citizenIdMimeType String?
+
+  companyDocumentKey      String?
+  companyDocumentUrl      String?
+  companyDocumentFileName String?
+  companyDocumentFileSize Int?
+  companyDocumentMimeType String?
+
   payoutBankName      String?
   payoutAccountName   String?
   payoutAccountNumber String?
@@ -272,6 +282,18 @@ model ServiceStoreClaim {
   proposedLatitude    Decimal?
   proposedLongitude   Decimal?
 
+  citizenIdKey      String
+  citizenIdUrl      String
+  citizenIdFileName String
+  citizenIdFileSize Int
+  citizenIdMimeType String
+
+  companyDocumentKey      String
+  companyDocumentUrl      String
+  companyDocumentFileName String
+  companyDocumentFileSize Int
+  companyDocumentMimeType String
+
   status ClaimStatus @default(PENDING)
 
   submittedAt DateTime  @default(now())
@@ -296,6 +318,21 @@ model ServiceStoreOnboardingRequest {
   phone        String?
   email        String?
   website      String?
+  address      String?
+  latitude     Decimal?
+  longitude    Decimal?
+
+  citizenIdKey      String
+  citizenIdUrl      String
+  citizenIdFileName String
+  citizenIdFileSize Int
+  citizenIdMimeType String
+
+  companyDocumentKey      String
+  companyDocumentUrl      String
+  companyDocumentFileName String
+  companyDocumentFileSize Int
+  companyDocumentMimeType String
 
   status OnboardingRequestStatus @default(PENDING)
 
@@ -509,7 +546,7 @@ model Billing {
   discount     Decimal @default(0)
   total        Decimal @default(0)
 
-  status BillingStatus @default(DRAFT)
+  status BillingStatus @default(PENDING)
 
   rejectReason String?
 

@@ -1,4 +1,3 @@
-import Image from "next/image"
 import Link from "next/link"
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -12,26 +11,26 @@ export function ServiceStoreHeaderBrand({
   className,
 }: ServiceStoreHeaderBrandProps) {
   return (
-    <Link href={href} className={cn("flex min-w-0 items-center gap-2.5 sm:gap-3", className)}>
-      <Image
-        src="/brand/autohub-logo.png"
+    <Link href={href} className={cn("flex min-w-0 items-center gap-2 bg-transparent sm:gap-2.5", className)}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/brand/autohub-wordmark.png"
         alt="AutoHub"
-        width={180}
-        height={46}
-        className="h-10 w-auto shrink-0 sm:h-11 dark:hidden"
-        priority
+        width={909}
+        height={156}
+        className="h-5 w-auto shrink-0 bg-transparent sm:h-6 dark:hidden"
       />
-      <Image
-        src="/brand/autohub-logo-dark.png"
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/brand/autohub-wordmark-dark.png"
         alt=""
-        width={180}
-        height={46}
+        width={860}
+        height={149}
         aria-hidden
-        className="hidden h-10 w-auto shrink-0 sm:h-11 dark:block"
-        priority
+        className="hidden h-5 w-auto shrink-0 bg-transparent sm:h-6 dark:block"
       />
-      <span className="hidden min-w-0 border-l border-border pl-2.5 sm:block sm:pl-3">
-        <span className="block text-[10px] leading-tight font-medium tracking-wide text-muted-foreground sm:text-[11px]">
+      <span className="hidden min-w-0 border-l border-border pl-2 sm:block sm:pl-2.5">
+        <span className="block text-[10px] leading-tight font-medium tracking-wide text-muted-foreground">
           The Automotive Service Platform
         </span>
       </span>
