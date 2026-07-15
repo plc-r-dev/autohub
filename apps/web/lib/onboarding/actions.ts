@@ -19,6 +19,7 @@ import {
   deleteStoredFile,
   uploadClaimDocumentFile,
   uploadOnboardingRequestDocumentFile,
+  uploadOnboardingRequestLogoFile,
 } from "@/lib/storage/upload-service"
 import { UploadValidationError } from "@/lib/storage/validation"
 
@@ -494,6 +495,9 @@ export async function createServiceStoreDirect(
   let companyUpload: Awaited<
     ReturnType<typeof uploadOnboardingRequestDocumentFile>
   > | null = null
+  let logoUpload: Awaited<
+    ReturnType<typeof uploadOnboardingRequestLogoFile>
+  > | null = null
 
   try {
     await assertTenantExists(input.tenantId);
@@ -508,6 +512,14 @@ export async function createServiceStoreDirect(
       kind: "company-document",
       file: files.companyDocumentFile,
     })
+
+    const logoFile = formData.get("logoFile")
+    if (logoFile instanceof File && logoFile.size > 0) {
+      logoUpload = await uploadOnboardingRequestLogoFile({
+        requestId,
+        file: logoFile,
+      })
+    }
 
     const domainUserId = await resolveDomainUserIdForServiceStoreOnboarding(
       session.user.id,
@@ -566,6 +578,7 @@ export async function createServiceStoreDirect(
           companyDocumentFileName: companyUpload!.fileName,
           companyDocumentFileSize: companyUpload!.fileSize,
           companyDocumentMimeType: companyUpload!.mimeType,
+          logoKey: logoUpload?.key,
         },
       })
     });
@@ -575,6 +588,9 @@ export async function createServiceStoreDirect(
     }
     if (companyUpload?.key) {
       await deleteStoredFile(companyUpload.key).catch(() => undefined)
+    }
+    if (logoUpload?.key) {
+      await deleteStoredFile(logoUpload.key).catch(() => undefined)
     }
     return mapOnboardingError(error);
   }

@@ -2,10 +2,18 @@
 
 import { useActionState, useRef, useState, useTransition } from "react";
 import {
+  Building2,
+  FileText,
+  IdCard,
+  ImagePlus,
+  Upload,
+  X,
+  type LucideIcon,
+} from "lucide-react";
+import {
   ServiceStoreButton,
   ServiceStoreFormField,
   serviceStoreInputClassName,
-  serviceStoreSelectClassName,
   serviceStoreTextareaClassName,
 } from "@/components/service-store/ui";
 import {
@@ -15,7 +23,7 @@ import {
   type OnboardingActionState,
 } from "@/lib/onboarding/actions";
 import { fetchClaimPrefillAction } from "@/lib/service-store/setup-actions";
-import { SERVICE_STORE_BUSINESS_CATEGORIES } from "@/lib/service-store/domain";
+import { cn } from "@workspace/ui/lib/utils";
 
 type TenantOption = { id: string; code: string; name: string };
 
@@ -53,9 +61,17 @@ export function ServiceStoreOnboardingWizard({
   const [isSearching, startSearchTransition] = useTransition();
   const [claimState, claimAction, claimPending] = useActionState(submitServiceStoreClaim, initialState);
   const [createState, createAction, createPending] = useActionState(createServiceStoreDirect, initialState);
+  const [createLogoFile, setCreateLogoFile] = useState<File | null>(null);
 
   const state = mode === "claim" ? claimState : createState;
   const isPending = mode === "claim" ? claimPending : createPending;
+
+  function handleCreateSubmit(formData: FormData) {
+    if (createLogoFile) {
+      formData.set("logoFile", createLogoFile);
+    }
+    createAction(formData);
+  }
 
   function handleSearchQueryChange(value: string) {
     setSearchQuery(value);
@@ -172,6 +188,7 @@ export function ServiceStoreOnboardingWizard({
                 <ServiceStoreFormField
                   id="serviceStoreSearch"
                   label="Search AutoHub directory"
+                  required
                   error={claimState.fieldErrors?.serviceStoreId?.[0]}
                 >
                   <input
@@ -252,7 +269,7 @@ export function ServiceStoreOnboardingWizard({
           </div>
         </form>
       ) : (
-        <form action={createAction} className="flex flex-col gap-8">
+        <form action={handleCreateSubmit} className="flex flex-col gap-8">
           <input type="hidden" name="tenantId" value={tenantId} />
 
           <div className="grid gap-8 lg:grid-cols-2">
@@ -268,6 +285,7 @@ export function ServiceStoreOnboardingWizard({
               <ServiceStoreFormField
                 id="businessName"
                 label="Store name"
+                required
                 error={createState.fieldErrors?.businessName?.[0]}
               >
                 <input
@@ -280,6 +298,7 @@ export function ServiceStoreOnboardingWizard({
               <ServiceStoreFormField
                 id="address"
                 label="Address"
+                required
                 error={createState.fieldErrors?.address?.[0]}
               >
                 <input
@@ -292,6 +311,7 @@ export function ServiceStoreOnboardingWizard({
               <ServiceStoreFormField
                 id="googleMapsUrl"
                 label="Google Maps link"
+                required
                 error={createState.fieldErrors?.googleMapsUrl?.[0]}
               >
                 <input
@@ -315,6 +335,17 @@ export function ServiceStoreOnboardingWizard({
                   className={serviceStoreTextareaClassName}
                 />
               </ServiceStoreFormField>
+              <DocumentUploadField
+                id="logoFile"
+                name="logoFile"
+                label="Store logo"
+                description="Square JPG, PNG, or WebP — max 5 MB"
+                icon={ImagePlus}
+                accept="image/jpeg,image/jpg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                required={false}
+                error={createState.fieldErrors?.logoFile?.[0]}
+                onFileChange={setCreateLogoFile}
+              />
             </section>
 
             <div className="flex flex-col gap-8">
@@ -359,6 +390,7 @@ function ClaimProfileFields({
         <ServiceStoreFormField
           id="firstName"
           label="First name"
+          required
           error={fieldErrors?.firstName?.[0]}
         >
           <input
@@ -372,6 +404,7 @@ function ClaimProfileFields({
         <ServiceStoreFormField
           id="lastName"
           label="Last name"
+          required
           error={fieldErrors?.lastName?.[0]}
         >
           <input
@@ -411,6 +444,7 @@ function CreateProfileFields({
         <ServiceStoreFormField
           id="createFirstName"
           label="First name"
+          required
           error={fieldErrors?.firstName?.[0]}
         >
           <input
@@ -424,6 +458,7 @@ function CreateProfileFields({
         <ServiceStoreFormField
           id="createLastName"
           label="Last name"
+          required
           error={fieldErrors?.lastName?.[0]}
         >
           <input
@@ -438,6 +473,7 @@ function CreateProfileFields({
       <ServiceStoreFormField
         id="createPhone"
         label="Phone"
+        required
         error={fieldErrors?.phone?.[0]}
       >
         <input
@@ -463,20 +499,24 @@ function ClaimDocumentFields({
           Supporting documents
         </h2>
         <p className="mt-1 text-sm text-[#64748B]">
-          JPG, PNG, or PDF — max 5 MB each.
+          Upload clear scans or photos. JPG, PNG, or PDF — max 5 MB each.
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <RemovableFileField
+        <DocumentUploadField
           id="citizenIdFile"
           name="citizenIdFile"
           label="Citizen ID"
+          description="Thai national ID of the store owner"
+          icon={IdCard}
           error={fieldErrors?.citizenIdFile?.[0]}
         />
-        <RemovableFileField
+        <DocumentUploadField
           id="companyDocumentFile"
           name="companyDocumentFile"
-          label="Store Document"
+          label="Store document"
+          description="Business license or company registration"
+          icon={Building2}
           error={fieldErrors?.companyDocumentFile?.[0]}
         />
       </div>
@@ -484,57 +524,154 @@ function ClaimDocumentFields({
   )
 }
 
-function RemovableFileField({
+function DocumentUploadField({
   id,
   name,
   label,
+  description,
+  icon: Icon,
   error,
+  accept = "image/jpeg,image/jpg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf",
+  required = true,
+  onFileChange,
 }: {
   id: string
   name: string
   label: string
+  description: string
+  icon: LucideIcon
   error?: string
+  accept?: string
+  required?: boolean
+  onFileChange?: (file: File | null) => void
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
-  const [fileName, setFileName] = useState<string | null>(null)
+  const [file, setFile] = useState<File | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+
+  function updateFile(next: File | null) {
+    setFile(next)
+    onFileChange?.(next)
+  }
+
+  function assignFile(next: File | undefined) {
+    if (!next || !inputRef.current) return
+    const transfer = new DataTransfer()
+    transfer.items.add(next)
+    inputRef.current.files = transfer.files
+    updateFile(next)
+  }
 
   function clearFile() {
     if (inputRef.current) {
       inputRef.current.value = ""
     }
-    setFileName(null)
+    updateFile(null)
+  }
+
+  function formatBytes(size: number) {
+    if (size < 1024) return `${size} B`
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(0)} KB`
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`
   }
 
   return (
-    <ServiceStoreFormField id={id} label={label} error={error}>
-      <div className="flex flex-col gap-2">
-        <input
-          ref={inputRef}
-          id={id}
-          name={name}
-          type="file"
-          required={!fileName}
-          accept="image/jpeg,image/jpg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf"
-          className={serviceStoreInputClassName}
-          onChange={(event) => {
-            const file = event.target.files?.[0]
-            setFileName(file?.name ?? null)
-          }}
-        />
-        {fileName ? (
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm">
-            <span className="truncate text-[#0F172A]">{fileName}</span>
-            <button
-              type="button"
-              onClick={clearFile}
-              className="shrink-0 text-[#dc2626] hover:underline"
-            >
-              Remove
-            </button>
-          </div>
-        ) : null}
+    <div className="flex flex-col gap-2">
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#F0FDF4] text-[#16A34A]">
+          <Icon className="size-4" aria-hidden />
+        </div>
+        <div className="min-w-0">
+          <label htmlFor={id} className="text-sm font-semibold text-[#0F172A]">
+            {label}
+            {required ? (
+              <span className="ml-1 text-[#DC2626]" aria-hidden>
+                *
+              </span>
+            ) : null}
+          </label>
+          <p className="mt-0.5 text-xs text-[#64748B]">{description}</p>
+        </div>
       </div>
-    </ServiceStoreFormField>
+
+      <input
+        ref={inputRef}
+        id={id}
+        name={name}
+        type="file"
+        required={required && !file}
+        accept={accept}
+        className="sr-only"
+        onChange={(event) => {
+          updateFile(event.target.files?.[0] ?? null)
+        }}
+      />
+
+      {file ? (
+        <div className="flex items-center gap-3 rounded-2xl border border-[#BBF7D0] bg-[#F0FDF4] px-4 py-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#16A34A] shadow-sm">
+            <FileText className="size-4" aria-hidden />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-[#0F172A]">
+              {file.name}
+            </p>
+            <p className="text-xs text-[#64748B]">{formatBytes(file.size)}</p>
+          </div>
+          <button
+            type="button"
+            onClick={clearFile}
+            className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-[#64748B] transition-colors hover:bg-white hover:text-[#DC2626]"
+            aria-label={`Remove ${label}`}
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onDragEnter={(event) => {
+            event.preventDefault()
+            setIsDragging(true)
+          }}
+          onDragOver={(event) => {
+            event.preventDefault()
+            setIsDragging(true)
+          }}
+          onDragLeave={(event) => {
+            event.preventDefault()
+            setIsDragging(false)
+          }}
+          onDrop={(event) => {
+            event.preventDefault()
+            setIsDragging(false)
+            assignFile(event.dataTransfer.files?.[0])
+          }}
+          onClick={() => inputRef.current?.click()}
+          className={cn(
+            "flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed px-4 py-7 text-center transition-colors",
+            isDragging
+              ? "border-[#16A34A] bg-[#16A34A]/5"
+              : error
+                ? "border-[#FECACA] bg-[#FEF2F2] hover:border-[#F87171]"
+                : "border-[#D7E0E9] bg-[#F8FAFC] hover:border-[#16A34A]/60 hover:bg-[#F0FDF4]",
+          )}
+        >
+          <div className="flex size-10 items-center justify-center rounded-full bg-white text-[#16A34A] shadow-sm">
+            <Upload className="size-4" aria-hidden />
+          </div>
+          <p className="text-sm text-[#64748B]">
+            Drag & drop or{" "}
+            <span className="font-semibold text-[#16A34A]">browse</span>
+          </p>
+          <p className="text-xs text-[#94A3B8]">JPG, PNG, or PDF · max 5 MB</p>
+        </button>
+      )}
+
+      {error ? (
+        <p className="text-sm text-[#DC2626]">{error}</p>
+      ) : null}
+    </div>
   )
 }
 
@@ -562,6 +699,11 @@ function ClaimReviewFields({
       />
       <input
         type="hidden"
+        name="businessCategory"
+        value={prefill?.businessCategory ?? ""}
+      />
+      <input
+        type="hidden"
         name="proposedLatitude"
         value={prefill?.proposedLatitude?.toString() ?? ""}
       />
@@ -570,13 +712,10 @@ function ClaimReviewFields({
         name="proposedLongitude"
         value={prefill?.proposedLongitude?.toString() ?? ""}
       />
-      <CategoryField
-        defaultValue={prefill?.businessCategory ?? ""}
-        error={fieldErrors?.businessCategory?.[0]}
-      />
       <ServiceStoreFormField
         id="proposedName"
         label="Store name"
+        required
         error={fieldErrors?.proposedName?.[0]}
       >
         <input
@@ -590,6 +729,7 @@ function ClaimReviewFields({
       <ServiceStoreFormField
         id="proposedPhone"
         label="Phone"
+        required
         error={fieldErrors?.proposedPhone?.[0]}
       >
         <input
@@ -603,6 +743,7 @@ function ClaimReviewFields({
       <ServiceStoreFormField
         id="proposedAddress"
         label="Address"
+        required
         error={fieldErrors?.proposedAddress?.[0]}
       >
         <input
@@ -648,27 +789,4 @@ function ClaimReviewFields({
       )}
     </section>
   )
-}
-
-function CategoryField({ defaultValue = "", error }: { defaultValue?: string; error?: string }) {
-  return (
-    <ServiceStoreFormField id="businessCategory" label="Business category" error={error}>
-      <select
-        id="businessCategory"
-        name="businessCategory"
-        required
-        defaultValue={defaultValue}
-        className={serviceStoreSelectClassName}
-      >
-        <option value="" disabled>
-          Select a category
-        </option>
-        {SERVICE_STORE_BUSINESS_CATEGORIES.map((category) => (
-          <option key={category.id} value={category.id}>
-            {category.label}
-          </option>
-        ))}
-      </select>
-    </ServiceStoreFormField>
-  );
 }

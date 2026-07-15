@@ -6,9 +6,9 @@ export const createBookingSchema = z.object({
   vehicleMode: z.enum(["existing", "new"]).default("existing"),
   vehicleId: z
     .string()
-    .uuid()
     .optional()
-    .transform((v) => (v === "" ? undefined : v)),
+    .transform((v) => (v === "" || v == null ? undefined : v))
+    .pipe(z.string().uuid().optional()),
   vehicleLicensePlate: z
     .string()
     .trim()
@@ -101,9 +101,9 @@ export const walkInBookingSchema = z
     vehicleMode: z.enum(["existing", "new"]).default("existing"),
     vehicleId: z
       .string()
-      .uuid()
       .optional()
-      .transform((v) => (v === "" ? undefined : v)),
+      .transform((v) => (v === "" || v == null ? undefined : v))
+      .pipe(z.string().uuid().optional()),
     vehicleLicensePlate: z
       .string()
       .trim()

@@ -1,18 +1,25 @@
-import type { JobDefinition } from "@/lib/jobs/types";
+import type { JobDefinition } from "@/lib/jobs/types"
 
-const jobs = new Map<string, JobDefinition>();
+const globalForJobs = globalThis as unknown as {
+  autohubJobRegistry?: Map<string, JobDefinition>
+}
 
-export function registerJob(job: JobDefinition): void {
-  if (jobs.has(job.name)) {
-    throw new Error(`Job "${job.name}" is already registered.`);
+function getJobsMap(): Map<string, JobDefinition> {
+  if (!globalForJobs.autohubJobRegistry) {
+    globalForJobs.autohubJobRegistry = new Map()
   }
-  jobs.set(job.name, job);
+  return globalForJobs.autohubJobRegistry
+}
+
+/** Idempotent — safe under Next.js HMR / repeated ensureJobDefinitionsRegistered calls. */
+export function registerJob(job: JobDefinition): void {
+  getJobsMap().set(job.name, job)
 }
 
 export function getRegisteredJob(name: string): JobDefinition | null {
-  return jobs.get(name) ?? null;
+  return getJobsMap().get(name) ?? null
 }
 
 export function listRegisteredJobs(): JobDefinition[] {
-  return [...jobs.values()].sort((a, b) => a.name.localeCompare(b.name));
+  return [...getJobsMap().values()].sort((a, b) => a.name.localeCompare(b.name))
 }

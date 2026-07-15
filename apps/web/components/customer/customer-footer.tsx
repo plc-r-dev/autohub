@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AutohubLogo } from "@/components/brand/autohub-logo";
 
 const FOOTER_LINKS = [
   { href: "#", label: "Privacy Policy" },
@@ -11,12 +12,7 @@ export function CustomerFooter() {
     <footer className="mt-16 border-t border-[#E8E8E8] bg-[#F0F0F0]">
       <div className="mx-auto flex max-w-[1280px] flex-col gap-8 px-5 py-12 md:flex-row md:items-start md:justify-between md:px-8">
         <div>
-          <Link
-            href="/browse"
-            className="font-serif text-[22px] font-semibold tracking-tight text-[#0F172A]"
-          >
-            AutoHub
-          </Link>
+          <AutohubLogo href="/browse" heightClassName="h-8" />
           <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-[#64748B]">
             © {new Date().getFullYear()} AutoHub. Engineering Excellence in Every Service.
           </p>

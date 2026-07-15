@@ -53,7 +53,10 @@ export const serviceStoreClaimSchema = profileFieldsSchema.extend({
     .trim()
     .optional()
     .transform((value) => (value === "" ? undefined : value)),
-  businessCategory: z.enum(categoryIds, { message: "Select a business category" }),
+  businessCategory: z
+    .union([z.enum(categoryIds), z.literal("")])
+    .optional()
+    .transform((value) => (value === "" || value == null ? undefined : value)),
   proposedName: z.string().trim().min(1, "Business name is required").max(200),
   proposedPhone: z.string().trim().min(1, "Phone is required").max(30),
   proposedAddress: z.string().trim().min(1, "Address is required").max(500),

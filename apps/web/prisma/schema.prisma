@@ -334,6 +334,8 @@ model ServiceStoreOnboardingRequest {
   companyDocumentFileSize Int
   companyDocumentMimeType String
 
+  logoKey String?
+
   status OnboardingRequestStatus @default(PENDING)
 
   submittedAt DateTime  @default(now())
@@ -659,19 +661,25 @@ model PlatformSettings {
   companyName String @default("")
   taxId       String @default("")
   address     String @default("")
+  companyLogoKey String?
 
   bankName      String @default("")
   accountName   String @default("")
   accountNumber String @default("")
   bankBranch    String @default("")
+  promptPayQrKey String?
 
   storageProvider String @default("local")
   bucketName      String @default("autohub-uploads")
   storageRegion   String @default("")
 
   timeZone   String @default("Asia/Bangkok")
+  language   String @default("en")
   dateFormat String @default("medium")
   timeFormat String @default("short")
+
+  /** JSON array of disabled job names, e.g. ["storage-cleanup"] */
+  disabledJobs String @default("[]")
 
   updatedAt DateTime @updatedAt
 }

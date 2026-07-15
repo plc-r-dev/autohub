@@ -6,6 +6,7 @@ import {
   buildOnboardingRequestDocumentKey,
   buildPaymentSlipKey,
   buildStoreDocumentKey,
+  validateImageUploadFile,
   validateUploadFile,
 } from "@/lib/storage/validation";
 
@@ -141,6 +142,35 @@ export async function uploadOnboardingRequestDocumentFile(input: {
     fileName: input.file.name,
     fileSize: result.fileSize,
     mimeType: input.file.type || "application/octet-stream",
+  };
+}
+
+export async function uploadOnboardingRequestLogoFile(input: {
+  requestId: string;
+  file: File;
+}): Promise<UploadedFileMeta> {
+  validateImageUploadFile(input.file);
+
+  const key = buildOnboardingRequestDocumentKey(
+    input.requestId,
+    "logo",
+    input.file.name,
+  );
+  const body = new Uint8Array(await input.file.arrayBuffer());
+  const provider = await getStorageProvider();
+  const result = await provider.upload({
+    key,
+    body,
+    contentType: input.file.type || "image/jpeg",
+    fileName: input.file.name,
+  });
+
+  return {
+    key: result.key,
+    url: result.url,
+    fileName: input.file.name,
+    fileSize: result.fileSize,
+    mimeType: input.file.type || "image/jpeg",
   };
 }
 

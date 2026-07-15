@@ -26,4 +26,6 @@ export type JobDefinition = {
 export type RunJobOptions = {
   maxRetries?: number;
   retryDelayMs?: number;
+  /** When true, run even if the job is disabled in Settings → Scheduler. */
+  force?: boolean;
 };

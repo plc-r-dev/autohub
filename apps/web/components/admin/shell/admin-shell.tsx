@@ -5,37 +5,46 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded"
-import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded"
+import StorefrontRoundedIcon from "@mui/icons-material/StorefrontRounded"
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded"
 import AssessmentRoundedIcon from "@mui/icons-material/AssessmentRounded"
-import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded"
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded"
+import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded"
+import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded"
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded"
+import ExpandLess from "@mui/icons-material/ExpandLess"
+import ExpandMore from "@mui/icons-material/ExpandMore"
 import AppBar from "@mui/material/AppBar"
 import Box from "@mui/material/Box"
+import Collapse from "@mui/material/Collapse"
 import Drawer from "@mui/material/Drawer"
 import IconButton from "@mui/material/IconButton"
 import List from "@mui/material/List"
 import ListItemButton from "@mui/material/ListItemButton"
 import ListItemIcon from "@mui/material/ListItemIcon"
 import ListItemText from "@mui/material/ListItemText"
+import ListSubheader from "@mui/material/ListSubheader"
 import Toolbar from "@mui/material/Toolbar"
 import Typography from "@mui/material/Typography"
 import { AdminSignOutButton } from "@/components/admin/ui/admin-sign-out-button"
 import {
-  ADMIN_NAV_ITEMS,
+  ADMIN_NAV_SECTIONS,
   isAdminNavActive,
+  isAdminNavGroupActive,
+  type AdminNavItem,
 } from "@/components/admin/shell/admin-nav"
 
-const DRAWER_WIDTH = 248
+const DRAWER_WIDTH = 260
 
 const NAV_ICONS: Record<string, React.ReactNode> = {
   "/admin/dashboard": <DashboardRoundedIcon fontSize="small" />,
-  "/admin/service-store-requests": <AssignmentRoundedIcon fontSize="small" />,
+  "/admin/service-stores": <StorefrontRoundedIcon fontSize="small" />,
   "/admin/billings": <ReceiptLongRoundedIcon fontSize="small" />,
   "/admin/reports": <AssessmentRoundedIcon fontSize="small" />,
-  "/admin/jobs": <ScheduleRoundedIcon fontSize="small" />,
-  "/admin/settings": <SettingsRoundedIcon fontSize="small" />,
+  "/admin/settings/general": <SettingsRoundedIcon fontSize="small" />,
+  "/admin/settings/platform": <SettingsRoundedIcon fontSize="small" />,
+  "/admin/settings/scheduler": <ScheduleRoundedIcon fontSize="small" />,
+  "/admin/settings/audit-logs": <AssignmentRoundedIcon fontSize="small" />,
 }
 
 type AdminShellProps = {
@@ -45,13 +54,108 @@ type AdminShellProps = {
   children: React.ReactNode
 }
 
+function NavItem({
+  item,
+  onNavigate,
+}: {
+  item: AdminNavItem
+  onNavigate: () => void
+}) {
+  const pathname = usePathname()
+  const hasChildren = Boolean(item.children?.length)
+  const groupActive = isAdminNavGroupActive(pathname, item)
+  const [open, setOpen] = React.useState(groupActive)
+
+  React.useEffect(() => {
+    if (groupActive) setOpen(true)
+  }, [groupActive])
+
+  if (!hasChildren) {
+    const selected = isAdminNavActive(pathname, item)
+    return (
+      <ListItemButton
+        component={Link}
+        href={item.href}
+        selected={selected}
+        onClick={onNavigate}
+      >
+        <ListItemIcon sx={{ minWidth: 36 }}>
+          {NAV_ICONS[item.href]}
+        </ListItemIcon>
+        <ListItemText
+          primary={item.label}
+          slotProps={{
+            primary: { variant: "body2", sx: { fontWeight: 600 } },
+          }}
+        />
+      </ListItemButton>
+    )
+  }
+
+  const defaultChild = item.children![0]!
+
+  return (
+    <>
+      <ListItemButton
+        selected={groupActive && !open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <ListItemIcon sx={{ minWidth: 36 }}>
+          {NAV_ICONS[item.href]}
+        </ListItemIcon>
+        <ListItemText
+          primary={item.label}
+          slotProps={{
+            primary: { variant: "body2", sx: { fontWeight: 600 } },
+          }}
+        />
+        {open ? (
+          <ExpandLess fontSize="small" />
+        ) : (
+          <ExpandMore fontSize="small" />
+        )}
+      </ListItemButton>
+      <Collapse in={open} timeout="auto" unmountOnExit>
+        <List component="div" disablePadding>
+          {item.children!.map((child) => {
+            const selected = isAdminNavActive(pathname, child)
+            return (
+              <ListItemButton
+                key={child.href}
+                component={Link}
+                href={child.href}
+                selected={selected}
+                onClick={onNavigate}
+                sx={{ pl: 5.5 }}
+              >
+                <ListItemText
+                  primary={child.label}
+                  slotProps={{
+                    primary: {
+                      variant: "body2",
+                      sx: { fontWeight: selected ? 700 : 500 },
+                    },
+                  }}
+                />
+              </ListItemButton>
+            )
+          })}
+          {/* Keep parent href discoverable for deep links */}
+          <Box component="span" sx={{ display: "none" }}>
+            {defaultChild.href}
+          </Box>
+        </List>
+      </Collapse>
+    </>
+  )
+}
+
 export function AdminShell({
   title,
   description,
   actions,
   children,
 }: AdminShellProps) {
-  const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = React.useState(false)
 
   const drawer = (
@@ -75,40 +179,51 @@ export function AdminShell({
           Admin
         </Typography>
       </Toolbar>
-      <List sx={{ flex: 1, py: 1 }}>
-        {ADMIN_NAV_ITEMS.map((item) => {
-          const selected = isAdminNavActive(pathname, item)
-          return (
-            <ListItemButton
-              key={item.href}
-              component={Link}
-              href={item.href}
-              selected={selected}
-              onClick={() => setMobileOpen(false)}
+
+      {ADMIN_NAV_SECTIONS.map((section) => (
+        <List
+          key={section.id}
+          dense
+          subheader={
+            <ListSubheader
+              component="div"
+              sx={{
+                bgcolor: "transparent",
+                lineHeight: 2.5,
+                fontSize: "0.7rem",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+              }}
             >
-              <ListItemIcon sx={{ minWidth: 36 }}>
-                {NAV_ICONS[item.href]}
-              </ListItemIcon>
-              <ListItemText
-                primary={item.label}
-                slotProps={{
-                  primary: { variant: "body2", sx: { fontWeight: 600 } },
-                }}
-              />
-            </ListItemButton>
-          )
-        })}
-      </List>
+              {section.label}
+            </ListSubheader>
+          }
+          sx={{ py: 0.5 }}
+        >
+          {section.items.map((item) => (
+            <NavItem
+              key={item.href}
+              item={item}
+              onNavigate={() => setMobileOpen(false)}
+            />
+          ))}
+        </List>
+      ))}
+
+      <Box sx={{ flex: 1 }} />
       <Box sx={{ p: 2, borderTop: 1, borderColor: "divider" }}>
         <Typography variant="caption" color="text.secondary">
-          Platform operations
+          Daily ops above · Platform admin in Settings
         </Typography>
       </Box>
     </Box>
   )
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
+    <Box
+      sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}
+    >
       <AppBar
         position="fixed"
         sx={{

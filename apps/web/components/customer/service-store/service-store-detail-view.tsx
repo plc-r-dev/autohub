@@ -12,7 +12,7 @@ import { ServiceStoreGallery } from "@/components/customer/service-store/service
 import { ButtonLink, ServiceCard } from "@/components/customer/ui";
 import { ServiceShopImage } from "@/components/customer/ui/service-shop-image";
 import { ImagePreviewLightbox } from "@/components/customer/ui/image-preview-lightbox";
-import { getServiceShopGalleryImages, getServiceShopImage } from "@/lib/media/service-shop-images";
+import { getServiceShopImage } from "@/lib/media/service-shop-images";
 import { buildBookingWizardHref } from "@/lib/booking/wizard";
 import type { HoursRow, StoreOpenStatus } from "@/lib/booking/store-hours-display";
 import { cn } from "@workspace/ui/lib/utils";
@@ -24,6 +24,7 @@ export type ServiceStoreDetailService = {
   price: string;
   branchId: string;
   category: string;
+  imageUrl?: string | null;
 };
 
 type ServiceStoreDetailViewProps = {
@@ -38,6 +39,8 @@ type ServiceStoreDetailViewProps = {
   openStatus: StoreOpenStatus;
   hours: HoursRow[];
   canBook: boolean;
+  imageUrl?: string | null;
+  galleryImages?: Array<{ src: string; alt: string }>;
   services: ServiceStoreDetailService[];
   categories: string[];
 };
@@ -54,12 +57,23 @@ export function ServiceStoreDetailView({
   openStatus,
   hours,
   canBook,
+  imageUrl,
+  galleryImages = [],
   services,
   categories,
 }: ServiceStoreDetailViewProps) {
   const [previewOpen, setPreviewOpen] = useState(false);
-  const heroImage = getServiceShopImage(serviceStoreId, name, 0);
-  const galleryImages = getServiceShopGalleryImages(serviceStoreId, name, 8);
+  const heroImage = imageUrl?.trim()
+    ? { src: imageUrl, alt: `${name} store photo` }
+    : getServiceShopImage(serviceStoreId, name, 0);
+  const previewGallery =
+    galleryImages.length > 0
+      ? galleryImages
+      : [];
+  const lightboxImages = [
+    heroImage,
+    ...previewGallery.filter((image) => image.src !== heroImage.src),
+  ];
   const mapsQuery = address ?? name;
   const firstService = services[0];
   const primaryBookHref = firstService
@@ -85,6 +99,7 @@ export function ServiceStoreDetailView({
             <ServiceShopImage
               serviceStoreId={serviceStoreId}
               serviceStoreName={name}
+              imageUrl={imageUrl}
               className="h-full"
               sizes="(min-width: 1024px) 1280px, 100vw"
               priority
@@ -213,8 +228,9 @@ export function ServiceStoreDetailView({
                       serviceId: service.id,
                       branchId: service.branchId,
                     })}
-                    canBook={canBook}
+                    canBook={false}
                     serviceStoreId={serviceStoreId}
+                    imageUrl={service.imageUrl}
                     imageSeed={service.name}
                     imageSlot={service.name.length % 6}
                   />
@@ -263,13 +279,17 @@ export function ServiceStoreDetailView({
 
           <div className="rounded-[16px] bg-white p-4 shadow-sm">
             <h2 className="mb-3 text-[14px] font-semibold text-[#0F172A]">Photos</h2>
-            <ServiceStoreGallery serviceStoreId={serviceStoreId} serviceStoreName={name} />
+            <ServiceStoreGallery
+              serviceStoreId={serviceStoreId}
+              serviceStoreName={name}
+              images={galleryImages}
+            />
           </div>
         </aside>
       </div>
 
       <ImagePreviewLightbox
-        images={[heroImage, ...galleryImages]}
+        images={lightboxImages}
         initialIndex={0}
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}

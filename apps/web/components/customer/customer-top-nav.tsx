@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Calendar, Home, Menu, X } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
+import { AutohubLogo } from "@/components/brand/autohub-logo";
 
 const NAV_LINKS = [
   { href: "/browse", label: "Home", icon: Home },
@@ -25,12 +26,7 @@ export function CustomerTopNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-[#E8E8E8] bg-[#F8F8F8]/95 backdrop-blur-md">
       <div className="mx-auto grid max-w-[1280px] grid-cols-[1fr_auto_1fr] items-center gap-4 px-5 py-5 md:px-8">
-        <Link
-          href="/browse"
-          className="font-serif text-[22px] font-semibold tracking-tight text-[#0F172A]"
-        >
-          AutoHub
-        </Link>
+        <AutohubLogo href="/browse" heightClassName="h-[22px]" priority />
 
         <nav className="hidden items-center justify-center gap-8 md:flex">
           {NAV_LINKS.map((link) => {

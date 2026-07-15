@@ -23,7 +23,7 @@ type ServiceStoreCardProps = {
 
 export function ServiceStoreCard({ serviceStore }: ServiceStoreCardProps) {
   const detailHref = `/browse/${serviceStore.id}`;
-  const canBook = serviceStore.canBook ?? serviceStore.bookHref.includes("/bookings/new");
+  const canBook = serviceStore.canBook === true;
   const hasApprovedClaim = serviceStore.hasApprovedClaim ?? false;
   const isOpen = serviceStore.openingStatus !== "closed";
   const rating = serviceStore.rating ?? "4.8";

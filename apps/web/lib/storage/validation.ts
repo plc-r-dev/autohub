@@ -75,7 +75,7 @@ export function buildStoreDocumentKey(
 
 export function buildOnboardingRequestDocumentKey(
   requestId: string,
-  kind: "citizen-id" | "company-document",
+  kind: "citizen-id" | "company-document" | "logo",
   fileName: string,
 ): string {
   const safeName = sanitizeFileName(fileName);

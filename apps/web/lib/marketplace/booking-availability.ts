@@ -59,7 +59,7 @@ const PRESENTATION: Record<
   SETUP_INCOMPLETE: {
     statusLabel: "Coming Soon",
     partnerBadge: null,
-    ctaLabel: "View Details",
+    ctaLabel: "Coming Soon",
     ctaAction: "details",
     unavailableMessage: "This Service Store is completing setup and is not bookable yet.",
   },
@@ -68,7 +68,11 @@ const PRESENTATION: Record<
 export function resolveMarketplaceBookingStatus(
   facts: MarketplaceServiceStoreFacts,
 ): MarketplaceBookingStatus {
-  if (facts.readinessStatus === READINESS_STATUS.READY && facts.bookingEnabled) {
+  if (
+    facts.readinessStatus === READINESS_STATUS.READY &&
+    facts.bookingEnabled &&
+    (facts.hasApprovedClaim || facts.hasOwnerMember)
+  ) {
     return MarketplaceBookingStatus.BOOKABLE;
   }
 
@@ -98,6 +102,7 @@ export function isServiceStoreBookable(facts: MarketplaceServiceStoreFacts): boo
   return (
     facts.bookingEnabled &&
     facts.readinessStatus === READINESS_STATUS.READY &&
+    (facts.hasApprovedClaim || facts.hasOwnerMember) &&
     (facts.status === "READY_FOR_BOOKING" || facts.status === "ACTIVE")
   );
 }

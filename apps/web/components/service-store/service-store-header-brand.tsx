@@ -18,7 +18,7 @@ export function ServiceStoreHeaderBrand({
         alt="AutoHub"
         width={909}
         height={156}
-        className="h-5 w-auto shrink-0 bg-transparent sm:h-6 dark:hidden"
+        className="h-[22px] w-auto shrink-0 bg-transparent dark:hidden"
       />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -27,7 +27,7 @@ export function ServiceStoreHeaderBrand({
         width={860}
         height={149}
         aria-hidden
-        className="hidden h-5 w-auto shrink-0 bg-transparent sm:h-6 dark:block"
+        className="hidden h-[22px] w-auto shrink-0 bg-transparent dark:block"
       />
       <span className="hidden min-w-0 border-l border-border pl-2 sm:block sm:pl-2.5">
         <span className="block text-[10px] leading-tight font-medium tracking-wide text-muted-foreground">

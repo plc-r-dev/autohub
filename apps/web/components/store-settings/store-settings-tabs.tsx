@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { DetailModalTabs } from "@/components/service-store/modals/detail-modal-parts"
+import { useStoreSettingsDirty } from "@/components/store-settings/store-unsaved-changes"
 
 export type StoreSettingsTab = "general" | "services" | "hours" | "staff"
 
@@ -20,8 +21,17 @@ export function StoreSettingsTabs({ activeTab }: StoreSettingsTabsProps) {
   const pathname = usePathname()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { isDirty } = useStoreSettingsDirty()
 
   function handleChange(tab: string) {
+    if (
+      tab !== activeTab &&
+      isDirty &&
+      !window.confirm("You have unsaved changes. Leave without saving?")
+    ) {
+      return
+    }
+
     const params = new URLSearchParams(searchParams.toString())
     params.set("tab", tab)
     params.delete("page")

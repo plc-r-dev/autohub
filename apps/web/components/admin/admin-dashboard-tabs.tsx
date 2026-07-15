@@ -5,7 +5,6 @@ import Link from "next/link"
 import Tab from "@mui/material/Tab"
 import Tabs from "@mui/material/Tabs"
 import Box from "@mui/material/Box"
-import Button from "@mui/material/Button"
 import Chip from "@mui/material/Chip"
 import Grid from "@mui/material/Grid"
 import Stack from "@mui/material/Stack"
@@ -14,7 +13,7 @@ import List from "@mui/material/List"
 import ListItem from "@mui/material/ListItem"
 import ListItemIcon from "@mui/material/ListItemIcon"
 import ListItemText from "@mui/material/ListItemText"
-import Alert from "@mui/material/Alert"
+import Paper from "@mui/material/Paper"
 import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded"
 import PaymentRoundedIcon from "@mui/icons-material/PaymentRounded"
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded"
@@ -44,20 +43,11 @@ type ActivityItem = {
   href?: string
 }
 
-type SystemAlert = {
-  id: string
-  title: string
-  detail: string
-  severity: "warning" | "error" | "info"
-  href?: string
-}
-
 export type AdminDashboardTabsProps = {
   initialTab?: "todo" | "kpi"
   todo: {
     tasks: TodoTask[]
     activity: ActivityItem[]
-    alerts: SystemAlert[]
   }
   kpi: {
     store: Array<{ label: string; value: string | number }>
@@ -103,14 +93,30 @@ export function AdminDashboardTabs({
   const openTaskCount = todo.tasks.reduce((sum, task) => sum + task.count, 0)
 
   return (
-    <Box>
-      <Box
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 3,
+        maxWidth: 1280,
+        mx: "auto",
+        width: "100%",
+      }}
+    >
+      <Paper
+        elevation={0}
         sx={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           gap: 2,
           flexWrap: "wrap",
+          px: 1.5,
+          py: 1,
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 2.5,
+          bgcolor: "background.paper",
         }}
       >
         <Tabs
@@ -118,30 +124,22 @@ export function AdminDashboardTabs({
           onChange={(_, value: "todo" | "kpi") => setTab(value)}
           sx={{
             minHeight: 40,
-            bgcolor: "action.hover",
-            borderRadius: 2,
-            p: 0.5,
-            "& .MuiTabs-indicator": { display: "none" },
-            "& .MuiTab-root": {
-              minHeight: 34,
-              borderRadius: 1.5,
-              px: 2,
+            "& .MuiTabs-indicator": {
+              height: 3,
+              borderRadius: "3px 3px 0 0",
             },
-            "& .Mui-selected": {
-              bgcolor: "background.paper",
-              boxShadow: 1,
+            "& .MuiTab-root": {
+              minHeight: 40,
+              px: 2,
+              fontWeight: 600,
             },
           }}
         >
           <Tab
             value="todo"
             label={
-              <Stack
-                direction="row"
-                spacing={1}
-                sx={{ alignItems: "center" }}
-              >
-                <span>To Do</span>
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                <span>Operations</span>
                 {openTaskCount > 0 ? (
                   <Chip size="small" color="secondary" label={openTaskCount} />
                 ) : null}
@@ -150,22 +148,27 @@ export function AdminDashboardTabs({
           />
           <Tab value="kpi" label="KPI" />
         </Tabs>
-        <Typography variant="caption" color="text.secondary">
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ px: 1, display: { xs: "none", sm: "block" } }}
+        >
           {tab === "todo"
             ? "Complete today's operational work"
             : "Read-only platform insights"}
         </Typography>
-      </Box>
+      </Paper>
 
       {tab === "todo" ? (
-        <Stack spacing={3} sx={{ pt: 2.5 }}>
+        <Stack spacing={3}>
           <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
-              Pending Tasks
-            </Typography>
+            <SectionHeading
+              title="Pending tasks"
+              subtitle="Jump into work that needs attention"
+            />
             <Grid container spacing={2}>
               {todo.tasks.map((task) => (
-                <Grid key={task.id} size={{ xs: 12, sm: 6 }}>
+                <Grid key={task.id} size={{ xs: 12, sm: 6, xl: 3 }}>
                   <AdminStatCard
                     label={task.title}
                     value={task.count}
@@ -179,115 +182,100 @@ export function AdminDashboardTabs({
             </Grid>
           </Box>
 
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, lg: 7 }}>
-              <AdminSectionCard title="Recent Activity">
-                {todo.activity.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary">
-                    No recent activity.
-                  </Typography>
-                ) : (
-                  <List disablePadding>
-                    {todo.activity.map((item) => {
-                      const Icon = ACTIVITY_ICON[item.category]
-                      return (
-                        <ListItem
-                          key={item.id}
-                          component={item.href ? Link : "div"}
-                          href={item.href}
-                          sx={{
-                            px: 0,
-                            borderRadius: 2,
-                            "&:hover": item.href
-                              ? { bgcolor: "action.hover" }
-                              : undefined,
-                          }}
-                        >
-                          <ListItemIcon sx={{ minWidth: 40 }}>
-                            <Icon fontSize="small" color="action" />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={item.title}
-                            secondary={`${item.detail} · ${item.at}`}
-                            slotProps={{
-                              primary: {
-                                variant: "body2",
-                                sx: { fontWeight: 600 },
-                              },
-                              secondary: { variant: "caption" },
-                            }}
-                          />
-                        </ListItem>
-                      )
-                    })}
-                  </List>
-                )}
-              </AdminSectionCard>
-            </Grid>
-            <Grid size={{ xs: 12, lg: 5 }}>
-              <AdminSectionCard title="System Alerts">
-                <Stack spacing={1.25}>
-                  {todo.alerts.map((alert) => (
-                    <Alert
-                      key={alert.id}
-                      severity={alert.severity}
-                      action={
-                        alert.href ? (
-                          <Button
-                            component={Link}
-                            href={alert.href}
-                            color="inherit"
-                            size="small"
-                          >
-                            Investigate
-                          </Button>
-                        ) : undefined
-                      }
+          <AdminSectionCard
+            title="Recent activity"
+            description="Latest claims, payments, and store events"
+          >
+            {todo.activity.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                No recent activity.
+              </Typography>
+            ) : (
+              <List disablePadding sx={{ mx: -1 }}>
+                {todo.activity.map((item) => {
+                  const Icon = ACTIVITY_ICON[item.category]
+                  return (
+                    <ListItem
+                      key={item.id}
+                      component={item.href ? Link : "div"}
+                      href={item.href}
+                      sx={{
+                        px: 1,
+                        py: 1.25,
+                        borderRadius: 2,
+                        "&:hover": item.href
+                          ? { bgcolor: "action.hover" }
+                          : undefined,
+                      }}
                     >
-                      <Typography variant="subtitle2">{alert.title}</Typography>
-                      <Typography variant="body2">{alert.detail}</Typography>
-                    </Alert>
-                  ))}
-                </Stack>
-              </AdminSectionCard>
-            </Grid>
-          </Grid>
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        <Icon fontSize="small" color="action" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.title}
+                        secondary={`${item.detail} · ${item.at}`}
+                        slotProps={{
+                          primary: {
+                            variant: "body2",
+                            sx: { fontWeight: 600 },
+                          },
+                          secondary: { variant: "caption" },
+                        }}
+                      />
+                    </ListItem>
+                  )
+                })}
+              </List>
+            )}
+          </AdminSectionCard>
         </Stack>
       ) : (
-        <Stack spacing={3} sx={{ pt: 2.5 }}>
-          <KpiGroup title="Store" cards={kpi.store} />
-          <KpiGroup title="Customer" cards={kpi.customer} />
-          <KpiGroup title="Operations" cards={kpi.operations} />
+        <Stack spacing={3}>
           <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
-              Analytics
-            </Typography>
+            <SectionHeading
+              title="At a glance"
+              subtitle="Today's operations and platform totals"
+            />
+            <Grid container spacing={2}>
+              {[...kpi.operations, ...kpi.store, ...kpi.customer].map((card) => (
+                <Grid key={card.label} size={{ xs: 12, sm: 6, md: 4, xl: 3 }}>
+                  <AdminStatCard label={card.label} value={card.value} />
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+
+          <Box>
+            <SectionHeading
+              title="Analytics"
+              subtitle="Booking, revenue, growth, and billing trends"
+            />
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <AdminBarChart
-                  title="Booking Trend (7 days)"
+                  title="Booking trend (7 days)"
                   points={kpi.bookingTrend7}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <AdminBarChart
-                  title="Booking Trend (30 days)"
+                  title="Booking trend (30 days)"
                   points={kpi.bookingTrend30}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <AdminBarChart
-                  title="Revenue Trend"
+                  title="Revenue trend"
                   points={kpi.revenueTrend}
                   valueFormatter={formatChartCurrency}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <AdminBarChart title="Store Growth" points={kpi.storeGrowth} />
+                <AdminBarChart title="Store growth" points={kpi.storeGrowth} />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <AdminBarChart
-                  title="Billing Status"
+                  title="Billing status"
                   points={kpi.billingStatus}
                   valueFormatter={formatChartCurrency}
                 />
@@ -300,25 +288,23 @@ export function AdminDashboardTabs({
   )
 }
 
-function KpiGroup({
+function SectionHeading({
   title,
-  cards,
+  subtitle,
 }: {
   title: string
-  cards: Array<{ label: string; value: string | number }>
+  subtitle?: string
 }) {
   return (
-    <Box>
-      <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
+    <Stack spacing={0.25} sx={{ mb: 1.75 }}>
+      <Typography variant="h2" component="h2">
         {title}
       </Typography>
-      <Grid container spacing={2}>
-        {cards.map((card) => (
-          <Grid key={card.label} size={{ xs: 12, sm: 6, md: 4 }}>
-            <AdminStatCard label={card.label} value={card.value} />
-          </Grid>
-        ))}
-      </Grid>
-    </Box>
+      {subtitle ? (
+        <Typography variant="body2" color="text.secondary">
+          {subtitle}
+        </Typography>
+      ) : null}
+    </Stack>
   )
 }

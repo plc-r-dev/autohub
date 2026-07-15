@@ -13,8 +13,7 @@ export type ReadinessCheckId =
   | "branch_configured"
   | "service_configured"
   | "hours_configured"
-  | "contact_configured"
-  | "payment_configured";
+  | "contact_configured";
 
 export type ReadinessCheckItem = {
   id: ReadinessCheckId;
@@ -83,13 +82,6 @@ export function evaluateServiceStoreReadiness(input: ReadinessInput): ServiceSto
       label: "Contact information",
       description: "Add a phone number or email to your Service Store profile.",
       met: input.hasContactInfo,
-      actionHref: "/app/settings",
-    },
-    {
-      id: "payment_configured",
-      label: "Payment account",
-      description: "Add a bank account for AutoHub payouts.",
-      met: Boolean(input.hasPaymentAccount),
       actionHref: "/app/settings",
     },
   ];

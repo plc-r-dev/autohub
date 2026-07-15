@@ -12,10 +12,14 @@ type StoreImageUploadCardProps = {
   imageUrl?: string | null
   aspectClassName?: string
   compact?: boolean
+  /** Render label + upload/remove buttons only (no preview tile). */
+  buttonOnly?: boolean
+  multiple?: boolean
   deferUpload?: boolean
   inputName?: string
   removed?: boolean
   onFileSelect?: (file: File | null) => void
+  onFilesSelect?: (files: File[]) => void
   onMarkRemove?: () => void
   onUpload?: (formData: FormData) => Promise<{ ok: boolean; error?: string }>
   onRemove?: () => Promise<{ ok: boolean; error?: string }>
@@ -28,10 +32,13 @@ export function StoreImageUploadCard({
   imageUrl,
   aspectClassName = "aspect-[4/3]",
   compact = false,
+  buttonOnly = false,
+  multiple = false,
   deferUpload = false,
   inputName,
   removed = false,
   onFileSelect,
+  onFilesSelect,
   onMarkRemove,
   onUpload,
   onRemove,
@@ -40,9 +47,11 @@ export function StoreImageUploadCard({
   const inputRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
   const [localPreview, setLocalPreview] = useState<string | null>(null)
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
 
   const displayUrl = removed ? null : localPreview ?? imageUrl ?? null
+  const hasImage = Boolean(displayUrl)
 
   function clearLocalPreview() {
     if (localPreview) {
@@ -51,16 +60,28 @@ export function StoreImageUploadCard({
     }
   }
 
-  function handleSelect(file: File | undefined) {
-    if (!file) {
+  function handleSelect(files: FileList | null) {
+    const selected = files ? Array.from(files) : []
+    if (selected.length === 0) {
       return
     }
 
     setError(null)
 
+    if (multiple && deferUpload && onFilesSelect) {
+      onFilesSelect(selected)
+      return
+    }
+
+    const file = selected[0]
+    if (!file) {
+      return
+    }
+
     if (deferUpload) {
       clearLocalPreview()
       setLocalPreview(URL.createObjectURL(file))
+      setSelectedFileName(file.name)
       onFileSelect?.(file)
       return
     }
@@ -86,6 +107,7 @@ export function StoreImageUploadCard({
 
     if (deferUpload) {
       clearLocalPreview()
+      setSelectedFileName(null)
       if (inputRef.current) {
         inputRef.current.value = ""
       }
@@ -105,6 +127,72 @@ export function StoreImageUploadCard({
       }
       setIsPending(false)
     })
+  }
+
+  const fileInput = (
+    <input
+      ref={inputRef}
+      type="file"
+      name={deferUpload && !multiple ? inputName : undefined}
+      accept="image/jpeg,image/png,image/webp"
+      multiple={multiple}
+      className="hidden"
+      onChange={(event) => {
+        const files = event.target.files
+        handleSelect(files)
+        // Keep the file on named defer-upload inputs so form submit includes it.
+        // Clear only for multi-select / immediate-upload flows.
+        if (multiple || !deferUpload || !inputName) {
+          event.target.value = ""
+        }
+      }}
+    />
+  )
+
+  if (buttonOnly) {
+    return (
+      <div className="space-y-2">
+        <div>
+          <p className="text-sm font-medium text-foreground">{label}</p>
+          {description ? (
+            <p className="text-xs text-muted-foreground">{description}</p>
+          ) : null}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <ServiceStoreButton
+            type="button"
+            variant="secondary"
+            disabled={isPending}
+            onClick={() => inputRef.current?.click()}
+            className="h-9 gap-2 px-3 text-xs"
+          >
+            <ImagePlus className="size-4" />
+            {hasImage ? "Replace cover" : "Upload cover"}
+          </ServiceStoreButton>
+          {hasImage && (onRemove || onMarkRemove) ? (
+            <ServiceStoreButton
+              type="button"
+              variant="secondary"
+              disabled={isPending}
+              onClick={handleRemove}
+              className="h-9 px-3 text-xs text-red-600 dark:text-red-400"
+            >
+              <Trash2 className="size-4" />
+              Remove
+            </ServiceStoreButton>
+          ) : null}
+          {hasImage ? (
+            <span className="truncate text-xs text-muted-foreground">
+              {selectedFileName ?? "Cover photo set"}
+            </span>
+          ) : null}
+        </div>
+
+        {fileInput}
+        {error ? <p className="text-xs text-red-600 dark:text-red-400">{error}</p> : null}
+      </div>
+    )
   }
 
   return (
@@ -185,20 +273,7 @@ export function StoreImageUploadCard({
         )}
       </div>
 
-      <input
-        ref={inputRef}
-        type="file"
-        name={deferUpload ? inputName : undefined}
-        accept="image/jpeg,image/png,image/webp"
-        className="hidden"
-        onChange={(event) => {
-          handleSelect(event.target.files?.[0])
-          if (!deferUpload) {
-            event.target.value = ""
-          }
-        }}
-      />
-
+      {fileInput}
       {error ? <p className="text-xs text-red-600 dark:text-red-400">{error}</p> : null}
     </div>
   )

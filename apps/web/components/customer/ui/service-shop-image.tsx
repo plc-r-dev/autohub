@@ -9,6 +9,8 @@ import { cn } from "@workspace/ui/lib/utils";
 type ServiceShopImageProps = {
   serviceStoreId: string;
   serviceStoreName: string;
+  /** Real store logo/cover URL. Falls back to curated placeholder when absent. */
+  imageUrl?: string | null;
   slot?: number;
   className?: string;
   imageClassName?: string;
@@ -22,6 +24,7 @@ type ServiceShopImageProps = {
 export function ServiceShopImage({
   serviceStoreId,
   serviceStoreName,
+  imageUrl,
   slot = 0,
   className,
   imageClassName,
@@ -31,10 +34,15 @@ export function ServiceShopImage({
   previewImages,
   previewIndex = 0,
 }: ServiceShopImageProps) {
-  const { src, alt } = getServiceShopImage(serviceStoreId, serviceStoreName, slot);
+  const placeholder = getServiceShopImage(serviceStoreId, serviceStoreName, slot);
+  const src = imageUrl?.trim() || placeholder.src;
+  const alt = imageUrl?.trim()
+    ? `${serviceStoreName} store photo`
+    : placeholder.alt;
   const [previewOpen, setPreviewOpen] = useState(false);
   const images = previewImages ?? [{ src, alt }];
   const startIndex = previewImages ? previewIndex : 0;
+  const isLocalUpload = src.startsWith("/api/storage/");
 
   const imageContent = (
     <div className={cn("relative overflow-hidden bg-[#134E4A]", className)}>
@@ -44,6 +52,7 @@ export function ServiceShopImage({
         fill
         priority={priority}
         sizes={sizes}
+        unoptimized={isLocalUpload}
         className={cn("object-cover", imageClassName)}
       />
       {previewable ? (

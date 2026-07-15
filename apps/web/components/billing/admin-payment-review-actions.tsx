@@ -1,6 +1,7 @@
 "use client"
 
-import { useActionState, useTransition } from "react"
+import { useActionState, useEffect, useTransition } from "react"
+import { useRouter } from "next/navigation"
 import Alert from "@mui/material/Alert"
 import Button from "@mui/material/Button"
 import Stack from "@mui/material/Stack"
@@ -26,11 +27,18 @@ export function AdminPaymentReviewActions({
   reviewStatus,
   billingStatus,
 }: AdminPaymentReviewActionsProps) {
+  const router = useRouter()
   const [isApproving, startTransition] = useTransition()
   const [state, rejectAction, isRejecting] = useActionState(
     rejectBillingPaymentAsAdmin.bind(null, billingId, paymentId),
     initialState,
   )
+
+  useEffect(() => {
+    if (state.success) {
+      router.refresh()
+    }
+  }, [state.success, router])
 
   if (reviewStatus !== "PENDING" || billingStatus !== "PAYMENT_SUBMITTED") {
     return null
@@ -43,19 +51,22 @@ export function AdminPaymentReviewActions({
         <Alert severity="success">{state.success}</Alert>
       ) : null}
 
-      <Button
-        type="button"
-        size="small"
-        variant="contained"
-        disabled={isApproving}
-        onClick={() =>
-          startTransition(async () => {
-            await approveBillingPaymentAsAdmin(billingId, paymentId)
-          })
-        }
-      >
-        {isApproving ? "Approving..." : "Approve payment"}
-      </Button>
+      <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
+        <Button
+          type="button"
+          size="small"
+          variant="contained"
+          disabled={isApproving || isRejecting}
+          onClick={() =>
+            startTransition(async () => {
+              await approveBillingPaymentAsAdmin(billingId, paymentId)
+              router.refresh()
+            })
+          }
+        >
+          {isApproving ? "Approving..." : "Approve"}
+        </Button>
+      </Stack>
 
       <form action={rejectAction}>
         <Stack spacing={1.5}>
@@ -64,6 +75,7 @@ export function AdminPaymentReviewActions({
             name="reason"
             label="Reject reason"
             required
+            size="small"
             multiline
             minRows={2}
             error={Boolean(state.fieldErrors?.reason?.[0])}
@@ -74,9 +86,9 @@ export function AdminPaymentReviewActions({
             size="small"
             variant="outlined"
             color="error"
-            disabled={isRejecting}
+            disabled={isRejecting || isApproving}
           >
-            {isRejecting ? "Rejecting..." : "Reject payment"}
+            {isRejecting ? "Rejecting..." : "Reject"}
           </Button>
         </Stack>
       </form>

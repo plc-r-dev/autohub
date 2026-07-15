@@ -16,15 +16,34 @@ import {
   uploadStoreImageFile,
 } from "@/lib/storage/media-upload"
 import { prisma } from "@/lib/prisma"
+import { loadReadinessInput } from "@/lib/service-store/application/readiness-queries"
+import { isServiceStoreReady } from "@/lib/service-store/domain"
 
 export type StoreSettingsActionResult =
   | { ok: true; message?: string }
   | { ok: false; error: string; fieldErrors?: Record<string, string[]> }
 
-function revalidateStoreSettings() {
+function revalidateStoreSettings(serviceStoreId?: string) {
   revalidatePath("/app/settings")
   revalidatePath("/app/profile")
   revalidatePath("/browse")
+  if (serviceStoreId) {
+    revalidatePath(`/browse/${serviceStoreId}`)
+  }
+}
+
+/** Book Now stays locked until required Store Settings are filled. */
+async function syncBookingEnabledFromSettings(serviceStoreId: string) {
+  const input = await loadReadinessInput(serviceStoreId)
+  if (!input) {
+    return
+  }
+
+  const ready = isServiceStoreReady(input)
+  await prisma.serviceStore.update({
+    where: { id: serviceStoreId },
+    data: { bookingEnabled: ready },
+  })
 }
 
 export async function saveStoreGeneral(
@@ -47,7 +66,7 @@ export async function saveStoreGeneral(
   const branch = await ensureDefaultBranch(serviceStore.id, parsed.data.name)
   const store = await prisma.serviceStore.findUnique({
     where: { id: serviceStore.id },
-    select: { logoKey: true, galleryImageKeys: true },
+    select: { logoKey: true, coverImageKey: true, galleryImageKeys: true },
   })
 
   if (!store) {
@@ -78,6 +97,34 @@ export async function saveStoreGeneral(
       return {
         ok: false,
         error: error instanceof Error ? error.message : "Logo upload failed.",
+      }
+    }
+  }
+
+  let coverImageKey = store.coverImageKey
+  const removeCover = formData.get("removeCover") === "true"
+  const coverFile = formData.get("cover")
+
+  if (removeCover && coverImageKey) {
+    await removeMediaFile(coverImageKey)
+    coverImageKey = null
+  }
+
+  if (coverFile instanceof File && coverFile.size > 0) {
+    try {
+      const uploaded = await uploadStoreImageFile({
+        serviceStoreId: serviceStore.id,
+        kind: "cover",
+        file: coverFile,
+      })
+      if (coverImageKey) {
+        await removeMediaFile(coverImageKey)
+      }
+      coverImageKey = uploaded.key
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : "Cover upload failed.",
       }
     }
   }
@@ -123,6 +170,7 @@ export async function saveStoreGeneral(
       data: {
         ...parsed.data,
         logoKey,
+        coverImageKey,
         galleryImageKeys,
       },
     }),
@@ -132,7 +180,8 @@ export async function saveStoreGeneral(
     }),
   ])
 
-  revalidateStoreSettings()
+  await syncBookingEnabledFromSettings(serviceStore.id)
+  revalidateStoreSettings(serviceStore.id)
   return { ok: true, message: "Store settings saved." }
 }
 
@@ -166,7 +215,7 @@ export async function uploadStoreLogo(
       data: { logoKey: uploaded.key },
     })
 
-    revalidateStoreSettings()
+    revalidateStoreSettings(serviceStore.id)
     return { ok: true, message: "Logo uploaded." }
   } catch (error) {
     return {
@@ -206,7 +255,7 @@ export async function uploadStoreCover(
       data: { coverImageKey: uploaded.key },
     })
 
-    revalidateStoreSettings()
+    revalidateStoreSettings(serviceStore.id)
     return { ok: true, message: "Cover image uploaded." }
   } catch (error) {
     return {
@@ -244,7 +293,7 @@ export async function uploadStoreGalleryImage(
       },
     })
 
-    revalidateStoreSettings()
+    revalidateStoreSettings(serviceStore.id)
     return { ok: true, message: "Photo added." }
   } catch (error) {
     return {
@@ -270,7 +319,7 @@ export async function removeStoreLogo(): Promise<StoreSettingsActionResult> {
     data: { logoKey: null },
   })
 
-  revalidateStoreSettings()
+  revalidateStoreSettings(serviceStore.id)
   return { ok: true, message: "Logo removed." }
 }
 
@@ -290,7 +339,7 @@ export async function removeStoreCover(): Promise<StoreSettingsActionResult> {
     data: { coverImageKey: null },
   })
 
-  revalidateStoreSettings()
+  revalidateStoreSettings(serviceStore.id)
   return { ok: true, message: "Cover image removed." }
 }
 
@@ -315,7 +364,7 @@ export async function removeStoreGalleryImage(
     },
   })
 
-  revalidateStoreSettings()
+  revalidateStoreSettings(serviceStore.id)
   return { ok: true, message: "Photo removed." }
 }
 
@@ -401,7 +450,8 @@ export async function saveStoreService(
     }
   }
 
-  revalidateStoreSettings()
+  await syncBookingEnabledFromSettings(serviceStore.id)
+  revalidateStoreSettings(serviceStore.id)
   return { ok: true, message: serviceId ? "Service updated." : "Service created." }
 }
 
@@ -424,7 +474,8 @@ export async function deleteStoreService(
   }
 
   await prisma.service.delete({ where: { id: service.id } })
-  revalidateStoreSettings()
+  await syncBookingEnabledFromSettings(serviceStore.id)
+  revalidateStoreSettings(serviceStore.id)
   return { ok: true, message: "Service deleted." }
 }
 
@@ -493,6 +544,7 @@ export async function saveStoreHours(
     ),
   )
 
-  revalidateStoreSettings()
+  await syncBookingEnabledFromSettings(serviceStore.id)
+  revalidateStoreSettings(serviceStore.id)
   return { ok: true, message: "Opening hours saved." }
 }

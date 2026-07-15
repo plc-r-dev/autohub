@@ -1,18 +1,27 @@
-"use server";
+"use server"
 
-import { revalidatePath } from "next/cache";
-import { requireAdminSession } from "@/lib/auth/require-admin";
-import { runAll, runJob } from "@/lib/jobs/runner";
+import { revalidatePath } from "next/cache"
+import { requireAdminSession } from "@/lib/auth/require-admin"
+import { setJobEnabled } from "@/lib/jobs/job-settings"
+import { runJob } from "@/lib/jobs/runner"
 
-export async function runJobNowAction(jobName: string) {
-  await requireAdminSession();
-  await runJob(jobName, { maxRetries: 2, retryDelayMs: 1500 });
-  revalidatePath("/admin/jobs");
-  revalidatePath(`/admin/jobs/${encodeURIComponent(jobName)}`);
+function revalidateSchedulerPaths(jobName?: string) {
+  revalidatePath("/admin/settings/scheduler")
+  revalidatePath("/admin/jobs")
+  if (jobName) {
+    revalidatePath(`/admin/settings/scheduler/${encodeURIComponent(jobName)}`)
+    revalidatePath(`/admin/jobs/${encodeURIComponent(jobName)}`)
+  }
 }
 
-export async function runAllJobsNowAction() {
-  await requireAdminSession();
-  await runAll({ maxRetries: 1, retryDelayMs: 1000 });
-  revalidatePath("/admin/jobs");
+export async function runJobNowAction(jobName: string) {
+  await requireAdminSession()
+  await runJob(jobName, { maxRetries: 2, retryDelayMs: 1500, force: true })
+  revalidateSchedulerPaths(jobName)
+}
+
+export async function setJobEnabledAction(jobName: string, enabled: boolean) {
+  await requireAdminSession()
+  await setJobEnabled(jobName, enabled)
+  revalidateSchedulerPaths(jobName)
 }

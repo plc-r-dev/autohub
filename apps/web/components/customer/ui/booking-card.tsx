@@ -10,6 +10,7 @@ export type BookingCardData = {
   bookingNumber: string
   serviceStoreId: string
   serviceStoreName: string
+  serviceStoreImageUrl?: string | null
   branchName?: string
   bookingDate: Date | string
   vehiclePlate: string
@@ -52,6 +53,7 @@ export function BookingCard({ booking, onViewDetail }: BookingCardProps) {
         <ServiceShopImage
           serviceStoreId={booking.serviceStoreId}
           serviceStoreName={booking.serviceStoreName}
+          imageUrl={booking.serviceStoreImageUrl}
           className="size-[72px] shrink-0 rounded-2xl sm:size-20"
           sizes="80px"
         />

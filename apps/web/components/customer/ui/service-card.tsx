@@ -1,8 +1,9 @@
-import { ArrowRight, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 import { ButtonLink } from "@/components/customer/ui/button";
 import { ServiceShopImage } from "@/components/customer/ui/service-shop-image";
 import { formatPrice } from "@/lib/booking/format";
 import { cn } from "@workspace/ui/lib/utils";
+import { ArrowRight } from "lucide-react";
 
 type ServiceCardProps = {
   name: string;
@@ -12,16 +13,13 @@ type ServiceCardProps = {
   canBook?: boolean;
   /** Service image, sourced via ServiceShopImage. Omit to render without an image. */
   serviceStoreId?: string;
+  imageUrl?: string | null;
   imageSeed?: string;
   imageSlot?: number;
 };
 
 /**
- * The card is not a link — "Book Now" (ButtonLink, system primary color) is
- * the one explicit action, leaving room for other card-level actions
- * (favorite, share, compare) later without them fighting a whole-card tap
- * target. Row layout on mobile (booking-app menu feel), column layout on
- * desktop (catalog tile feel) via flex-direction, not two components.
+ * Catalog tile for a service. Optional Book Now when `canBook` is true.
  */
 export function ServiceCard({
   name,
@@ -30,6 +28,7 @@ export function ServiceCard({
   bookHref,
   canBook = true,
   serviceStoreId,
+  imageUrl,
   imageSeed,
   imageSlot,
 }: ServiceCardProps) {
@@ -39,7 +38,7 @@ export function ServiceCard({
         "group relative flex flex-row overflow-hidden rounded-[20px] bg-white ring-1 ring-black/[0.04] transition-all duration-200 md:flex-col",
         canBook
           ? "hover:-translate-y-0.5 hover:shadow-[0_16px_28px_rgba(0,0,0,0.09)] hover:ring-[#16A34A]/30"
-          : "opacity-60",
+          : null,
       )}
     >
       <div className="relative aspect-square w-28 shrink-0 overflow-hidden sm:w-32 md:aspect-[4/3] md:w-full">
@@ -47,6 +46,7 @@ export function ServiceCard({
           <ServiceShopImage
             serviceStoreId={serviceStoreId}
             serviceStoreName={imageSeed ?? name}
+            imageUrl={imageUrl}
             slot={imageSlot}
             className="h-full"
             imageClassName="transition-transform duration-300 md:group-hover:scale-105"
@@ -85,18 +85,14 @@ export function ServiceCard({
           ) : null}
         </div>
 
-        <div className="shrink-0 md:hidden">
-          {canBook ? (
+        {canBook ? (
+          <div className="shrink-0 md:hidden">
             <ButtonLink href={bookHref} variant="primary" size="sm" aria-label={`Book ${name}`}>
               Book
               <ArrowRight className="size-3.5" />
             </ButtonLink>
-          ) : (
-            <span className="text-[11px] font-medium whitespace-nowrap text-[#94A3B8]">
-              Unavailable
-            </span>
-          )}
-        </div>
+          </div>
+        ) : null}
       </div>
     </article>
   );

@@ -9,6 +9,12 @@ import {
   canSubmitBillingPayment,
 } from "@/lib/billing/domain";
 import { generateReceiptNumber } from "@/lib/billing/numbering";
+import { formatBillingDate } from "@/lib/billing/format";
+import {
+  getAdminBillingDetail,
+  getBillingGenerationEstimate,
+  type BillingGenerationEstimate,
+} from "@/lib/billing/queries";
 import {
   billingGenerationSchema,
   rejectBillingSchema,
@@ -21,7 +27,10 @@ import {
 } from "@/lib/line/line-notification-service";
 import { getPlatformSettings } from "@/lib/platform-settings/queries";
 import { prisma } from "@/lib/prisma";
-import { uploadPaymentSlipFile } from "@/lib/storage/upload-service";
+import {
+  getPaymentSlipPreviewUrl,
+  uploadPaymentSlipFile,
+} from "@/lib/storage/upload-service";
 import { UploadValidationError } from "@/lib/storage/validation";
 
 export type BillingActionState = {
@@ -39,6 +48,8 @@ function revalidateBillingPaths(billingId: string) {
   revalidatePath(`/app/billings/${billingId}`);
   revalidatePath("/app/dashboard");
   revalidatePath("/admin/billings");
+  revalidatePath("/admin/billings/payment-review");
+  revalidatePath("/admin/billings/history");
   revalidatePath(`/admin/billings/${billingId}`);
 }
 
@@ -392,4 +403,93 @@ export async function rejectBillingPaymentAsAdmin(
 
   revalidateBillingPaths(billing.id);
   return { success: "Payment rejected." };
+}
+
+export type AdminBillingDrawerPayload = {
+  id: string;
+  storeName: string;
+  invoiceNumber: string | null;
+  periodLabel: string;
+  bookingCount: number;
+  bookingFee: string;
+  vat: string;
+  vatRate: string;
+  total: string;
+  status: string;
+  rejectReason: string | null;
+  payment: {
+    id: string;
+    amount: string;
+    paymentDate: string;
+    submittedAt: string;
+    fileName: string;
+    mimeType: string;
+    referenceNumber: string | null;
+    reviewStatus: string;
+    previewUrl: string;
+  } | null;
+};
+
+export async function getAdminBillingDrawerPayload(
+  billingId: string,
+): Promise<AdminBillingDrawerPayload | null> {
+  try {
+    await assertAdminReviewer();
+  } catch {
+    return null;
+  }
+
+  const billing = await getAdminBillingDetail(billingId);
+  if (!billing) return null;
+
+  const latestPayment = billing.payments[0] ?? null;
+  const previewUrl = latestPayment
+    ? await getPaymentSlipPreviewUrl(latestPayment.slipKey)
+    : "";
+
+  return {
+    id: billing.id,
+    storeName: billing.serviceStore.name,
+    invoiceNumber: billing.invoiceNumber,
+    periodLabel: `${formatBillingDate(billing.periodStart)} – ${formatBillingDate(billing.periodEnd)}`,
+    bookingCount: billing.bookingCount,
+    bookingFee: billing.bookingFee.toString(),
+    vat: billing.vat.toString(),
+    vatRate: billing.vatRate.toString(),
+    total: billing.total.toString(),
+    status: billing.status,
+    rejectReason: billing.rejectReason,
+    payment: latestPayment
+      ? {
+          id: latestPayment.id,
+          amount: latestPayment.amount.toString(),
+          paymentDate: latestPayment.paymentDate.toISOString(),
+          submittedAt: latestPayment.submittedAt.toISOString(),
+          fileName: latestPayment.fileName,
+          mimeType: latestPayment.mimeType,
+          referenceNumber: latestPayment.referenceNumber,
+          reviewStatus: latestPayment.reviewStatus,
+          previewUrl,
+        }
+      : null,
+  };
+}
+
+export async function estimateBillingGeneration(
+  periodStart: string,
+  periodEnd: string,
+): Promise<BillingGenerationEstimate | null> {
+  try {
+    await assertAdminReviewer();
+  } catch {
+    return null;
+  }
+
+  const start = new Date(periodStart);
+  const end = new Date(periodEnd);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return null;
+  }
+
+  return getBillingGenerationEstimate(start, end);
 }

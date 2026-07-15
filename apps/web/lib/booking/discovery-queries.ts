@@ -11,6 +11,7 @@ import {
 } from "@/lib/marketplace/booking-availability";
 import { evaluateServiceStoreReadiness } from "@/lib/service-store/domain";
 import { buildBookingWizardHref } from "@/lib/booking/wizard";
+import { resolveMediaPreviewUrl } from "@/lib/storage/media-upload";
 
 const marketplaceListSelect = {
   id: true,
@@ -21,6 +22,9 @@ const marketplaceListSelect = {
   email: true,
   status: true,
   bookingEnabled: true,
+  logoKey: true,
+  coverImageKey: true,
+  galleryImageKeys: true,
   tenant: {
     select: { name: true, code: true },
   },
@@ -68,6 +72,9 @@ type MarketplaceServiceStoreRow = {
   email: string | null;
   status: MarketplaceServiceStoreFacts["status"];
   bookingEnabled: boolean;
+  logoKey: string | null;
+  coverImageKey: string | null;
+  galleryImageKeys: string[];
   tenant: { name: string; code?: string };
   claims: Array<{ status: "PENDING" | "APPROVED" | "REJECTED" }>;
   members: Array<{ id: string }>;
@@ -120,7 +127,14 @@ function toFacts(row: MarketplaceServiceStoreRow): MarketplaceServiceStoreFacts 
   };
 }
 
-function resolveBookHref(row: MarketplaceServiceStoreRow): string {
+function resolveBookHref(
+  row: MarketplaceServiceStoreRow,
+  bookable: boolean,
+): string {
+  if (!bookable) {
+    return `/browse/${row.id}`;
+  }
+
   const firstBranch = row.branches.find((branch) => branch.services.length > 0);
   const firstService = firstBranch?.services[0];
 
@@ -147,6 +161,7 @@ export type MarketplaceServiceStoreListItem = {
   bookHref: string;
   hasApprovedClaim: boolean;
   distanceKm: number | null;
+  imageUrl: string | null;
   booking: MarketplaceBookingPresentation;
 };
 
@@ -176,12 +191,19 @@ function computeMinBranchDistanceKm(
   return Math.min(...distances);
 }
 
-function toListItem(
+async function toListItem(
   row: MarketplaceServiceStoreRow,
   refLat: number,
   refLng: number,
-): MarketplaceServiceStoreListItem {
+): Promise<MarketplaceServiceStoreListItem> {
   const facts = toFacts(row);
+  const booking = toMarketplaceBookingPresentation(facts);
+  const [logoUrl, coverImageUrl, firstGalleryUrl] = await Promise.all([
+    resolveMediaPreviewUrl(row.logoKey),
+    resolveMediaPreviewUrl(row.coverImageKey),
+    resolveMediaPreviewUrl(row.galleryImageKeys[0]),
+  ]);
+
   return {
     id: row.id,
     name: row.name,
@@ -191,10 +213,11 @@ function toListItem(
     email: row.email,
     tenant: row.tenant,
     branchCount: row.branches.length,
-    bookHref: resolveBookHref(row),
-    hasApprovedClaim: facts.hasApprovedClaim,
+    bookHref: resolveBookHref(row, booking.bookable),
+    hasApprovedClaim: facts.hasApprovedClaim || facts.hasOwnerMember,
     distanceKm: computeMinBranchDistanceKm(row, refLat, refLng),
-    booking: toMarketplaceBookingPresentation(facts),
+    imageUrl: coverImageUrl ?? firstGalleryUrl ?? logoUrl,
+    booking,
   };
 }
 
@@ -252,8 +275,14 @@ export async function listBrowseServiceStores() {
     orderBy: { name: "asc" },
   });
 
-  const items = rows.map((row) =>
-    toListItem(row as MarketplaceServiceStoreRow, BANGKOK_CENTER.lat, BANGKOK_CENTER.lng),
+  const items = await Promise.all(
+    rows.map((row) =>
+      toListItem(
+        row as MarketplaceServiceStoreRow,
+        BANGKOK_CENTER.lat,
+        BANGKOK_CENTER.lng,
+      ),
+    ),
   );
 
   return sortBrowseServiceStores(items, "asc", false);
@@ -276,7 +305,11 @@ export async function listBrowseServiceStoresPaginated(params: BrowseServiceStor
     orderBy: { name: params.sort },
   });
 
-  let items = rows.map((row) => toListItem(row as MarketplaceServiceStoreRow, refLat, refLng));
+  let items = await Promise.all(
+    rows.map((row) =>
+      toListItem(row as MarketplaceServiceStoreRow, refLat, refLng),
+    ),
+  );
 
   if (nearby) {
     items = items.filter(
@@ -298,6 +331,7 @@ export async function listBrowseServiceStoresPaginated(params: BrowseServiceStor
 
 export type MarketplaceServiceStoreDetail = MarketplaceServiceStoreListItem & {
   website: string | null;
+  galleryImages: Array<{ src: string; alt: string }>;
   branches: Array<{
     id: string;
     code: string;
@@ -342,14 +376,29 @@ export async function getBrowseServiceStore(
     return null;
   }
 
-  const listItem = toListItem(
+  const listItem = await toListItem(
     row as MarketplaceServiceStoreRow,
     BANGKOK_CENTER.lat,
     BANGKOK_CENTER.lng,
   );
+
+  const galleryImages = (
+    await Promise.all(
+      row.galleryImageKeys.map(async (key, index) => {
+        const src = await resolveMediaPreviewUrl(key);
+        if (!src) return null;
+        return {
+          src,
+          alt: `${row.name} photo ${index + 1}`,
+        };
+      }),
+    )
+  ).filter((image): image is { src: string; alt: string } => image != null);
+
   return {
     ...listItem,
     website: row.website,
+    galleryImages,
     branches: row.branches,
   };
 }
@@ -414,7 +463,7 @@ export async function getBrowseBranch(
     return null;
   }
 
-  const serviceStoreItem = toListItem(
+  const serviceStoreItem = await toListItem(
     branch.serviceStore as MarketplaceServiceStoreRow,
     BANGKOK_CENTER.lat,
     BANGKOK_CENTER.lng,

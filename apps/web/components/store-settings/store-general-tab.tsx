@@ -9,6 +9,11 @@ import {
   serviceStoreTextareaClassName,
 } from "@/components/service-store/ui"
 import { StoreImageUploadCard } from "@/components/store-settings/store-image-upload-card"
+import {
+  StoreUnsavedChangesBanner,
+  useBeforeUnloadWhenDirty,
+  useStoreSettingsDirty,
+} from "@/components/store-settings/store-unsaved-changes"
 import type { StoreSettingsGeneral } from "@/lib/service-store/store-settings-queries"
 import {
   saveStoreGeneral,
@@ -23,19 +28,29 @@ const initialState: StoreSettingsActionResult = { ok: true }
 
 export function StoreGeneralTab({ general }: StoreGeneralTabProps) {
   const [state, formAction, isPending] = useActionState(saveStoreGeneral, initialState)
+  const { isDirty, markDirty, clearDirty } = useStoreSettingsDirty()
   const [logoRemoved, setLogoRemoved] = useState(false)
+  const [coverRemoved, setCoverRemoved] = useState(false)
+  const [pendingLogo, setPendingLogo] = useState<File | null>(null)
+  const [pendingCover, setPendingCover] = useState<File | null>(null)
   const [removedGalleryKeys, setRemovedGalleryKeys] = useState<string[]>([])
   const [pendingGallery, setPendingGallery] = useState<
     Array<{ id: string; previewUrl: string; file: File }>
   >([])
   const [addPhotoKey, setAddPhotoKey] = useState(0)
 
+  useBeforeUnloadWhenDirty(isDirty)
+
   useEffect(() => {
     if (!state.ok || !state.message) {
       return
     }
 
+    clearDirty()
     setLogoRemoved(false)
+    setCoverRemoved(false)
+    setPendingLogo(null)
+    setPendingCover(null)
     setRemovedGalleryKeys([])
     setPendingGallery((current) => {
       for (const item of current) {
@@ -44,11 +59,21 @@ export function StoreGeneralTab({ general }: StoreGeneralTabProps) {
       return []
     })
     setAddPhotoKey((key) => key + 1)
-  }, [state])
+  }, [state, clearDirty])
 
   function handleSubmit(formData: FormData) {
     if (logoRemoved) {
       formData.set("removeLogo", "true")
+    }
+    if (coverRemoved) {
+      formData.set("removeCover", "true")
+    }
+
+    if (pendingLogo) {
+      formData.set("logo", pendingLogo)
+    }
+    if (pendingCover) {
+      formData.set("cover", pendingCover)
     }
 
     for (const key of removedGalleryKeys) {
@@ -62,18 +87,21 @@ export function StoreGeneralTab({ general }: StoreGeneralTabProps) {
     formAction(formData)
   }
 
-  function addPendingGallery(file: File) {
+  function addPendingGallery(files: File | File[]) {
+    const selected = Array.isArray(files) ? files : [files]
+    markDirty()
     setPendingGallery((current) => [
       ...current,
-      {
+      ...selected.map((file) => ({
         id: crypto.randomUUID(),
         previewUrl: URL.createObjectURL(file),
         file,
-      },
+      })),
     ])
   }
 
   function removePendingGallery(id: string) {
+    markDirty()
     setPendingGallery((current) => {
       const item = current.find((entry) => entry.id === id)
       if (item) {
@@ -88,7 +116,11 @@ export function StoreGeneralTab({ general }: StoreGeneralTabProps) {
   )
 
   return (
-    <form action={handleSubmit} className="flex flex-col gap-5">
+    <form
+      action={handleSubmit}
+      onChange={markDirty}
+      className="flex flex-col gap-5"
+    >
       {!state.ok && state.error ? (
         <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
           {state.error}
@@ -99,6 +131,8 @@ export function StoreGeneralTab({ general }: StoreGeneralTabProps) {
           {state.message}
         </p>
       ) : null}
+
+      <StoreUnsavedChangesBanner visible={isDirty} />
 
       <div className="grid gap-5 lg:grid-cols-2 lg:items-stretch">
         <ServiceStoreCard className="flex h-full flex-col space-y-5">
@@ -190,14 +224,40 @@ export function StoreGeneralTab({ general }: StoreGeneralTabProps) {
             imageUrl={general.logoUrl}
             aspectClassName="aspect-square w-full max-w-[140px]"
             deferUpload
-            inputName="logo"
             removed={logoRemoved}
             onFileSelect={(file) => {
               if (file) {
+                markDirty()
                 setLogoRemoved(false)
+                setPendingLogo(file)
               }
             }}
-            onMarkRemove={() => setLogoRemoved(true)}
+            onMarkRemove={() => {
+              markDirty()
+              setLogoRemoved(true)
+              setPendingLogo(null)
+            }}
+          />
+
+          <StoreImageUploadCard
+            label="Cover photo"
+            description="Used as the banner on browse and store detail. Wide image works best."
+            imageUrl={general.coverImageUrl}
+            buttonOnly
+            deferUpload
+            removed={coverRemoved}
+            onFileSelect={(file) => {
+              if (file) {
+                markDirty()
+                setCoverRemoved(false)
+                setPendingCover(file)
+              }
+            }}
+            onMarkRemove={() => {
+              markDirty()
+              setCoverRemoved(true)
+              setPendingCover(null)
+            }}
           />
 
           <div className="flex flex-1 flex-col space-y-2 border-t border-border pt-4">
@@ -219,6 +279,7 @@ export function StoreGeneralTab({ general }: StoreGeneralTabProps) {
                   allowReplace={false}
                   deferUpload
                   onMarkRemove={() => {
+                    markDirty()
                     setRemovedGalleryKeys((current) => [...current, image.key])
                   }}
                 />
@@ -236,14 +297,13 @@ export function StoreGeneralTab({ general }: StoreGeneralTabProps) {
               ))}
               <StoreImageUploadCard
                 key={addPhotoKey}
-                label="Add photo"
+                label="Add photos"
                 compact
+                multiple
                 deferUpload
-                onFileSelect={(file) => {
-                  if (file) {
-                    addPendingGallery(file)
-                    setAddPhotoKey((key) => key + 1)
-                  }
+                onFilesSelect={(files) => {
+                  addPendingGallery(files)
+                  setAddPhotoKey((key) => key + 1)
                 }}
               />
             </div>

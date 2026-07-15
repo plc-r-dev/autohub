@@ -4,8 +4,9 @@ import { ServicesPageFilters } from "@/components/listing/management/filters/ser
 import { StoreGeneralTab } from "@/components/store-settings/store-general-tab"
 import { StoreHoursTab } from "@/components/store-settings/store-hours-tab"
 import { StoreServicesTab } from "@/components/store-settings/store-services-tab"
+import { StoreSettingsShell } from "@/components/store-settings/store-settings-shell"
 import { StoreStaffTab } from "@/components/store-settings/store-staff-tab"
-import { StoreSettingsTabs, type StoreSettingsTab } from "@/components/store-settings/store-settings-tabs"
+import type { StoreSettingsTab } from "@/components/store-settings/store-settings-tabs"
 import { requireApprovedServiceStoreUser } from "@/lib/auth/domain-user"
 import { listServiceStoreMembers } from "@/lib/service-store/application/member-queries"
 import { requireServiceStoreContext } from "@/lib/service-store/context"
@@ -42,18 +43,14 @@ export default async function StoreSettingsPage({ searchParams }: PageProps) {
 
     return (
       <PageShell title="Store Settings" nav={serviceStoreNav}>
-        <div className="space-y-5">
-          <Suspense fallback={null}>
-            <StoreSettingsTabs activeTab={tab} />
-          </Suspense>
-
+        <StoreSettingsShell activeTab={tab}>
           <StoreStaffTab
             serviceStoreId={ctx.serviceStore.id}
             members={members}
             currentUserId={ctx.user.id}
             currentRole={ctx.membership.role}
           />
-        </div>
+        </StoreSettingsShell>
       </PageShell>
     )
   }
@@ -63,11 +60,7 @@ export default async function StoreSettingsPage({ searchParams }: PageProps) {
 
   return (
     <PageShell title="Store Settings" nav={serviceStoreNav}>
-      <div className="space-y-5">
-        <Suspense fallback={null}>
-          <StoreSettingsTabs activeTab={tab} />
-        </Suspense>
-
+      <StoreSettingsShell activeTab={tab}>
         {tab === "general" ? <StoreGeneralTab general={data.general} /> : null}
 
         {tab === "services" ? (
@@ -87,7 +80,7 @@ export default async function StoreSettingsPage({ searchParams }: PageProps) {
         ) : null}
 
         {tab === "hours" ? <StoreHoursTab hours={data.hours} /> : null}
-      </div>
+      </StoreSettingsShell>
     </PageShell>
   )
 }

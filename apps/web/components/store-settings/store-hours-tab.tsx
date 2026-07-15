@@ -1,12 +1,17 @@
 "use client"
 
-import { useActionState, useState } from "react"
+import { useActionState, useEffect, useState } from "react"
 import { cn } from "@workspace/ui/lib/utils"
 import {
   ServiceStoreButton,
   ServiceStoreCard,
   serviceStoreInputClassName,
 } from "@/components/service-store/ui"
+import {
+  StoreUnsavedChangesBanner,
+  useBeforeUnloadWhenDirty,
+  useStoreSettingsDirty,
+} from "@/components/store-settings/store-unsaved-changes"
 import { DAY_LABELS } from "@/lib/booking/engine/time"
 import { saveStoreHours, type StoreSettingsActionResult } from "@/lib/service-store/store-settings-actions"
 import type { StoreSettingsHoursDay } from "@/lib/service-store/store-settings-queries"
@@ -28,9 +33,10 @@ type StoreHoursDayRowProps = {
   dayOfWeek: number
   day: StoreSettingsHoursDay
   hasError?: boolean
+  onDirty?: () => void
 }
 
-function StoreHoursDayRow({ dayOfWeek, day, hasError }: StoreHoursDayRowProps) {
+function StoreHoursDayRow({ dayOfWeek, day, hasError, onDirty }: StoreHoursDayRowProps) {
   const [isOpen, setIsOpen] = useState(!day.isClosed)
   const prefix = `day-${dayOfWeek}`
 
@@ -54,7 +60,10 @@ function StoreHoursDayRow({ dayOfWeek, day, hasError }: StoreHoursDayRowProps) {
           role="switch"
           aria-checked={isOpen}
           aria-label={`${DAY_LABELS[dayOfWeek]} ${isOpen ? "open" : "closed"}`}
-          onClick={() => setIsOpen((current) => !current)}
+          onClick={() => {
+            onDirty?.()
+            setIsOpen((current) => !current)
+          }}
           className={cn(
             "relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors",
             isOpen
@@ -112,7 +121,16 @@ function StoreHoursDayRow({ dayOfWeek, day, hasError }: StoreHoursDayRowProps) {
 
 export function StoreHoursTab({ hours }: StoreHoursTabProps) {
   const [state, formAction, isPending] = useActionState(saveStoreHours, initialState)
+  const { isDirty, markDirty, clearDirty } = useStoreSettingsDirty()
   const hoursByDay = new Map(hours.map((hour) => [hour.dayOfWeek, hour]))
+
+  useBeforeUnloadWhenDirty(isDirty)
+
+  useEffect(() => {
+    if (state.ok && state.message) {
+      clearDirty()
+    }
+  }, [state, clearDirty])
 
   return (
     <ServiceStoreCard className="max-w-4xl space-y-4">
@@ -123,7 +141,7 @@ export function StoreHoursTab({ hours }: StoreHoursTabProps) {
         </p>
       </div>
 
-      <form action={formAction} className="flex flex-col gap-4">
+      <form action={formAction} onChange={markDirty} className="flex flex-col gap-4">
         {!state.ok && state.error ? (
           <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
             {state.error}
@@ -134,6 +152,8 @@ export function StoreHoursTab({ hours }: StoreHoursTabProps) {
             {state.message}
           </p>
         ) : null}
+
+        <StoreUnsavedChangesBanner visible={isDirty} />
 
         <div className="rounded-xl border border-border bg-muted/30 px-4 dark:bg-muted/20">
           <div className="hidden border-b border-border py-2.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase sm:grid sm:grid-cols-[5.5rem_7.5rem_1fr_1fr] sm:gap-4">
@@ -157,6 +177,7 @@ export function StoreHoursTab({ hours }: StoreHoursTabProps) {
                 dayOfWeek={dayOfWeek}
                 day={day}
                 hasError={!state.ok && Boolean(state.fieldErrors)}
+                onDirty={markDirty}
               />
             )
           })}

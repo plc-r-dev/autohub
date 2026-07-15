@@ -26,7 +26,22 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/admin/merchant-requests",
-        destination: "/admin/service-store-requests",
+        destination: "/admin/service-stores/claims",
+        permanent: false,
+      },
+      {
+        source: "/admin/service-store-requests",
+        destination: "/admin/service-stores/claims",
+        permanent: false,
+      },
+      {
+        source: "/admin/jobs",
+        destination: "/admin/settings/scheduler",
+        permanent: false,
+      },
+      {
+        source: "/admin/jobs/:path*",
+        destination: "/admin/settings/scheduler/:path*",
         permanent: false,
       },
       {

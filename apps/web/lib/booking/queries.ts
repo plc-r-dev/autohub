@@ -31,6 +31,14 @@ const bookingListSelect = {
   },
 } as const;
 
+const customerBookingServiceStoreSelect = {
+  id: true,
+  name: true,
+  logoKey: true,
+  coverImageKey: true,
+  galleryImageKeys: true,
+} as const;
+
 export async function getCustomerBookings(customerId: string) {
   return prisma.booking.findMany({
     where: { customerId },
@@ -39,7 +47,7 @@ export async function getCustomerBookings(customerId: string) {
       branch: {
         select: {
           name: true,
-          serviceStore: { select: { name: true } },
+          serviceStore: { select: customerBookingServiceStoreSelect },
         },
       },
     },
@@ -88,7 +96,7 @@ export async function getCustomerBookingsPaginated(
         branch: {
           select: {
             name: true,
-            serviceStore: { select: { id: true, name: true } },
+            serviceStore: { select: customerBookingServiceStoreSelect },
           },
         },
       },

@@ -9,6 +9,7 @@ export type ServiceStoreCardData = {
   name: string;
   bookHref: string;
   phone?: string | null;
+  imageUrl?: string | null;
   hasApprovedClaim?: boolean;
   canBook?: boolean;
   rating?: string;
@@ -20,62 +21,76 @@ export type ServiceStoreCardData = {
 const callButtonClassName =
   "inline-flex h-[40px] w-full items-center justify-center gap-2 rounded-[20px] border border-[#062C21] bg-white text-[14px] font-semibold text-[#062C21] transition-colors hover:bg-[#F8FAFC]";
 
+const comingSoonButtonClassName =
+  "flex h-[40px] w-full cursor-not-allowed items-center justify-center rounded-[20px] bg-[#F1F5F9] text-[14px] font-semibold text-[#94A3B8]";
+
 export function ServiceStoreCard({ serviceStore }: { serviceStore: ServiceStoreCardData }) {
   const isOpen = serviceStore.openingStatus !== "closed";
   const hasApprovedClaim = serviceStore.hasApprovedClaim ?? false;
   const canBook = serviceStore.canBook === true;
+  const isComingSoon = hasApprovedClaim && !canBook;
   const detailHref = `/browse/${serviceStore.id}`;
   const phone = serviceStore.phone?.trim();
 
-  return (
-    <article className="group overflow-hidden rounded-[20px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+  const media = (
+    <>
       <div className="relative">
-          <ServiceShopImage
-            serviceStoreId={serviceStore.id}
-            serviceStoreName={serviceStore.name}
-            className="h-48 md:h-52"
-            previewable
-          />
-          <div className="absolute top-4 left-4 flex gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-semibold text-[#0F172A] backdrop-blur-sm">
-              <Star className="size-3 fill-amber-400 text-amber-400" />
-              {serviceStore.rating ?? "4.8"}
+        <ServiceShopImage
+          serviceStoreId={serviceStore.id}
+          serviceStoreName={serviceStore.name}
+          imageUrl={serviceStore.imageUrl}
+          className="h-48 md:h-52"
+        />
+        <div className="absolute top-4 left-4 flex gap-2">
+          <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-semibold text-[#0F172A] backdrop-blur-sm">
+            <Star className="size-3 fill-amber-400 text-amber-400" />
+            {serviceStore.rating ?? "4.8"}
+          </span>
+          <span
+            className={cn(
+              "rounded-full px-2.5 py-1 text-[11px] font-semibold text-white",
+              isOpen ? "bg-[#16A34A]" : "bg-[#64748B]",
+            )}
+          >
+            {isOpen ? "Open" : "Closed"}
+          </span>
+          {canBook || hasApprovedClaim ? (
+            <span className="rounded-full bg-[#062C21] px-2.5 py-1 text-[11px] font-semibold text-white">
+              Partner
             </span>
-            <span
-              className={cn(
-                "rounded-full px-2.5 py-1 text-[11px] font-semibold text-white",
-                isOpen ? "bg-[#16A34A]" : "bg-[#64748B]",
-              )}
-            >
-              {isOpen ? "Open" : "Closed"}
-            </span>
-            {canBook || hasApprovedClaim ? (
-              <span className="rounded-full bg-[#062C21] px-2.5 py-1 text-[11px] font-semibold text-white">
-                Partner
-              </span>
-            ) : null}
-          </div>
-        </div>
-      <Link href={detailHref} className="block">
-        <div className="p-6">
-          <h3 className="text-[18px] font-semibold tracking-tight text-[#0F172A]">{serviceStore.name}</h3>
-          <p className="mt-1 text-[14px] text-[#64748B]">{serviceStore.distance ?? "1.2 km away"}</p>
-          {serviceStore.startingPrice ? (
-            <p className="mt-3 text-[15px] font-semibold text-[#0F172A]">
-              From <span className="text-[#16A34A]">{serviceStore.startingPrice}</span>
-            </p>
           ) : null}
         </div>
-      </Link>
+      </div>
+      <div className="p-6">
+        <h3 className="text-[18px] font-semibold tracking-tight text-[#0F172A]">{serviceStore.name}</h3>
+        <p className="mt-1 text-[14px] text-[#64748B]">{serviceStore.distance ?? "1.2 km away"}</p>
+        {serviceStore.startingPrice ? (
+          <p className="mt-3 text-[15px] font-semibold text-[#0F172A]">
+            From <span className="text-[#16A34A]">{serviceStore.startingPrice}</span>
+          </p>
+        ) : null}
+      </div>
+    </>
+  );
+
+  return (
+    <article className="group overflow-hidden rounded-[20px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+      {isComingSoon ? (
+        <div className="block">{media}</div>
+      ) : (
+        <Link href={detailHref} className="block">
+          {media}
+        </Link>
+      )}
       <div className="px-6 pb-6">
         {canBook ? (
-          <ButtonLink href={serviceStore.bookHref} size="md" className="w-full">
+          <ButtonLink href={detailHref} size="md" className="w-full">
             Book Now
           </ButtonLink>
-        ) : hasApprovedClaim ? (
-          <ButtonLink href={detailHref} variant="secondary" size="md" className="w-full">
-            View Details
-          </ButtonLink>
+        ) : isComingSoon ? (
+          <span className={comingSoonButtonClassName} aria-disabled="true">
+            Coming Soon
+          </span>
         ) : phone ? (
           <a href={`tel:${phone}`} className={callButtonClassName}>
             <Phone className="size-4" />

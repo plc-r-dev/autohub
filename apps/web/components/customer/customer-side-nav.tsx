@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@workspace/ui/lib/utils";
+import { AutohubLogo } from "@/components/brand/autohub-logo";
 
 const TABS = [
   { href: "/browse", label: "Home", icon: "🏠", match: (path: string) => path === "/browse" },
@@ -34,9 +35,9 @@ export function CustomerSideNav() {
       className="hidden w-56 shrink-0 flex-col gap-1 border-r border-[#e8eaed] bg-white p-4 md:flex"
       aria-label="Customer navigation"
     >
-      <p className="mb-3 px-3 text-xs font-semibold tracking-wide text-[#6b7c8c] uppercase">
-        AutoHub
-      </p>
+      <div className="mb-3 px-3">
+        <AutohubLogo href="/browse" heightClassName="h-6" />
+      </div>
       {TABS.map((tab) => {
         const active = tab.match(pathname);
         return (

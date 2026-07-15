@@ -233,109 +233,22 @@ export function BookingWizard({
       <input type="hidden" name="serviceId" value={selectedServiceId} />
       <input type="hidden" name="bookingDate" value={selectedSlot ?? ""} />
       <input type="hidden" name="vehicleMode" value={vehicleMode} />
-      <input type="hidden" name="vehicleId" value={vehicleMode === "existing" ? selectedVehicleId : ""} />
+      {vehicleMode === "existing" && selectedVehicleId ? (
+        <input type="hidden" name="vehicleId" value={selectedVehicleId} />
+      ) : null}
 
-      {state.error ? (
+      {state.error || state.fieldErrors ? (
         <p className="mb-6 rounded-[16px] bg-red-50 px-4 py-3 text-[14px] text-red-600">
-          {state.error}
+          {state.error ??
+            Object.values(state.fieldErrors ?? {})
+              .flat()
+              .find(Boolean) ??
+            "Please check the form and try again."}
         </p>
       ) : null}
 
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[1fr_360px] lg:items-start lg:gap-8">
         <div className="flex flex-col gap-6">
-          {/* Vehicle */}
-          <Card className="space-y-4">
-            <SectionTitle title="Vehicle" />
-            {vehicles.length > 0 ? (
-              <>
-                <div className="flex gap-2">
-                  <SelectChip selected={vehicleMode === "existing"} onClick={() => setVehicleMode("existing")}>
-                    My vehicles
-                  </SelectChip>
-                  <SelectChip selected={vehicleMode === "new"} onClick={() => setVehicleMode("new")}>
-                    Add new vehicle
-                  </SelectChip>
-                </div>
-                {vehicleMode === "existing" ? (
-                  <CustomerFormField
-                    id="vehicleId"
-                    label="Select vehicle"
-                    error={state.fieldErrors?.vehicleId?.[0]}
-                  >
-                    <SelectField
-                      id="vehicleId"
-                      value={selectedVehicleId}
-                      onChange={(event) => setSelectedVehicleId(event.target.value)}
-                    >
-                      {vehicles.map((vehicle) => (
-                        <option key={vehicle.id} value={vehicle.id}>
-                          {formatVehicleSelectLabel(vehicle)}
-                        </option>
-                      ))}
-                    </SelectField>
-                  </CustomerFormField>
-                ) : (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <CustomerFormField
-                      id="vehicleLicensePlate"
-                      label="License plate"
-                      error={state.fieldErrors?.vehicleLicensePlate?.[0]}
-                    >
-                      <TextField id="vehicleLicensePlate" name="vehicleLicensePlate" required />
-                    </CustomerFormField>
-                    <CustomerFormField
-                      id="vehicleBrand"
-                      label="Brand"
-                      error={state.fieldErrors?.vehicleBrand?.[0]}
-                    >
-                      <TextField id="vehicleBrand" name="vehicleBrand" required />
-                    </CustomerFormField>
-                    <CustomerFormField
-                      id="vehicleModel"
-                      label="Model"
-                      error={state.fieldErrors?.vehicleModel?.[0]}
-                    >
-                      <TextField id="vehicleModel" name="vehicleModel" required />
-                    </CustomerFormField>
-                    <CustomerFormField id="vehicleProvince" label="Province">
-                      <TextField id="vehicleProvince" name="vehicleProvince" />
-                    </CustomerFormField>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="sm:col-span-2">
-                  <EmptyState
-                    title="Add your vehicle"
-                    description="We need your car details to complete the booking."
-                  />
-                </div>
-                <CustomerFormField
-                  id="vehicleLicensePlate"
-                  label="License plate"
-                  error={state.fieldErrors?.vehicleLicensePlate?.[0]}
-                >
-                  <TextField id="vehicleLicensePlate" name="vehicleLicensePlate" required />
-                </CustomerFormField>
-                <CustomerFormField
-                  id="vehicleBrand"
-                  label="Brand"
-                  error={state.fieldErrors?.vehicleBrand?.[0]}
-                >
-                  <TextField id="vehicleBrand" name="vehicleBrand" required />
-                </CustomerFormField>
-                <CustomerFormField
-                  id="vehicleModel"
-                  label="Model"
-                  error={state.fieldErrors?.vehicleModel?.[0]}
-                >
-                  <TextField id="vehicleModel" name="vehicleModel" required />
-                </CustomerFormField>
-              </div>
-            )}
-          </Card>
-
           {/* Service */}
           <Card className="space-y-4">
             <SectionTitle title="Service" />
@@ -443,29 +356,131 @@ export function BookingWizard({
             </div>
           </Card>
 
-          {/* Customer Information */}
-          <Card className="space-y-4">
+          {/* Customer Information (includes vehicle) */}
+          <Card padding={false} className="space-y-5 p-4 md:p-5">
             <SectionTitle title="Customer information" />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <CustomerFormField id="contactPhone" label="Phone number">
-                <TextField
-                  id="contactPhone"
-                  type="tel"
-                  inputMode="tel"
-                  defaultValue={customerPhone ?? ""}
-                  placeholder="e.g. 081-234-5678"
-                />
-              </CustomerFormField>
+
+            <div className="space-y-3">
+              <p className="text-[13px] font-semibold text-[#0F172A]">Vehicle</p>
+              {vehicles.length > 0 ? (
+                <>
+                  <div className="flex flex-wrap gap-2">
+                    <SelectChip
+                      selected={vehicleMode === "existing"}
+                      onClick={() => setVehicleMode("existing")}
+                      className="min-h-[36px] px-3.5 text-[13px]"
+                    >
+                      My vehicles
+                    </SelectChip>
+                    <SelectChip
+                      selected={vehicleMode === "new"}
+                      onClick={() => setVehicleMode("new")}
+                      className="min-h-[36px] px-3.5 text-[13px]"
+                    >
+                      Add new vehicle
+                    </SelectChip>
+                  </div>
+                  {vehicleMode === "existing" ? (
+                    <CustomerFormField
+                      id="vehicleId"
+                      label="Select vehicle"
+                      error={state.fieldErrors?.vehicleId?.[0]}
+                    >
+                      <SelectField
+                        id="vehicleId"
+                        value={selectedVehicleId}
+                        onChange={(event) => setSelectedVehicleId(event.target.value)}
+                      >
+                        {vehicles.map((vehicle) => (
+                          <option key={vehicle.id} value={vehicle.id}>
+                            {formatVehicleSelectLabel(vehicle)}
+                          </option>
+                        ))}
+                      </SelectField>
+                    </CustomerFormField>
+                  ) : (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <CustomerFormField
+                        id="vehicleLicensePlate"
+                        label="License plate"
+                        error={state.fieldErrors?.vehicleLicensePlate?.[0]}
+                      >
+                        <TextField id="vehicleLicensePlate" name="vehicleLicensePlate" required />
+                      </CustomerFormField>
+                      <CustomerFormField
+                        id="vehicleBrand"
+                        label="Brand"
+                        error={state.fieldErrors?.vehicleBrand?.[0]}
+                      >
+                        <TextField id="vehicleBrand" name="vehicleBrand" required />
+                      </CustomerFormField>
+                      <CustomerFormField
+                        id="vehicleModel"
+                        label="Model"
+                        error={state.fieldErrors?.vehicleModel?.[0]}
+                      >
+                        <TextField id="vehicleModel" name="vehicleModel" required />
+                      </CustomerFormField>
+                      <CustomerFormField id="vehicleProvince" label="Province">
+                        <TextField id="vehicleProvince" name="vehicleProvince" />
+                      </CustomerFormField>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <p className="sm:col-span-2 text-[13px] text-[#64748B]">
+                    Add your car details to complete the booking.
+                  </p>
+                  <CustomerFormField
+                    id="vehicleLicensePlate"
+                    label="License plate"
+                    error={state.fieldErrors?.vehicleLicensePlate?.[0]}
+                  >
+                    <TextField id="vehicleLicensePlate" name="vehicleLicensePlate" required />
+                  </CustomerFormField>
+                  <CustomerFormField
+                    id="vehicleBrand"
+                    label="Brand"
+                    error={state.fieldErrors?.vehicleBrand?.[0]}
+                  >
+                    <TextField id="vehicleBrand" name="vehicleBrand" required />
+                  </CustomerFormField>
+                  <CustomerFormField
+                    id="vehicleModel"
+                    label="Model"
+                    error={state.fieldErrors?.vehicleModel?.[0]}
+                  >
+                    <TextField id="vehicleModel" name="vehicleModel" required />
+                  </CustomerFormField>
+                </div>
+              )}
             </div>
-            <CustomerFormField id="note" label="Notes (optional)" error={state.fieldErrors?.note?.[0]}>
-              <TextareaField
-                id="note"
-                name="note"
-                rows={3}
-                maxLength={1000}
-                placeholder="Anything the shop should know before you arrive?"
-              />
-            </CustomerFormField>
+
+            <div className="border-t border-[#E2E8F0] pt-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <CustomerFormField id="contactPhone" label="Phone number">
+                  <TextField
+                    id="contactPhone"
+                    type="tel"
+                    inputMode="tel"
+                    defaultValue={customerPhone ?? ""}
+                    placeholder="e.g. 081-234-5678"
+                  />
+                </CustomerFormField>
+              </div>
+              <div className="mt-4">
+                <CustomerFormField id="note" label="Notes (optional)" error={state.fieldErrors?.note?.[0]}>
+                  <TextareaField
+                    id="note"
+                    name="note"
+                    rows={3}
+                    maxLength={1000}
+                    placeholder="Anything the shop should know before you arrive?"
+                  />
+                </CustomerFormField>
+              </div>
+            </div>
           </Card>
         </div>
 

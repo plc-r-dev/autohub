@@ -4,10 +4,12 @@ import { runMonthlyBillingGenerationService } from "@/lib/jobs/services/monthly-
 import { runPendingBookingExpirationService } from "@/lib/jobs/services/pending-booking-expiration-job";
 import { runStorageCleanupService } from "@/lib/jobs/services/storage-cleanup-job";
 
-let initialized = false;
+const globalForJobs = globalThis as unknown as {
+  autohubJobsInitialized?: boolean;
+};
 
 export function ensureJobDefinitionsRegistered() {
-  if (initialized) {
+  if (globalForJobs.autohubJobsInitialized) {
     return;
   }
 
@@ -83,5 +85,5 @@ export function ensureJobDefinitionsRegistered() {
     },
   });
 
-  initialized = true;
+  globalForJobs.autohubJobsInitialized = true;
 }

@@ -4,7 +4,6 @@ import { requireAdminSession } from "@/lib/auth/require-admin"
 import { formatBillingCurrency } from "@/lib/billing/format"
 import {
   getAdminRecentActivity,
-  getAdminSystemAlerts,
   getAdminTodoTaskCards,
 } from "@/lib/reporting/admin-dashboard"
 import {
@@ -33,7 +32,6 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
     serviceStoreGrowth,
     tasks,
     activity,
-    alerts,
   ] = await Promise.all([
     getPlatformDashboardCardMetrics(),
     getBookingTrend(7),
@@ -43,20 +41,18 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
     getServiceStoreGrowthMonthly(),
     getAdminTodoTaskCards(),
     getAdminRecentActivity(),
-    getAdminSystemAlerts(),
   ])
 
   return (
     <AdminLayout
-      title="Platform dashboard"
-      description="Operations workspace and executive KPIs."
+      title="Dashboard"
+      description="Operations workspace and platform KPIs"
     >
       <AdminDashboardTabs
         initialTab={initialTab}
         todo={{
           tasks,
           activity,
-          alerts,
         }}
         kpi={{
           store: [

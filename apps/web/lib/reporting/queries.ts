@@ -366,16 +366,25 @@ export async function getServiceStoreDashboardMetrics(
         ORDER BY qty DESC
         LIMIT 5
       `),
-      prisma.$queryRaw<Array<{ customerId: string; firstName: string; lastName: string; lastBookingDate: Date }>>(Prisma.sql`
+      prisma.$queryRaw<
+        Array<{
+          customerId: string
+          firstName: string
+          lastName: string
+          linePictureUrl: string | null
+          lastBookingDate: Date
+        }>
+      >(Prisma.sql`
         SELECT c."id" AS "customerId",
                c."firstName",
                c."lastName",
+               c."linePictureUrl",
                MAX(b."bookingDate") AS "lastBookingDate"
         FROM "Booking" b
         JOIN "Customer" c ON c."id" = b."customerId"
         JOIN "Branch" br ON br."id" = b."branchId"
         WHERE br."serviceStoreId" = ${serviceStoreId}
-        GROUP BY c."id", c."firstName", c."lastName"
+        GROUP BY c."id", c."firstName", c."lastName", c."linePictureUrl"
         ORDER BY "lastBookingDate" DESC
         LIMIT 8
       `),

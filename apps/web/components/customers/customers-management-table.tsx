@@ -12,6 +12,7 @@ type CustomerRow = {
   firstName: string
   lastName: string
   phone: string | null
+  linePictureUrl?: string | null
   vehicles: Array<{ licensePlate: string; brand: string; model: string }>
   _count: { bookings: number }
 }
@@ -34,6 +35,7 @@ const columns: ManagementTableColumn<CustomerRow>[] = [
         <AvatarInitials
           firstName={customer.firstName}
           lastName={customer.lastName}
+          imageUrl={customer.linePictureUrl}
           size="sm"
         />
         <span className="font-medium text-foreground">

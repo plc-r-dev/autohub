@@ -1,44 +1,5 @@
-import { AdminLayout } from "@/components/admin/admin-layout"
-import { AdminJobsTable } from "@/components/admin/admin-jobs-table"
-import { requireAdminSession } from "@/lib/auth/require-admin"
-import { runAllJobsNowAction, runJobNowAction } from "@/lib/jobs/actions"
-import { getJobsOverview } from "@/lib/jobs/queries"
+import { redirect } from "next/navigation"
 
-function formatDateTime(value?: Date | null): string {
-  if (!value) return "-"
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(value)
-}
-
-function formatDuration(value?: number | null): string {
-  if (!value || value <= 0) return "-"
-  return `${value} ms`
-}
-
-export default async function AdminJobsPage() {
-  await requireAdminSession()
-  const jobs = await getJobsOverview()
-
-  return (
-    <AdminLayout
-      title="Background jobs"
-      description="Centralized scheduler registry and execution history."
-    >
-      <AdminJobsTable
-        runAllAction={runAllJobsNowAction}
-        runJobAction={runJobNowAction}
-        jobs={jobs.map((job) => ({
-          name: job.name,
-          description: job.description,
-          schedule: job.schedule,
-          lastRunAt: formatDateTime(job.lastRun?.startedAt),
-          lastStatus: job.lastRun?.status ?? "-",
-          lastDuration: formatDuration(job.lastRun?.duration),
-          nextRunAt: formatDateTime(job.nextRun),
-        }))}
-      />
-    </AdminLayout>
-  )
+export default function AdminJobsPage() {
+  redirect("/admin/settings/scheduler")
 }

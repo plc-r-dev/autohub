@@ -15,7 +15,7 @@ import { BrowseServiceStoreFilters } from "@/components/browse/browse-service-st
 import { listBrowseServiceStoresPaginated } from "@/lib/booking/discovery-queries";
 import type { MarketplaceServiceStoreListItem } from "@/lib/booking/discovery-queries";
 import { formatDistanceKm } from "@/lib/geo/distance";
-import { toCustomerBookingCardData } from "@/lib/booking/customer-booking-display";
+import { toCustomerBookingCardData } from "@/lib/booking/customer-booking-mapper";
 import { getCustomerBookingsPaginated } from "@/lib/booking/queries";
 import { resolveIdentityLink } from "@/lib/auth/identity";
 import { getCustomerForUser } from "@/lib/customer/context";
@@ -40,6 +40,7 @@ function toServiceStoreCard(row: MarketplaceServiceStoreListItem): ServiceStoreC
     name: row.name,
     bookHref: row.bookHref,
     phone: row.phone,
+    imageUrl: row.imageUrl,
     hasApprovedClaim: row.hasApprovedClaim,
     canBook: row.booking.bookable,
     rating: "4.8",

@@ -107,7 +107,7 @@ export async function approveServiceStoreClaim(
           googlePlaceId: claim.googlePlaceId ?? undefined,
           businessCategory: claim.businessCategory ?? undefined,
           status: "ACTIVE",
-          bookingEnabled: false,
+          bookingEnabled: true,
         },
       });
 
@@ -172,7 +172,9 @@ export async function approveServiceStoreClaim(
     return { error: "Unable to approve serviceStore claim." };
   }
 
-  revalidatePath("/admin/service-store-requests");
+  revalidatePath("/admin/service-store-requests")
+  revalidatePath("/admin/service-stores/claims")
+  revalidatePath("/admin/service-stores/active");
   revalidatePath("/app");
   revalidatePath("/app/dashboard");
   revalidatePath("/app");
@@ -213,7 +215,9 @@ export async function rejectServiceStoreClaim(
     return { error: "Unable to reject serviceStore claim." };
   }
 
-  revalidatePath("/admin/service-store-requests");
+  revalidatePath("/admin/service-store-requests")
+  revalidatePath("/admin/service-stores/claims")
+  revalidatePath("/admin/service-stores/active");
   revalidatePath("/app");
 
   return { success: "Service Store claim rejected." };
@@ -253,6 +257,7 @@ export async function approveServiceStoreOnboardingRequest(
           companyDocumentFileName: true,
           companyDocumentFileSize: true,
           companyDocumentMimeType: true,
+          logoKey: true,
         },
       });
 
@@ -284,6 +289,7 @@ export async function approveServiceStoreOnboardingRequest(
           address: request.address,
           status: "ACTIVE",
           bookingEnabled: false,
+          logoKey: request.logoKey,
           citizenIdKey: request.citizenIdKey,
           citizenIdUrl: request.citizenIdUrl,
           citizenIdFileName: request.citizenIdFileName,
@@ -371,7 +377,9 @@ export async function approveServiceStoreOnboardingRequest(
     return { error: "Unable to approve serviceStore onboarding request." };
   }
 
-  revalidatePath("/admin/service-store-requests");
+  revalidatePath("/admin/service-store-requests")
+  revalidatePath("/admin/service-stores/claims")
+  revalidatePath("/admin/service-stores/active");
   revalidatePath("/app");
   revalidatePath("/app/dashboard");
   revalidatePath("/app");
@@ -412,8 +420,57 @@ export async function rejectServiceStoreOnboardingRequest(
     return { error: "Unable to reject serviceStore onboarding request." };
   }
 
-  revalidatePath("/admin/service-store-requests");
+  revalidatePath("/admin/service-store-requests")
+  revalidatePath("/admin/service-stores/claims")
+  revalidatePath("/admin/service-stores/active");
+  revalidatePath("/admin/service-stores/claims");
   revalidatePath("/app");
 
   return { success: "Service Store onboarding request rejected." };
+}
+
+export async function setServiceStoreAdminStatus(
+  serviceStoreId: string,
+  status: "ACTIVE" | "SUSPENDED",
+): Promise<ServiceStoreRequestActionState> {
+  try {
+    await assertRequestManager();
+  } catch {
+    return { error: "Unauthorized." };
+  }
+
+  const store = await prisma.serviceStore.findUnique({
+    where: { id: serviceStoreId },
+    select: { id: true, status: true },
+  });
+  if (!store) {
+    return { error: "Service store not found." };
+  }
+
+  if (status === "SUSPENDED" && store.status === "SUSPENDED") {
+    return { error: "Store is already suspended." };
+  }
+  if (status === "ACTIVE" && store.status === "ACTIVE") {
+    return { error: "Store is already active." };
+  }
+
+  await prisma.serviceStore.update({
+    where: { id: store.id },
+    data: {
+      status,
+      ...(status === "SUSPENDED" ? { bookingEnabled: false } : {}),
+    },
+  });
+
+  revalidatePath("/admin/service-stores");
+  revalidatePath("/admin/service-stores/active");
+  revalidatePath(`/admin/service-stores/${store.id}`);
+  revalidatePath("/admin/dashboard");
+
+  return {
+    success:
+      status === "SUSPENDED"
+        ? "Service store suspended."
+        : "Service store activated.",
+  };
 }

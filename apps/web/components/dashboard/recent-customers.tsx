@@ -12,6 +12,7 @@ type RecentCustomer = {
   customerId: string
   firstName: string
   lastName: string
+  linePictureUrl?: string | null
   lastBookingDate: Date | string
 }
 
@@ -45,6 +46,7 @@ export function RecentCustomers({ customers }: RecentCustomersProps) {
                     <AvatarInitials
                       firstName={customer.firstName}
                       lastName={customer.lastName}
+                      imageUrl={customer.linePictureUrl}
                       size="sm"
                     />
                     <span className="font-semibold text-foreground">

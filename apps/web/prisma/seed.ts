@@ -208,7 +208,7 @@ async function seedTenant(prisma: PrismaClient) {
 
 async function seedTenantRole(prisma: PrismaClient, tenantId: string) {
   await prisma.role.upsert({
-    where: { tenantId_code: { tenantId, code: "MERCHANT_OWNER" } },
+    where: { tenantId_code: { tenantId, code: "SERVICE_STORE_OWNER" } },
     update: { name: "Service Store Owner" },
     create: { tenantId, code: "SERVICE_STORE_OWNER", name: "Service Store Owner" },
   });
@@ -518,6 +518,17 @@ async function seedServiceStoreClaims(prisma: PrismaClient, tenantId: string, se
           userId: user.id,
           status: claimStatus,
           reviewedAt: claimStatus === "APPROVED" ? new Date() : null,
+          // Supporting docs are required by schema; use seed placeholders.
+          citizenIdKey: `seed/citizen-id/${user.id}`,
+          citizenIdUrl: "",
+          citizenIdFileName: "seed-citizen-id.pdf",
+          citizenIdFileSize: 0,
+          citizenIdMimeType: "application/pdf",
+          companyDocumentKey: `seed/company-doc/${user.id}`,
+          companyDocumentUrl: "",
+          companyDocumentFileName: "seed-company-doc.pdf",
+          companyDocumentFileSize: 0,
+          companyDocumentMimeType: "application/pdf",
         },
       });
     } else {

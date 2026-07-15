@@ -11,6 +11,7 @@ import { businessCategoryLabel } from "@/lib/service-store/domain";
 import { formatDistanceKm } from "@/lib/geo/distance";
 import { prisma } from "@/lib/prisma";
 import { getDefaultOperatingHours } from "@/lib/booking/engine/time";
+import { buildSignedStorageUrl } from "@/lib/storage/signed-url";
 
 type PageProps = {
   params: Promise<{ serviceStoreId: string }>;
@@ -33,6 +34,7 @@ export default async function BrowseServiceStorePage({ params }: PageProps) {
         duration: true,
         price: true,
         branchId: true,
+        imageKey: true,
       },
       orderBy: { name: "asc" },
     }),
@@ -89,6 +91,8 @@ export default async function BrowseServiceStorePage({ params }: PageProps) {
         openStatus={resolveStoreOpenStatus(operatingHours)}
         hours={formatOperatingHoursRows(operatingHours)}
         canBook={serviceStore.booking.bookable}
+        imageUrl={serviceStore.imageUrl}
+        galleryImages={serviceStore.galleryImages}
         services={services.map((service) => ({
           id: service.id,
           name: service.name,
@@ -96,6 +100,9 @@ export default async function BrowseServiceStorePage({ params }: PageProps) {
           price: service.price.toString(),
           branchId: service.branchId,
           category,
+          imageUrl: service.imageKey
+            ? buildSignedStorageUrl(service.imageKey, 3600)
+            : null,
         }))}
         categories={categories}
       />

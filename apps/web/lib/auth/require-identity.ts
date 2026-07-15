@@ -61,16 +61,19 @@ export async function requireCustomerIdentity(): Promise<AuthenticatedCustomerId
     redirect(PORTALS.customer.openInLine);
   }
 
-  let identity = await resolveIdentityLink(session.user.id);
-  if (!isIdentityLinked(identity)) {
+  // Always ensure Customer exists — including store owners who were linked
+  // without a Customer profile during claim/onboarding.
+  try {
     await ensureCustomerProfile({
       authUserId: session.user.id,
       displayName: session.user.name,
       imageUrl: session.user.image,
     });
-    identity = await resolveIdentityLink(session.user.id);
+  } catch {
+    redirect(`${PORTALS.customer.openInLine}?error=auth`);
   }
 
+  const identity = await resolveIdentityLink(session.user.id);
   if (!isIdentityLinked(identity)) {
     redirect(`${PORTALS.customer.openInLine}?error=auth`);
   }

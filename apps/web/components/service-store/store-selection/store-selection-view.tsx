@@ -9,6 +9,7 @@ import Avatar from "@mui/material/Avatar"
 import Box from "@mui/material/Box"
 import Button from "@mui/material/Button"
 import Card from "@mui/material/Card"
+import CardActionArea from "@mui/material/CardActionArea"
 import CardActions from "@mui/material/CardActions"
 import CardContent from "@mui/material/CardContent"
 import Chip from "@mui/material/Chip"
@@ -27,6 +28,11 @@ const ADD_STORE_HREF = "/app?mode=onboard"
 
 const addCardHoverSx = {
   borderColor: "primary.main",
+  bgcolor: "rgba(22,163,74,0.04)",
+  boxShadow: "0 8px 24px rgba(22, 163, 74, 0.08)",
+} as const
+
+const storeCardHoverSx = {
   bgcolor: "rgba(22,163,74,0.04)",
   boxShadow: "0 8px 24px rgba(22, 163, 74, 0.08)",
 } as const
@@ -96,7 +102,6 @@ export function StoreSelectionView({
   avatarUrl,
   summaries,
   pendingApplications = [],
-  activeServiceStoreId,
 }: StoreSelectionViewProps) {
   const hasPendingOnly = summaries.length === 0 && pendingApplications.length > 0
 
@@ -129,92 +134,109 @@ export function StoreSelectionView({
         <Grid container spacing={2.5}>
           {summaries.map((summary) => {
             const chip = statusChip(summary.serviceStore.status)
-            const isActive = activeServiceStoreId === summary.serviceStore.id
             return (
               <Grid key={summary.serviceStore.id} size={{ xs: 12, sm: 6, lg: 4 }}>
-                <Card
-                  sx={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    outline: isActive ? "2px solid" : "none",
-                    outlineColor: "primary.main",
-                  }}
+                <form
+                  action={switchActiveServiceStore.bind(
+                    null,
+                    summary.serviceStore.id,
+                  )}
+                  style={{ height: "100%" }}
                 >
-                  <CardContent sx={{ flex: 1 }}>
-                    <Stack spacing={2}>
-                      <Stack
-                        direction="row"
-                        spacing={1.5}
-                        sx={{ alignItems: "center" }}
-                      >
-                        <Avatar
-                          src={summary.serviceStore.logoUrl ?? undefined}
-                          sx={{
-                            width: 56,
-                            height: 56,
-                            bgcolor: "primary.main",
-                            fontWeight: 700,
-                          }}
-                        >
-                          {summary.serviceStore.logoUrl
-                            ? null
-                            : storeInitials(summary.serviceStore.name)}
-                        </Avatar>
-                        <Box sx={{ minWidth: 0, flex: 1 }}>
-                          <Typography
-                            variant="subtitle1"
-                            sx={{ fontWeight: 700 }}
-                            noWrap
-                          >
-                            {summary.serviceStore.name}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {summary.primaryBranchName ??
-                              summary.serviceStore.code}
-                          </Typography>
-                        </Box>
-                      </Stack>
-
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        useFlexGap
-                        sx={{ flexWrap: "wrap" }}
-                      >
-                        <Chip
-                          size="small"
-                          label={roleLabel(summary.role)}
-                          variant="outlined"
-                        />
-                        <Chip
-                          size="small"
-                          label={chip.label}
-                          color={chip.color}
-                          variant="outlined"
-                        />
-                        <Chip
-                          size="small"
-                          label={`${summary.branchCount} branch${summary.branchCount === 1 ? "" : "es"}`}
-                          variant="outlined"
-                        />
-                      </Stack>
-                    </Stack>
-                  </CardContent>
-                  <CardActions sx={{ px: 2, pb: 2 }}>
-                    <form
-                      action={switchActiveServiceStore.bind(
-                        null,
-                        summary.serviceStore.id,
-                      )}
-                      style={{ width: "100%" }}
+                  <Card
+                    sx={{
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      transition: "background-color 0.18s, box-shadow 0.18s",
+                      "&:hover": storeCardHoverSx,
+                    }}
+                  >
+                    <CardActionArea
+                      type="submit"
+                      sx={{
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "stretch",
+                        justifyContent: "flex-start",
+                      }}
                     >
-                      <Button type="submit" variant="contained" fullWidth>
-                        Open
-                      </Button>
-                    </form>
-                  </CardActions>
-                </Card>
+                      <CardContent sx={{ flex: 1, width: "100%" }}>
+                        <Stack spacing={2}>
+                          <Stack
+                            direction="row"
+                            spacing={1.5}
+                            sx={{ alignItems: "center" }}
+                          >
+                            <Avatar
+                              src={summary.serviceStore.logoUrl ?? undefined}
+                              sx={{
+                                width: 56,
+                                height: 56,
+                                bgcolor: "primary.main",
+                                fontWeight: 700,
+                              }}
+                            >
+                              {summary.serviceStore.logoUrl
+                                ? null
+                                : storeInitials(summary.serviceStore.name)}
+                            </Avatar>
+                            <Box sx={{ minWidth: 0, flex: 1 }}>
+                              <Typography
+                                variant="subtitle1"
+                                sx={{ fontWeight: 700 }}
+                                noWrap
+                              >
+                                {summary.serviceStore.name}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                {summary.primaryBranchName ??
+                                  summary.serviceStore.code}
+                              </Typography>
+                            </Box>
+                          </Stack>
+
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            useFlexGap
+                            sx={{ flexWrap: "wrap" }}
+                          >
+                            <Chip
+                              size="small"
+                              label={roleLabel(summary.role)}
+                              variant="outlined"
+                            />
+                            <Chip
+                              size="small"
+                              label={chip.label}
+                              color={chip.color}
+                              variant="outlined"
+                            />
+                            <Chip
+                              size="small"
+                              label={`${summary.branchCount} branch${summary.branchCount === 1 ? "" : "es"}`}
+                              variant="outlined"
+                            />
+                          </Stack>
+                        </Stack>
+                      </CardContent>
+                      <Box sx={{ px: 2, pb: 2, width: "100%" }}>
+                        <Button
+                          component="span"
+                          variant="contained"
+                          fullWidth
+                        >
+                          Open
+                        </Button>
+                      </Box>
+                    </CardActionArea>
+                  </Card>
+                </form>
               </Grid>
             )
           })}

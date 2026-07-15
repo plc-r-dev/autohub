@@ -103,6 +103,7 @@ export async function searchServiceStoreCustomersPaginated(
         firstName: true,
         lastName: true,
         phone: true,
+        linePictureUrl: true,
         vehicles: {
           select: { licensePlate: true, brand: true, model: true },
           orderBy: { createdAt: "asc" },

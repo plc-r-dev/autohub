@@ -3,7 +3,7 @@ import { Pool } from "pg"
 import { PrismaClient } from "@/lib/generated/prisma/client"
 
 /** Bump when Prisma schema changes so dev HMR does not keep a stale client. */
-const PRISMA_CLIENT_VERSION = "20260714200000_onboarding_request_docs_and_address_v2"
+const PRISMA_CLIENT_VERSION = "20260715070000_platform_settings_media_language"
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient
