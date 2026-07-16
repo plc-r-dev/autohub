@@ -9,6 +9,15 @@ import {
   type MarketplaceBookingPresentation,
   type MarketplaceServiceStoreFacts,
 } from "@/lib/marketplace/booking-availability";
+import {
+  buildTokenSearchOrClauses,
+  extractSearchableFields,
+  rankBySearchRelevance,
+  scoreStoreSearchRelevance,
+  tokenizeSearchQuery,
+  type StoreSearchRelevance,
+} from "@/lib/listing/store-search";
+import { customerStoreSearchableStatusFilter } from "@/lib/service-store/customer-access";
 import { evaluateServiceStoreReadiness } from "@/lib/service-store/domain";
 import { buildBookingWizardHref } from "@/lib/booking/wizard";
 import { resolveMediaPreviewUrl } from "@/lib/storage/media-upload";
@@ -41,6 +50,7 @@ const marketplaceListSelect = {
   branches: {
     select: {
       id: true,
+      name: true,
       latitude: true,
       longitude: true,
       operatingHours: {
@@ -48,19 +58,16 @@ const marketplaceListSelect = {
       },
       services: {
         where: { isActive: true },
-        select: { id: true },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
       },
     },
   },
 } as const;
 
-/** Customer browse: discoverable shops (incl. claimed stores still finishing catalog). */
+/** Customer browse/search — statuses owned by customer-access SSOT. */
 const browseServiceStoreWhere = {
-  status: {
-    in: ["ACTIVE", "READY_FOR_BOOKING", "ONBOARDING"] as Array<
-      "ACTIVE" | "READY_FOR_BOOKING" | "ONBOARDING"
-    >,
-  },
+  status: customerStoreSearchableStatusFilter(),
 };
 
 type MarketplaceServiceStoreRow = {
@@ -83,10 +90,11 @@ type MarketplaceServiceStoreRow = {
   payoutAccountNumber: string | null;
   branches: Array<{
     id: string;
+    name: string;
     latitude: { toString(): string } | null;
     longitude: { toString(): string } | null;
     operatingHours: Array<{ isClosed: boolean }>;
-    services: Array<{ id: string }>;
+    services: Array<{ id: string; name: string }>;
   }>;
 };
 
@@ -149,6 +157,15 @@ function resolveBookHref(
   });
 }
 
+function resolvePrimaryServiceName(
+  row: MarketplaceServiceStoreRow,
+): string | null {
+  const firstBranch = row.branches.find((branch) => branch.services.length > 0);
+  return firstBranch?.services[0]?.name ?? null;
+}
+
+export type { StoreSearchRelevance } from "@/lib/listing/store-search";
+
 export type MarketplaceServiceStoreListItem = {
   id: string;
   name: string;
@@ -162,7 +179,9 @@ export type MarketplaceServiceStoreListItem = {
   hasApprovedClaim: boolean;
   distanceKm: number | null;
   imageUrl: string | null;
+  primaryServiceName: string | null;
   booking: MarketplaceBookingPresentation;
+  searchRelevance?: StoreSearchRelevance;
 };
 
 function computeMinBranchDistanceKm(
@@ -217,6 +236,7 @@ async function toListItem(
     hasApprovedClaim: facts.hasApprovedClaim || facts.hasOwnerMember,
     distanceKm: computeMinBranchDistanceKm(row, refLat, refLng),
     imageUrl: coverImageUrl ?? firstGalleryUrl ?? logoUrl,
+    primaryServiceName: resolvePrimaryServiceName(row),
     booking,
   };
 }
@@ -251,20 +271,85 @@ function sortBrowseServiceStores(
   });
 }
 
+const FALLBACK_SUGGESTION_COUNT = 5;
+
 function buildSearchWhere(keyword?: string) {
   const trimmed = keyword?.trim();
   if (!trimmed) {
     return {};
   }
 
-  return {
-    OR: [
-      { name: { contains: trimmed, mode: "insensitive" as const } },
-      { code: { contains: trimmed, mode: "insensitive" as const } },
-      { description: { contains: trimmed, mode: "insensitive" as const } },
-      { tenant: { name: { contains: trimmed, mode: "insensitive" as const } } },
-    ],
-  };
+  const tokens = tokenizeSearchQuery(trimmed);
+  if (tokens.length === 0) {
+    return {
+      OR: [
+        { name: { contains: trimmed, mode: "insensitive" as const } },
+        { code: { contains: trimmed, mode: "insensitive" as const } },
+        { description: { contains: trimmed, mode: "insensitive" as const } },
+        { tenant: { name: { contains: trimmed, mode: "insensitive" as const } } },
+      ],
+    };
+  }
+
+  const orClauses = buildTokenSearchOrClauses(tokens);
+  return orClauses.length > 0 ? { OR: orClauses } : {};
+}
+
+function isSearchMatch(relevance: StoreSearchRelevance | undefined): boolean {
+  if (!relevance || relevance.score <= 0) return false;
+  return (
+    relevance.matchedTokens > 0 ||
+    relevance.matchType === "exact_phrase" ||
+    relevance.matchType === "synonym" ||
+    relevance.matchType === "fuzzy"
+  );
+}
+
+function applySearchRanking(
+  items: MarketplaceServiceStoreListItem[],
+  rows: MarketplaceServiceStoreRow[],
+  query: string,
+): MarketplaceServiceStoreListItem[] {
+  const tokens = tokenizeSearchQuery(query);
+  const rowById = new Map(rows.map((row) => [row.id, row]));
+
+  const ranked = items.map((item) => {
+    const row = rowById.get(item.id);
+    if (!row) return item;
+
+    const relevance = scoreStoreSearchRelevance(
+      extractSearchableFields(row),
+      query,
+      tokens,
+    );
+
+    return { ...item, searchRelevance: relevance };
+  });
+
+  return rankBySearchRelevance(ranked.filter((item) => isSearchMatch(item.searchRelevance)));
+}
+
+function pickClosestStores(
+  items: MarketplaceServiceStoreListItem[],
+  limit: number,
+): MarketplaceServiceStoreListItem[] {
+  return [...items]
+    .sort((a, b) => {
+      const distA = a.distanceKm ?? Number.POSITIVE_INFINITY;
+      const distB = b.distanceKm ?? Number.POSITIVE_INFINITY;
+      if (distA !== distB) return distA - distB;
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, limit)
+    .map((item) => ({
+      ...item,
+      searchRelevance: {
+        score: 0,
+        matchedTokens: 0,
+        totalTokens: 0,
+        matchType: "fuzzy" as const,
+      },
+    }));
 }
 
 /** Customer browse: all active serviceStores. */
@@ -289,21 +374,29 @@ export async function listBrowseServiceStores() {
 }
 
 export async function listBrowseServiceStoresPaginated(params: BrowseServiceStoreListParams) {
-  const where = {
-    ...browseServiceStoreWhere,
-    ...buildSearchWhere(params.q),
-  };
-
+  const searchQuery = params.q?.trim();
   const refLat = params.refLat ?? BANGKOK_CENTER.lat;
   const refLng = params.refLng ?? BANGKOK_CENTER.lng;
   const nearbyRadiusKm = params.nearbyRadiusKm ?? DEFAULT_NEARBY_RADIUS_KM;
   const nearby = params.nearby ?? false;
 
-  const rows = await prisma.serviceStore.findMany({
-    where,
+  let isFallback = false;
+  let rows = await prisma.serviceStore.findMany({
+    where: {
+      ...browseServiceStoreWhere,
+      ...buildSearchWhere(searchQuery),
+    },
     select: marketplaceListSelect,
     orderBy: { name: params.sort },
   });
+
+  if (searchQuery && rows.length === 0) {
+    rows = await prisma.serviceStore.findMany({
+      where: browseServiceStoreWhere,
+      select: marketplaceListSelect,
+      orderBy: { name: params.sort },
+    });
+  }
 
   let items = await Promise.all(
     rows.map((row) =>
@@ -311,13 +404,44 @@ export async function listBrowseServiceStoresPaginated(params: BrowseServiceStor
     ),
   );
 
+  if (searchQuery) {
+    let ranked = applySearchRanking(items, rows as MarketplaceServiceStoreRow[], searchQuery);
+
+    if (ranked.length === 0) {
+      const scored = items.map((item) => {
+        const row = (rows as MarketplaceServiceStoreRow[]).find((r) => r.id === item.id);
+        if (!row) return item;
+        return {
+          ...item,
+          searchRelevance: scoreStoreSearchRelevance(
+            extractSearchableFields(row),
+            searchQuery,
+            tokenizeSearchQuery(searchQuery),
+          ),
+        };
+      });
+      const fuzzyMatches = rankBySearchRelevance(
+        scored.filter((item) => item.searchRelevance?.matchType === "fuzzy"),
+      );
+      ranked =
+        fuzzyMatches.length > 0
+          ? fuzzyMatches
+          : pickClosestStores(items, FALLBACK_SUGGESTION_COUNT);
+      isFallback = fuzzyMatches.length === 0;
+    }
+
+    items = ranked;
+  }
+
   if (nearby) {
     items = items.filter(
       (item) => item.distanceKm != null && item.distanceKm <= nearbyRadiusKm,
     );
   }
 
-  items = sortBrowseServiceStores(items, params.sort, nearby);
+  if (!searchQuery) {
+    items = sortBrowseServiceStores(items, params.sort, nearby);
+  }
 
   const totalCount = items.length;
   const start = (params.page - 1) * params.pageSize;
@@ -326,6 +450,7 @@ export async function listBrowseServiceStoresPaginated(params: BrowseServiceStor
   return {
     totalCount,
     rows: pageRows,
+    isFallback,
   };
 }
 
